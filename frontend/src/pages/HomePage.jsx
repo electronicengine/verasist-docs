@@ -5,17 +5,35 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 
 export default function HomePage() {
+  const [tabs, setTabs] = useState([]);
   const [sections, setSections] = useState([]);
   const [docs, setDocs] = useState([]);
 
   useEffect(() => {
-    Promise.all([api.get("/sections"), api.get("/documents")])
-      .then(([s, d]) => {
+    Promise.all([api.get("/tabs"), api.get("/sections"), api.get("/documents")])
+      .then(([t, s, d]) => {
+        setTabs(t.data);
         setSections(s.data);
         setDocs(d.data);
       })
       .catch(() => {});
   }, []);
+
+  const tabForSection = (sec) => tabs.find((t) => t.id === sec.tab_id);
+  const linkFor = (sec, docSlug) =>
+    `/docs/${tabForSection(sec)?.slug || "guides"}/${docSlug}`;
+  const firstDocLink = (() => {
+    const firstTab = tabs[0];
+    if (!firstTab) return "/docs";
+    const firstSec = sections.find((s) => s.tab_id === firstTab.id);
+    if (!firstSec) return `/docs/${firstTab.slug}`;
+    const firstDoc = docs
+      .filter((d) => d.section_id === firstSec.id && d.published)
+      .sort((a, b) => a.order - b.order)[0];
+    return firstDoc
+      ? `/docs/${firstTab.slug}/${firstDoc.slug}`
+      : `/docs/${firstTab.slug}`;
+  })();
 
   const features = [
     { icon: Zap, title: "2 dakikada kurulum", desc: "Docker ile sıfırdan çalışan sesli bota dakikalar içinde ulaşın." },
@@ -50,7 +68,7 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-wrap gap-3" data-testid="hero-cta">
             <Button asChild size="lg" data-testid="hero-start-btn">
-              <Link to="/docs/giris">
+              <Link to={firstDocLink}>
                 Hızlı başlangıç
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
@@ -112,7 +130,7 @@ export default function HomePage() {
                   {items.slice(0, 5).map((d) => (
                     <li key={d.id}>
                       <Link
-                        to={`/docs/${d.slug}`}
+                        to={linkFor(s, d.slug)}
                         className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
                         data-testid={`home-doc-${d.slug}`}
                       >

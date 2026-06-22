@@ -4,10 +4,13 @@ import { api } from "@/lib/api";
 import { ChevronRight, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
 
 export default function DocPage() {
-  const { slug } = useParams();
+  const params = useParams();
+  const slug = params.docSlug || params.slug;
+  const tabSlugParam = params.tabSlug;
   const navigate = useNavigate();
   const [doc, setDoc] = useState(null);
   const [section, setSection] = useState(null);
+  const [tab, setTab] = useState(null);
   const [siblings, setSiblings] = useState([]);
   const [toc, setToc] = useState([]);
   const [activeId, setActiveId] = useState(null);
@@ -25,9 +28,16 @@ export default function DocPage() {
 
   useEffect(() => {
     if (!doc) return;
-    Promise.all([api.get("/sections"), api.get("/documents", { params: { section_id: doc.section_id } })])
-      .then(([s, d]) => {
-        setSection(s.data.find((x) => x.id === doc.section_id) || null);
+    Promise.all([
+      api.get("/sections"),
+      api.get("/tabs"),
+      api.get("/documents", { params: { section_id: doc.section_id } }),
+    ])
+      .then(([s, t, d]) => {
+        const sec = s.data.find((x) => x.id === doc.section_id) || null;
+        setSection(sec);
+        const tb = sec ? t.data.find((x) => x.id === sec.tab_id) : null;
+        setTab(tb);
         const ordered = [...d.data].sort((a, b) => a.order - b.order);
         setSiblings(ordered);
       })
@@ -88,6 +98,8 @@ export default function DocPage() {
   const currentIdx = siblings.findIndex((d) => d.id === doc.id);
   const prev = currentIdx > 0 ? siblings[currentIdx - 1] : null;
   const next = currentIdx >= 0 && currentIdx < siblings.length - 1 ? siblings[currentIdx + 1] : null;
+  const tabSlug = tab?.slug || tabSlugParam || "guides";
+  const docLink = (s) => `/docs/${tabSlug}/${s}`;
 
   return (
     <div className="flex gap-10" data-testid={`doc-page-${doc.slug}`}>
@@ -98,6 +110,14 @@ export default function DocPage() {
           data-testid="doc-breadcrumb"
         >
           <Link to="/" className="hover:text-foreground">Dokümantasyon</Link>
+          {tab && (
+            <>
+              <ChevronRight className="w-3.5 h-3.5" />
+              <Link to={`/docs/${tab.slug}`} className="hover:text-foreground">
+                {tab.title}
+              </Link>
+            </>
+          )}
           {section && (
             <>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -147,7 +167,7 @@ export default function DocPage() {
           <div>
             {prev && (
               <Link
-                to={`/docs/${prev.slug}`}
+                to={docLink(prev.slug)}
                 className="block p-4 rounded-lg border border-border hover:border-primary/50 transition-colors group"
                 data-testid="prev-doc-link"
               >
@@ -161,7 +181,7 @@ export default function DocPage() {
           <div>
             {next && (
               <Link
-                to={`/docs/${next.slug}`}
+                to={docLink(next.slug)}
                 className="block p-4 rounded-lg border border-border hover:border-primary/50 transition-colors group text-right"
                 data-testid="next-doc-link"
               >

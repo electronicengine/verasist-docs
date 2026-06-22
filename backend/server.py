@@ -72,11 +72,18 @@ class SectionIn(BaseModel):
     title: str
     slug: Optional[str] = None
     order: int = 0
+    tab_id: Optional[str] = None
+
+class TabIn(BaseModel):
+    title: str
+    slug: Optional[str] = None
+    order: int = 0
 
 class DocumentIn(BaseModel):
     title: str
     slug: Optional[str] = None
     section_id: str
+    parent_id: Optional[str] = None
     content: str = ""
     excerpt: str = ""
     order: int = 0
@@ -118,6 +125,48 @@ async def me(user: dict = Depends(get_current_user)):
 async def logout(user: dict = Depends(get_current_user)):
     return {"ok": True}
 
+# ----- Tabs -----
+@api.get("/tabs")
+async def list_tabs():
+    tabs = await db.tabs.find({}, {"_id": 0}).sort("order", 1).to_list(100)
+    return tabs
+
+@api.post("/tabs")
+async def create_tab(body: TabIn, user: dict = Depends(get_current_user)):
+    slug = body.slug or slugify(body.title)
+    if await db.tabs.find_one({"slug": slug}):
+        slug = f"{slug}-{str(uuid.uuid4())[:6]}"
+    doc = {
+        "id": str(uuid.uuid4()),
+        "title": body.title,
+        "slug": slug,
+        "order": body.order,
+        "created_at": now_iso(),
+    }
+    await db.tabs.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+@api.put("/tabs/{tid}")
+async def update_tab(tid: str, body: TabIn, user: dict = Depends(get_current_user)):
+    upd = {"title": body.title, "order": body.order}
+    if body.slug:
+        upd["slug"] = body.slug
+    res = await db.tabs.update_one({"id": tid}, {"$set": upd})
+    if res.matched_count == 0:
+        raise HTTPException(404, "Tab bulunamadı")
+    return {"ok": True}
+
+@api.delete("/tabs/{tid}")
+async def delete_tab(tid: str, user: dict = Depends(get_current_user)):
+    # Cascade: delete sections and their docs
+    sections = await db.sections.find({"tab_id": tid}).to_list(500)
+    for s in sections:
+        await db.documents.delete_many({"section_id": s["id"]})
+    await db.sections.delete_many({"tab_id": tid})
+    await db.tabs.delete_one({"id": tid})
+    return {"ok": True}
+
 # ----- Sections -----
 @api.get("/sections")
 async def list_sections():
@@ -129,11 +178,16 @@ async def create_section(body: SectionIn, user: dict = Depends(get_current_user)
     slug = body.slug or slugify(body.title)
     if await db.sections.find_one({"slug": slug}):
         slug = f"{slug}-{str(uuid.uuid4())[:6]}"
+    tab_id = body.tab_id
+    if not tab_id:
+        first_tab = await db.tabs.find_one({}, sort=[("order", 1)])
+        tab_id = first_tab["id"] if first_tab else None
     doc = {
         "id": str(uuid.uuid4()),
         "title": body.title,
         "slug": slug,
         "order": body.order,
+        "tab_id": tab_id,
         "created_at": now_iso(),
         "updated_at": now_iso(),
     }
@@ -146,6 +200,8 @@ async def update_section(sid: str, body: SectionIn, user: dict = Depends(get_cur
     upd = {"title": body.title, "order": body.order, "updated_at": now_iso()}
     if body.slug:
         upd["slug"] = body.slug
+    if body.tab_id:
+        upd["tab_id"] = body.tab_id
     res = await db.sections.update_one({"id": sid}, {"$set": upd})
     if res.matched_count == 0:
         raise HTTPException(404, "Bölüm bulunamadı")
@@ -183,6 +239,7 @@ async def create_document(body: DocumentIn, user: dict = Depends(get_current_use
         "title": body.title,
         "slug": slug,
         "section_id": body.section_id,
+        "parent_id": body.parent_id,
         "content": body.content,
         "excerpt": body.excerpt,
         "order": body.order,
@@ -199,6 +256,7 @@ async def update_document(did: str, body: DocumentIn, user: dict = Depends(get_c
     upd = {
         "title": body.title,
         "section_id": body.section_id,
+        "parent_id": body.parent_id,
         "content": body.content,
         "excerpt": body.excerpt,
         "order": body.order,
@@ -467,11 +525,50 @@ async def on_startup():
     # Indexes
     await db.users.create_index("email", unique=True)
     await db.users.create_index("id", unique=True)
+    await db.tabs.create_index("slug", unique=True)
+    await db.tabs.create_index("id", unique=True)
     await db.sections.create_index("slug", unique=True)
     await db.sections.create_index("id", unique=True)
     await db.documents.create_index("slug", unique=True)
     await db.documents.create_index("id", unique=True)
     await db.documents.create_index("section_id")
+    await db.documents.create_index("parent_id")
+
+    # Seed tabs (idempotent)
+    seed_tabs = [
+        {"slug": "guides", "title": "Rehberler", "order": 1, "section_slugs": ["baslangic", "yapilandirma", "dagitim"]},
+        {"slug": "developer", "title": "Geliştirici", "order": 2, "section_slugs": []},
+        {"slug": "api", "title": "API Referansı", "order": 3, "section_slugs": ["api-referansi"]},
+    ]
+    tab_slug_to_id = {}
+    for t in seed_tabs:
+        existing = await db.tabs.find_one({"slug": t["slug"]})
+        if existing:
+            tab_slug_to_id[t["slug"]] = existing["id"]
+        else:
+            tid = str(uuid.uuid4())
+            tab_slug_to_id[t["slug"]] = tid
+            await db.tabs.insert_one({
+                "id": tid,
+                "slug": t["slug"],
+                "title": t["title"],
+                "order": t["order"],
+                "created_at": now_iso(),
+            })
+
+    # Migrate existing sections to tabs
+    for t in seed_tabs:
+        for sec_slug in t["section_slugs"]:
+            await db.sections.update_one(
+                {"slug": sec_slug, "$or": [{"tab_id": None}, {"tab_id": {"$exists": False}}]},
+                {"$set": {"tab_id": tab_slug_to_id[t["slug"]]}},
+            )
+    # Default any remaining sections without tab to first tab
+    default_tab_id = tab_slug_to_id["guides"]
+    await db.sections.update_many(
+        {"$or": [{"tab_id": None}, {"tab_id": {"$exists": False}}]},
+        {"$set": {"tab_id": default_tab_id}},
+    )
 
     # Seed admin
     admin_email = os.environ["ADMIN_EMAIL"].lower()
@@ -496,11 +593,18 @@ async def on_startup():
         for s in SEED_SECTIONS:
             sid = str(uuid.uuid4())
             slug_to_id[s["slug"]] = sid
+            # find tab for this section
+            tab_for_section = default_tab_id
+            for t in seed_tabs:
+                if s["slug"] in t["section_slugs"]:
+                    tab_for_section = tab_slug_to_id[t["slug"]]
+                    break
             await db.sections.insert_one({
                 "id": sid,
                 "slug": s["slug"],
                 "title": s["title"],
                 "order": s["order"],
+                "tab_id": tab_for_section,
                 "created_at": now_iso(),
                 "updated_at": now_iso(),
             })
@@ -510,6 +614,7 @@ async def on_startup():
                 "slug": d["slug"],
                 "title": d["title"],
                 "section_id": slug_to_id[d["section_slug"]],
+                "parent_id": None,
                 "content": d["content"],
                 "excerpt": d["excerpt"],
                 "order": d["order"],

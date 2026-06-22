@@ -20,6 +20,8 @@ function App() {
             <Route element={<DocsLayout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/docs" element={<DocsIndexPage />} />
+              <Route path="/docs/:tabSlug" element={<DocsIndexPage />} />
+              <Route path="/docs/:tabSlug/:docSlug" element={<DocPage />} />
               <Route path="/docs/:slug" element={<DocPage />} />
             </Route>
             <Route path="/admin/login" element={<AdminLogin />} />

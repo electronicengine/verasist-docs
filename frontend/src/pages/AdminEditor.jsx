@@ -25,12 +25,14 @@ export default function AdminEditor() {
   const { theme } = useTheme();
 
   const [sections, setSections] = useState([]);
+  const [allDocs, setAllDocs] = useState([]);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [sectionId, setSectionId] = useState("");
+  const [parentId, setParentId] = useState("none");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
   const [order, setOrder] = useState(0);
@@ -38,25 +40,24 @@ export default function AdminEditor() {
   const [savedSlug, setSavedSlug] = useState(null);
 
   useEffect(() => {
-    api.get("/sections").then(({ data }) => {
-      setSections(data);
-      if (isNew && data.length > 0) setSectionId((s) => s || data[0].id);
+    Promise.all([api.get("/sections"), api.get("/documents")]).then(([s, d]) => {
+      setSections(s.data);
+      setAllDocs(d.data);
+      if (isNew && s.data.length > 0) setSectionId((curr) => curr || s.data[0].id);
     });
     if (!isNew) {
       api
         .get("/documents")
         .then(({ data }) => {
           const found = data.find((d) => d.id === id);
-          if (found) {
-            // fetch full doc with content
-            return api.get(`/documents/${found.slug}`);
-          }
+          if (found) return api.get(`/documents/${found.slug}`);
           throw new Error("Doküman bulunamadı");
         })
         .then(({ data: doc }) => {
           setTitle(doc.title);
           setSlug(doc.slug);
           setSectionId(doc.section_id);
+          setParentId(doc.parent_id || "none");
           setExcerpt(doc.excerpt || "");
           setContent(doc.content || "");
           setOrder(doc.order || 0);
@@ -82,6 +83,7 @@ export default function AdminEditor() {
       title,
       slug: slug || undefined,
       section_id: sectionId,
+      parent_id: parentId && parentId !== "none" ? parentId : null,
       content,
       excerpt,
       order: Number(order),
@@ -197,6 +199,27 @@ export default function AdminEditor() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label htmlFor="parent">Üst doküman</Label>
+                <Select value={parentId} onValueChange={setParentId}>
+                  <SelectTrigger id="parent" className="mt-1.5" data-testid="editor-parent-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— Üst seviye —</SelectItem>
+                    {allDocs
+                      .filter((d) => d.section_id === sectionId && d.id !== id)
+                      .map((d) => (
+                        <SelectItem key={d.id} value={d.id}>
+                          {d.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <div className="text-[11px] text-muted-foreground mt-1">
+                  İç içe alt başlık için bir üst doküman seçin.
+                </div>
               </div>
               <div>
                 <Label htmlFor="slug">URL kısayolu (slug)</Label>

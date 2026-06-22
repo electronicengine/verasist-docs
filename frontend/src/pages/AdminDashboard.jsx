@@ -49,17 +49,24 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [sections, setSections] = useState([]);
   const [docs, setDocs] = useState([]);
+  const [tabs, setTabs] = useState([]);
   const [filterSection, setFilterSection] = useState("all");
   const [sectionDialog, setSectionDialog] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
   const [sectionTitle, setSectionTitle] = useState("");
   const [sectionOrder, setSectionOrder] = useState(0);
+  const [sectionTabId, setSectionTabId] = useState("");
 
   const load = async () => {
     try {
-      const [s, d] = await Promise.all([api.get("/sections"), api.get("/documents")]);
+      const [s, d, t] = await Promise.all([
+        api.get("/sections"),
+        api.get("/documents"),
+        api.get("/tabs"),
+      ]);
       setSections(s.data);
       setDocs(d.data);
+      setTabs(t.data);
     } catch (e) {
       toast.error(formatApiError(e));
     }
@@ -74,10 +81,12 @@ export default function AdminDashboard() {
       setEditingSection(s);
       setSectionTitle(s.title);
       setSectionOrder(s.order);
+      setSectionTabId(s.tab_id || (tabs[0]?.id ?? ""));
     } else {
       setEditingSection(null);
       setSectionTitle("");
       setSectionOrder(sections.length + 1);
+      setSectionTabId(tabs[0]?.id ?? "");
     }
     setSectionDialog(true);
   };
@@ -88,12 +97,14 @@ export default function AdminDashboard() {
         await api.put(`/sections/${editingSection.id}`, {
           title: sectionTitle,
           order: Number(sectionOrder),
+          tab_id: sectionTabId || undefined,
         });
         toast.success("Bölüm güncellendi");
       } else {
         await api.post("/sections", {
           title: sectionTitle,
           order: Number(sectionOrder),
+          tab_id: sectionTabId || undefined,
         });
         toast.success("Bölüm oluşturuldu");
       }
@@ -198,13 +209,20 @@ export default function AdminDashboard() {
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {sections.map((s) => (
+            {sections.map((s) => {
+              const tab = tabs.find((t) => t.id === s.tab_id);
+              return (
               <div
                 key={s.id}
                 className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card text-sm"
                 data-testid={`section-chip-${s.slug}`}
               >
                 <span>{s.title}</span>
+                {tab && (
+                  <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                    {tab.title}
+                  </span>
+                )}
                 <span className="text-xs text-muted-foreground">
                   ({docs.filter((d) => d.section_id === s.id).length})
                 </span>
@@ -225,7 +243,8 @@ export default function AdminDashboard() {
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
-            ))}
+              );
+            })}
             {sections.length === 0 && (
               <div className="text-sm text-muted-foreground">Henüz bölüm yok</div>
             )}
@@ -362,6 +381,21 @@ export default function AdminDashboard() {
                 className="mt-1.5"
                 data-testid="section-title-input"
               />
+            </div>
+            <div>
+              <Label htmlFor="section-tab">Sekme</Label>
+              <Select value={sectionTabId} onValueChange={setSectionTabId}>
+                <SelectTrigger id="section-tab" className="mt-1.5" data-testid="section-tab-select">
+                  <SelectValue placeholder="Sekme seç" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tabs.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="section-order">Sıra</Label>

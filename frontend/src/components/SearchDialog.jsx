@@ -82,7 +82,7 @@ export default function SearchDialog({ open, onOpenChange }) {
               key={r.id}
               onClick={() => {
                 onOpenChange(false);
-                navigate(`/docs/${r.slug}`);
+                navigate(linkFor(r));
               }}
               className="w-full text-left px-4 py-3 hover:bg-secondary/60 transition-colors flex items-start gap-3 border-b border-border/50"
               data-testid={`search-result-${r.slug}`}
