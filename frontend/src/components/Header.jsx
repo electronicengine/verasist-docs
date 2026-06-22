@@ -12,6 +12,7 @@ export default function Header({ onSearchClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [tabs, setTabs] = useState([]);
+  const [showLogoFallback, setShowLogoFallback] = useState(false);
 
   useEffect(() => {
     api.get("/tabs").then(({ data }) => setTabs(data)).catch(() => {});
@@ -27,21 +28,24 @@ export default function Header({ onSearchClick }) {
     >
       <div className="max-w-[1400px] mx-auto flex items-center gap-3 h-16 px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2.5 group shrink-0" data-testid="logo-link">
-          <span
-            className="relative flex items-center justify-center w-9 h-9 rounded-lg"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--brand-mid)))",
-              boxShadow: "0 0 24px -4px hsl(var(--primary) / 0.55)",
-            }}
-          >
-            <span className="text-white font-bold text-lg" style={{ fontFamily: "Outfit" }}>S</span>
-          </span>
+          <div className="relative flex items-center justify-center w-11 h-11 rounded-xl overflow-hidden border border-border/70 bg-background shadow-sm">
+            <img
+              src="/logo.png"
+              alt="Verasist logo"
+              className={`h-8 w-8 object-contain ${showLogoFallback ? "hidden" : "block"}`}
+              onError={() => setShowLogoFallback(true)}
+            />
+            {!showLogoFallback && <span className="sr-only">Verasist</span>}
+            {showLogoFallback && (
+              <span className="text-sm font-semibold tracking-wide text-foreground">V</span>
+            )}
+          </div>
           <div className="hidden sm:flex flex-col leading-tight">
             <span className="font-semibold text-[15px]" style={{ fontFamily: "Outfit" }}>
-              Dokümantasyon
+              Verasist Dökümantasyon
             </span>
             <span className="text-[11px] text-muted-foreground tracking-wide uppercase">
-              Türkçe rehber
+              Yazılım Rehberi
             </span>
           </div>
         </Link>
@@ -126,16 +130,7 @@ export default function Header({ onSearchClick }) {
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
-        ) : (
-          <Button
-            size="sm"
-            onClick={() => navigate("/admin/login")}
-            data-testid="login-btn"
-            className="hidden sm:inline-flex"
-          >
-            Giriş
-          </Button>
-        )}
+        ) : null}
       </div>
     </header>
   );

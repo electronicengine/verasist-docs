@@ -40,7 +40,6 @@ import {
   ExternalLink,
   Moon,
   Sun,
-  ShieldCheck,
 } from "lucide-react";
 
 export default function AdminDashboard() {
@@ -53,6 +52,7 @@ export default function AdminDashboard() {
   const [filterSection, setFilterSection] = useState("all");
   const [sectionDialog, setSectionDialog] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
+  const [showLogoFallback, setShowLogoFallback] = useState(false);
   const [sectionTitle, setSectionTitle] = useState("");
   const [sectionOrder, setSectionOrder] = useState(0);
   const [sectionTabId, setSectionTabId] = useState("");
@@ -148,14 +148,15 @@ export default function AdminDashboard() {
       <header className="border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-30">
         <div className="max-w-[1400px] mx-auto h-16 px-4 sm:px-6 flex items-center gap-4">
           <Link to="/" className="flex items-center gap-2.5">
-            <span
-              className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--brand-mid)))",
-              }}
-            >
-              <ShieldCheck className="w-5 h-5 text-white" />
-            </span>
+            <div className="w-11 h-11 rounded-xl border border-border/70 bg-background shadow-sm overflow-hidden flex items-center justify-center">
+              <img
+                src="/logo.png"
+                alt="Verasist logo"
+                className={`h-8 w-8 object-contain ${showLogoFallback ? "hidden" : "block"}`}
+                onError={() => setShowLogoFallback(true)}
+              />
+              {showLogoFallback && <span className="text-sm font-semibold tracking-wide text-foreground">V</span>}
+            </div>
             <div>
               <div className="text-xs uppercase tracking-[0.12em] text-muted-foreground">Panel</div>
               <div className="font-semibold leading-tight" style={{ fontFamily: "Outfit" }}>

@@ -4,16 +4,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-const BG_URL =
-  "https://images.pexels.com/photos/10653941/pexels-photo-10653941.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showLogoFallback, setShowLogoFallback] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -47,13 +46,14 @@ export default function AdminLogin() {
           data-testid="login-card"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center"
-              style={{
-                background: "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--brand-mid)))",
-              }}
-            >
-              <ShieldCheck className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 rounded-xl border border-border/70 bg-background shadow-sm overflow-hidden flex items-center justify-center">
+              <img
+                src="/logo.png"
+                alt="Verasist logo"
+                className={`h-8 w-8 object-contain ${showLogoFallback ? "hidden" : "block"}`}
+                onError={() => setShowLogoFallback(true)}
+              />
+              {showLogoFallback && <span className="text-sm font-semibold tracking-wide text-foreground">V</span>}
             </div>
             <div>
               <div className="text-xs uppercase tracking-[0.15em] text-muted-foreground">
