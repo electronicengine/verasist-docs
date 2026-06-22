@@ -1,0 +1,94 @@
+{
+  "theme_and_archetype": {
+    "theme": "Dark and Light Toggle",
+    "archetype": "Swiss & High-Contrast (Authority, Clarity, Truth)"
+  },
+  "color_palette": {
+    "dark": {
+      "background": "#111318",
+      "surface": "#1C1F28",
+      "deep_black": "#0A0B0F",
+      "text_primary": "#FFFFFF",
+      "primary": "#4B6FD4",
+      "primary_hover": "#6B8EE8",
+      "primary_light": "#8BA8F0",
+      "primary_fade": "#C4D4F8",
+      "border": "#2B303B"
+    },
+    "light": {
+      "background": "#F7F9FF",
+      "surface": "#FFFFFF",
+      "tint_bg": "#E8EFFE",
+      "text_primary": "#111318",
+      "primary": "#2B50B8",
+      "primary_hover": "#4B6FD4",
+      "primary_light": "#7D9EF0",
+      "border": "#BDD0FA"
+    }
+  },
+  "typography": {
+    "headings": "Outfit, sans-serif",
+    "body": "Work Sans, sans-serif",
+    "code": "JetBrains Mono, monospace"
+  },
+  "layout_strategy": {
+    "description": "Three-column documentation layout: Left sidebar (navigation), Center (content max 800px), Right sidebar (on-page TOC). High emphasis on whitespace, typography, and readability.",
+    "sidebar": "Fixed 280px width, sticky, hidden on mobile (replaced by hamburger menu/Sheet).",
+    "header": "Sticky glassmorphism header (backdrop-blur-md) with logo, search trigger, theme toggle, and Admin link.",
+    "spacing": "Generous spacing: p-8 or p-12 for content areas. Content sections separated by generous margins (e.g., mt-12, mb-8)."
+  },
+  "components": {
+    "icons": "lucide-react",
+    "sidebar_mobile": "Shadcn Sheet",
+    "search": "Shadcn Dialog + Command for global document search",
+    "tables_and_lists": "Shadcn Table, bordered style",
+    "editor": "react-quill or tiptap for Admin Rich Text Editing",
+    "markdown": "react-markdown with remark-gfm for rendering docs, react-syntax-highlighter for code blocks"
+  },
+  "pages": {
+    "documentation_reader": {
+      "layout": "Left Sidebar + Main Content + Right TOC",
+      "features": [
+        "Navigation tree with categories and active states",
+        "Breadcrumbs",
+        "Markdown rendering (H1-H4, blockquotes, lists, code blocks)",
+        "On-page Table of Contents that highlights current section on scroll",
+        "Global search via Cmd+K"
+      ]
+    },
+    "admin_login": {
+      "layout": "Centered Card overlay on abstract background",
+      "features": [
+        "JWT Login form",
+        "Uses image_urls.admin_login_background as the full-screen background with an overlay"
+      ]
+    },
+    "admin_dashboard": {
+      "layout": "Sidebar (Admin Nav) + Main Content Area",
+      "features": [
+        "Data table of existing documents",
+        "Create/Edit document view with Title input, Category select, and Rich Text/Markdown Editor",
+        "Publish/Draft toggle"
+      ]
+    }
+  },
+  "image_urls": {
+    "admin_login_background": {
+      "url": "https://images.pexels.com/photos/10653941/pexels-photo-10653941.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Dynamic abstract photograph of blue light patterns with a dark backdrop, creating a sense of motion and mystery."
+    }
+  },
+  "design_system_rules": {
+    "buttons": "Flat design, rounded-md. Primary buttons use the exact primary color for the active theme, with hover states mapped to the corresponding lighter/darker shade.",
+    "cards": "Subtle borders (1px solid border color) and very soft shadows in light mode, no shadows and slightly lighter surface color in dark mode.",
+    "code_blocks": "Dark background (#0A0B0F) for code blocks in both themes to maintain developer aesthetic, with syntax highlighting.",
+    "testing": "All interactive elements must include a data-testid attribute in kebab-case."
+  },
+  "instructions_to_main_agent": [
+    "Configure tailwind.config.js to use the exact colors defined in this JSON for light and dark themes using CSS variables.",
+    "Implement next-themes or similar for dark/light mode toggling.",
+    "Translate the reference content from docs.dograh.com into Turkish as requested.",
+    "Ensure the admin dashboard has a functional (mock or real) JWT login and document management system.",
+    "Follow the specific typography choices by importing Outfit, Work Sans, and JetBrains Mono from Google Fonts."
+  ]
+}
