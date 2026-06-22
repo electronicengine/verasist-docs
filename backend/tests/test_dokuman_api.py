@@ -3,7 +3,7 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://dokuman-hub.preview.emergentagent.com").rstrip("/")
+BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "http://localhost:7010").rstrip("/")
 API = f"{BASE_URL}/api"
 ADMIN_EMAIL = "admin@dokuman.com"
 ADMIN_PASSWORD = "admin123"
