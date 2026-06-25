@@ -1,7 +1,7 @@
 # Dokümantasyon Platformu — PRD
 
 ## Original Problem
-Build a Turkish documentation site modeled after docs.dograh.com with: JWT email/password login for admins to edit & add docs; full theme palette provided (dark + light with brand blues); WYSIWYG editor; in-doc search; both light & dark themes with toggle.
+Build a Turkish documentation site modeled after docs.verasist.online with: JWT email/password login for admins to edit & add docs; full theme palette provided (dark + light with brand blues); WYSIWYG editor; in-doc search; both light & dark themes with toggle.
 
 ## Architecture
 - **Backend**: FastAPI + Motor (MongoDB). JWT (Bearer in localStorage). bcrypt password hashing. Auto-seeded admin + Turkish content on startup.

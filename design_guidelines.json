@@ -87,7 +87,7 @@
   "instructions_to_main_agent": [
     "Configure tailwind.config.js to use the exact colors defined in this JSON for light and dark themes using CSS variables.",
     "Implement next-themes or similar for dark/light mode toggling.",
-    "Translate the reference content from docs.dograh.com into Turkish as requested.",
+    "Translate the reference content from docs.verasist.online into Turkish as requested.",
     "Ensure the admin dashboard has a functional (mock or real) JWT login and document management system.",
     "Follow the specific typography choices by importing Outfit, Work Sans, and JetBrains Mono from Google Fonts."
   ]
