@@ -28,11 +28,7 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-6 bg-background">
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${BG_URL})` }}
-      />
-      <div className="absolute inset-0 bg-background/75 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-tint/20 to-primary/10" />
       <div className="relative w-full max-w-md">
         <Link
           to="/"
