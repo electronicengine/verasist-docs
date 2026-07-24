@@ -16,6 +16,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Language interceptor: adds ?lang= to every request
+api.interceptors.request.use((config) => {
+  try {
+    const lang = localStorage.getItem("dokuman_lang") || "tr";
+    if (!config.params) config.params = {};
+    if (!config.params.lang) config.params.lang = lang;
+  } catch {}
+  return config;
+});
+
 export function formatApiError(err) {
   const detail = err?.response?.data?.detail;
   if (detail == null) return err?.message || "Bir hata oluştu";

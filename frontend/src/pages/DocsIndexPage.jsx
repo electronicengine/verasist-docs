@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translateSection, t } from "@/lib/translations";
 import { BookOpen, ArrowRight } from "lucide-react";
 
 export default function DocsIndexPage() {
   const [sections, setSections] = useState([]);
   const [docs, setDocs] = useState([]);
+  const { lang } = useLanguage();
 
   useEffect(() => {
     Promise.all([api.get("/sections"), api.get("/documents")])
@@ -21,12 +24,12 @@ export default function DocsIndexPage() {
       <div className="flex items-center gap-3 mb-2">
         <BookOpen className="w-5 h-5 text-primary" />
         <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-semibold">
-          Dokümantasyon
+          {t("docsIndex.breadcrumb", lang)}
         </span>
       </div>
-      <h1 className="text-4xl font-bold mb-3">Tüm dokümanlar</h1>
+      <h1 className="text-4xl font-bold mb-3">{t("docsIndex.heading", lang)}</h1>
       <p className="text-muted-foreground mb-12 max-w-2xl">
-        Konularına göre düzenlenmiş, sürekli güncellenen Türkçe rehberler.
+        {t("docsIndex.description", lang)}
       </p>
 
       <div className="space-y-10">
@@ -35,14 +38,14 @@ export default function DocsIndexPage() {
           if (items.length === 0) return null;
           return (
             <section key={s.id} data-testid={`docs-section-${s.slug}`}>
-              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-border">{s.title}</h2>
+              <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-border">{translateSection(s, lang).title}</h2>
               <div className="grid md:grid-cols-2 gap-3">
                 {items
                   .sort((a, b) => a.order - b.order)
                   .map((d) => (
                     <Link
                       key={d.id}
-                      to={`/docs/${d.slug}`}
+                      to={d.path ? `/${d.path}` : `/docs/${d.slug}`}
                       className="group p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-secondary/40 transition-all"
                       data-testid={`docs-index-link-${d.slug}`}
                     >

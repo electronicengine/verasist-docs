@@ -3,11 +3,14 @@ import { useEffect, useState } from "react";
 import { Moon, Sun, Search, ShieldCheck, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
+import { translateTab, t } from "@/lib/translations";
 
 export default function Header({ onSearchClick }) {
   const { theme, toggle } = useTheme();
+  const { lang, toggleLang } = useLanguage();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,10 +45,10 @@ export default function Header({ onSearchClick }) {
           </div>
           <div className="hidden sm:flex flex-col leading-tight">
             <span className="font-semibold text-[15px]" style={{ fontFamily: "Outfit" }}>
-              Verasist Dökümantasyon
+              {t("header.brand", lang)}
             </span>
             <span className="text-[11px] text-muted-foreground tracking-wide uppercase">
-              Yazılım Rehberi
+              {t("header.tagline", lang)}
             </span>
           </div>
         </Link>
@@ -64,7 +67,7 @@ export default function Header({ onSearchClick }) {
                 }`}
                 data-testid={`tab-${t.slug}`}
               >
-                {t.title}
+                {translateTab(t, lang).title}
               </NavLink>
             );
           })}
@@ -93,6 +96,17 @@ export default function Header({ onSearchClick }) {
           aria-label="Ara"
         >
           <Search className="w-4 h-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleLang}
+          className="text-xs font-semibold px-2 min-w-[36px]"
+          aria-label={lang === "tr" ? "Switch to English" : "Türkçe'ye geç"}
+          data-testid="lang-toggle-btn"
+        >
+          {lang === "tr" ? "EN" : "TR"}
         </Button>
 
         <Button

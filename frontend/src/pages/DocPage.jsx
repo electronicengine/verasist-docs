@@ -1,14 +1,24 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import mermaid from "mermaid";
 import { api } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { ChevronRight, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
 
 export default function DocPage() {
   const params = useParams();
+  const splat = params["*"];
   const slug = params.docSlug || params.slug;
   const tabSlugParam = params.tabSlug;
+  const { lang } = useLanguage();
   const navigate = useNavigate();
+
+  // Determine lookup mode: path-based (Mintlify) or slug-based (legacy /docs/...)
+  const lookupPath =
+    splat && splat !== "" && !splat.startsWith("docs/") ? splat : null;
+
   const [doc, setDoc] = useState(null);
+  const [navData, setNavData] = useState(null);
   const [section, setSection] = useState(null);
   const [tab, setTab] = useState(null);
   const [siblings, setSiblings] = useState([]);
@@ -17,32 +27,92 @@ export default function DocPage() {
   const [notFound, setNotFound] = useState(false);
   const contentRef = useRef(null);
 
+  // Fetch document by path (Mintlify-style) or slug (legacy)
   useEffect(() => {
     setNotFound(false);
     setDoc(null);
-    api
-      .get(`/documents/${slug}`)
-      .then(({ data }) => setDoc(data))
-      .catch(() => setNotFound(true));
-  }, [slug]);
+    setNavData(null);
+    setSection(null);
+    setTab(null);
+    setSiblings([]);
 
+    if (lookupPath) {
+      // Path-based lookup: GET /api/documents/by-path/{path}
+      api
+        .get(`/documents/by-path/${lookupPath}`)
+        .then(({ data }) => {
+          setDoc(data);
+          // Also fetch navigation context
+          return api.get("/navigation");
+        })
+        .then((navRes) => {
+          if (navRes) setNavData(navRes.data);
+        })
+        .catch(() => setNotFound(true));
+    } else if (slug) {
+      // Legacy slug-based lookup
+      api
+        .get(`/documents/${slug}`)
+        .then(({ data }) => setDoc(data))
+        .catch(() => setNotFound(true));
+    }
+  }, [lookupPath, slug]);
+
+  // Build navigation context from navData (path-based) or fetch directly (legacy slug-based)
   useEffect(() => {
     if (!doc) return;
-    Promise.all([
-      api.get("/sections"),
-      api.get("/tabs"),
-      api.get("/documents", { params: { section_id: doc.section_id } }),
-    ])
-      .then(([s, t, d]) => {
-        const sec = s.data.find((x) => x.id === doc.section_id) || null;
-        setSection(sec);
-        const tb = sec ? t.data.find((x) => x.id === sec.tab_id) : null;
-        setTab(tb);
-        const ordered = [...d.data].sort((a, b) => a.order - b.order);
-        setSiblings(ordered);
-      })
-      .catch(() => {});
-  }, [doc]);
+
+    if (navData) {
+      // Path-based: extract section, tab, and siblings from navigation tree
+      for (const t of navData) {
+        for (const s of t.sections || []) {
+          const found = (s.documents || []).find(
+            (d) =>
+              d.id === doc.id || d.slug === doc.slug || d.path === doc.path,
+          );
+          if (found) {
+            setTab(t);
+            setSection({
+              id: s.id,
+              slug: s.slug,
+              title: s.title,
+              tab_id: t.id,
+            });
+            // Build siblings list from section docs
+            const allDocs = [...(s.documents || [])];
+            s.documents.forEach((d) => {
+              if (d.children) allDocs.push(...d.children);
+            });
+            setSiblings(
+              allDocs.sort((a, b) => (a.order || 0) - (b.order || 0)),
+            );
+            return;
+          }
+        }
+      }
+      // Fallback: try legacy API
+      fetchLegacyContext();
+    } else if (slug) {
+      fetchLegacyContext();
+    }
+
+    function fetchLegacyContext() {
+      Promise.all([
+        api.get("/sections"),
+        api.get("/tabs"),
+        api.get("/documents", { params: { section_id: doc.section_id } }),
+      ])
+        .then(([s, t, d]) => {
+          const sec = s.data.find((x) => x.id === doc.section_id) || null;
+          setSection(sec);
+          const tb = sec ? t.data.find((x) => x.id === sec.tab_id) : null;
+          setTab(tb);
+          const ordered = [...d.data].sort((a, b) => a.order - b.order);
+          setSiblings(ordered);
+        })
+        .catch(() => {});
+    }
+  }, [doc, navData, slug]);
 
   // Build TOC from rendered content
   useEffect(() => {
@@ -55,9 +125,30 @@ export default function DocPage() {
       headings.forEach((h, i) => {
         const id = `heading-${i}`;
         h.id = id;
-        items.push({ id, text: h.textContent, level: h.tagName === "H2" ? 2 : 3 });
+        items.push({
+          id,
+          text: h.textContent,
+          level: h.tagName === "H2" ? 2 : 3,
+        });
       });
       setToc(items);
+
+      // Render Mermaid diagrams
+      const mermaidEls = el.querySelectorAll(".mermaid");
+      if (mermaidEls.length > 0) {
+        mermaid.initialize({ startOnLoad: false, theme: "default" });
+        mermaidEls.forEach(async (mel, idx) => {
+          const code = mel.textContent || "";
+          const id = `mermaid-${Date.now()}-${idx}`;
+          try {
+            const { svg } = await mermaid.render(id, code);
+            mel.innerHTML = svg;
+          } catch (err) {
+            console.warn("Mermaid render failed:", err);
+            mel.innerHTML = `<pre class="mermaid-error">${code}</pre>`;
+          }
+        });
+      }
     }, 50);
   }, [doc]);
 
@@ -70,7 +161,7 @@ export default function DocPage() {
           if (e.isIntersecting) setActiveId(e.target.id);
         });
       },
-      { rootMargin: "-80px 0px -70% 0px", threshold: 0 }
+      { rootMargin: "-80px 0px -70% 0px", threshold: 0 },
     );
     toc.forEach((t) => {
       const el = document.getElementById(t.id);
@@ -83,8 +174,14 @@ export default function DocPage() {
     return (
       <div className="py-16 text-center">
         <h1 className="text-3xl font-bold mb-3">Doküman bulunamadı</h1>
-        <p className="text-muted-foreground mb-6">Aradığınız doküman silinmiş veya taşınmış olabilir.</p>
-        <Link to="/" className="text-primary hover:underline" data-testid="not-found-home-link">
+        <p className="text-muted-foreground mb-6">
+          Aradığınız doküman silinmiş veya taşınmış olabilir.
+        </p>
+        <Link
+          to="/"
+          className="text-primary hover:underline"
+          data-testid="not-found-home-link"
+        >
           Ana sayfaya dön
         </Link>
       </div>
@@ -97,9 +194,18 @@ export default function DocPage() {
 
   const currentIdx = siblings.findIndex((d) => d.id === doc.id);
   const prev = currentIdx > 0 ? siblings[currentIdx - 1] : null;
-  const next = currentIdx >= 0 && currentIdx < siblings.length - 1 ? siblings[currentIdx + 1] : null;
-  const tabSlug = tab?.slug || tabSlugParam || "guides";
-  const docLink = (s) => `/docs/${tabSlug}/${s}`;
+  const next =
+    currentIdx >= 0 && currentIdx < siblings.length - 1
+      ? siblings[currentIdx + 1]
+      : null;
+
+  // Use path-based URL if available (Mintlify-style), otherwise fall back to /docs/:tab/:slug
+  const docLink = (d) => {
+    const p = d.path || d.slug;
+    if (p && !p.startsWith("docs/")) return `/${p}`;
+    const ts = tab?.slug || tabSlugParam || "rehberler";
+    return `/docs/${ts}/${d.slug}`;
+  };
 
   return (
     <div className="flex gap-10" data-testid={`doc-page-${doc.slug}`}>
@@ -109,8 +215,10 @@ export default function DocPage() {
           className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6"
           data-testid="doc-breadcrumb"
         >
-          <Link to="/" className="hover:text-foreground">Dokümantasyon</Link>
-          {tab && (
+          <Link to="/" className="hover:text-foreground">
+            Dokümantasyon
+          </Link>
+          {tab && !lookupPath && (
             <>
               <ChevronRight className="w-3.5 h-3.5" />
               <Link to={`/docs/${tab.slug}`} className="hover:text-foreground">
@@ -128,17 +236,22 @@ export default function DocPage() {
           <span className="text-foreground">{doc.title}</span>
         </nav>
 
-        <h1 className="text-4xl font-bold tracking-tight mb-3" data-testid="doc-title">
+        <h1
+          className="text-4xl font-bold tracking-tight mb-3"
+          data-testid="doc-title"
+        >
           {doc.title}
         </h1>
         {doc.excerpt && (
-          <p className="text-lg text-muted-foreground mb-6 leading-relaxed">{doc.excerpt}</p>
+          <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
+            {doc.excerpt}
+          </p>
         )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground border-b border-border pb-6 mb-2">
           <Calendar className="w-3.5 h-3.5" />
           <span>
             Güncelleme:{" "}
-            {new Date(doc.updated_at).toLocaleDateString("tr-TR", {
+            {new Date(doc.updated_at).toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US", {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -167,28 +280,32 @@ export default function DocPage() {
           <div>
             {prev && (
               <Link
-                to={docLink(prev.slug)}
+                to={docLink(prev)}
                 className="block p-4 rounded-lg border border-border hover:border-primary/50 transition-colors group"
                 data-testid="prev-doc-link"
               >
                 <div className="text-xs text-muted-foreground flex items-center gap-1 mb-1">
                   <ArrowLeft className="w-3 h-3" /> Önceki
                 </div>
-                <div className="text-sm font-medium group-hover:text-primary">{prev.title}</div>
+                <div className="text-sm font-medium group-hover:text-primary">
+                  {prev.title}
+                </div>
               </Link>
             )}
           </div>
           <div>
             {next && (
               <Link
-                to={docLink(next.slug)}
+                to={docLink(next)}
                 className="block p-4 rounded-lg border border-border hover:border-primary/50 transition-colors group text-right"
                 data-testid="next-doc-link"
               >
                 <div className="text-xs text-muted-foreground flex items-center justify-end gap-1 mb-1">
                   Sonraki <ArrowRight className="w-3 h-3" />
                 </div>
-                <div className="text-sm font-medium group-hover:text-primary">{next.title}</div>
+                <div className="text-sm font-medium group-hover:text-primary">
+                  {next.title}
+                </div>
               </Link>
             )}
           </div>

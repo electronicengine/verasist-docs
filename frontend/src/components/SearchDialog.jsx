@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Search, FileText } from "lucide-react";
 import { api } from "@/lib/api";
+
+// Build link for a search result: prefer path-based, fall back to /docs/.../slug
+function linkFor(doc) {
+  if (doc.path) return `/${doc.path}`;
+  return `/docs/${doc.slug}`;
+}
 
 export default function SearchDialog({ open, onOpenChange }) {
   const [q, setQ] = useState("");
@@ -61,7 +63,10 @@ export default function SearchDialog({ open, onOpenChange }) {
             ESC
           </kbd>
         </div>
-        <div className="max-h-[420px] overflow-y-auto" data-testid="search-results">
+        <div
+          className="max-h-[420px] overflow-y-auto"
+          data-testid="search-results"
+        >
           {!q && (
             <div className="px-4 py-10 text-center text-sm text-muted-foreground">
               Aramaya başlamak için yazın

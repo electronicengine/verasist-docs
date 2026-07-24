@@ -1,6 +1,7 @@
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import DocsLayout from "@/components/DocsLayout";
 import HomePage from "@/pages/HomePage";
@@ -14,6 +15,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 function App() {
   return (
     <ThemeProvider>
+      <LanguageProvider>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
@@ -23,6 +25,8 @@ function App() {
               <Route path="/docs/:tabSlug" element={<DocsIndexPage />} />
               <Route path="/docs/:tabSlug/:docSlug" element={<DocPage />} />
               <Route path="/docs/:slug" element={<DocPage />} />
+              {/* Catch-all: Mintlify-style paths like /voice-agent/start-call */}
+              <Route path="*" element={<DocPage />} />
             </Route>
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route
@@ -44,6 +48,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

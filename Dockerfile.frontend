@@ -15,7 +15,7 @@ COPY submodules/verasist-docs/frontend/ ./
 # Build the application
 # We can pass REACT_APP_BACKEND_URL during build phase as CRA embeds environment variables at build-time.
 ARG REACT_APP_BACKEND_URL
-ENV REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL:-https://docs.verasist.online}
+ENV REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL:-https://docs.verasist.ai}
 RUN npm run build
 
 # Stage 2: Runner
@@ -27,6 +27,9 @@ RUN npm install -g serve
 
 # Copy build files from builder
 COPY --from=builder /app/build ./build
+
+# Copy docs images so they are served as /images/*
+COPY docs/images/ ./build/images/
 
 EXPOSE 3012
 

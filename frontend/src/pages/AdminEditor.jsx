@@ -37,6 +37,7 @@ export default function AdminEditor() {
   const [content, setContent] = useState("");
   const [order, setOrder] = useState(0);
   const [published, setPublished] = useState(true);
+  const [lang, setLang] = useState("tr");
   const [savedSlug, setSavedSlug] = useState(null);
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function AdminEditor() {
           setContent(doc.content || "");
           setOrder(doc.order || 0);
           setPublished(doc.published);
+          setLang(doc.lang || "tr");
           setSavedSlug(doc.slug);
         })
         .catch((e) => toast.error(formatApiError(e)))
@@ -88,6 +90,7 @@ export default function AdminEditor() {
       excerpt,
       order: Number(order),
       published,
+      lang,
     };
     try {
       if (isNew) {
@@ -184,6 +187,18 @@ export default function AdminEditor() {
                   onCheckedChange={setPublished}
                   data-testid="editor-published-switch"
                 />
+              </div>
+              <div>
+                <Label htmlFor="lang">Dil / Language</Label>
+                <Select value={lang} onValueChange={setLang}>
+                  <SelectTrigger id="lang" className="mt-1.5" data-testid="editor-lang-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tr">Türkçe</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="section">Bölüm</Label>

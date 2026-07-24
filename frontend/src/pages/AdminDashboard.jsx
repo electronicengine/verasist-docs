@@ -326,7 +326,7 @@ export default function AdminDashboard() {
                         aria-label="Görüntüle"
                         data-testid={`view-doc-${d.slug}`}
                       >
-                        <Link to={`/docs/${d.slug}`} target="_blank">
+                        <Link to={d.path ? `/${d.path}` : `/docs/${d.slug}`} target="_blank">
                           <ExternalLink className="w-4 h-4" />
                         </Link>
                       </Button>

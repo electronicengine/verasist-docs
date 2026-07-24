@@ -82,6 +82,33 @@
   ::selection {
     background: hsl(var(--primary) / 0.25);
   }
+
+  /* ── Thin, theme-aware scrollbars ── */
+
+  /* Firefox */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* Chrome / Safari / Edge */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.45);
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 /* Prose-like styling for docs content */
@@ -132,7 +159,136 @@
   border: 0;
 }
 .doc-content hr { @apply my-8 border-border; }
-.doc-content img { @apply rounded-lg my-4; }
+.doc-content img {
+  @apply rounded-lg my-4 max-w-full h-auto;
+}
+.doc-content .frame img {
+  @apply my-0 rounded-none;
+}
+
+/* ── Video / iframe embeds ── */
+.doc-content iframe {
+  @apply my-5 max-w-full;
+  border-radius: 0.75rem;
+}
+.doc-content .aspect-video {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+
+/* ── GFM Tables ── */
+.doc-content table {
+  @apply w-full my-6 border-collapse text-sm;
+}
+.doc-content thead {
+  @apply border-b-2 border-border;
+}
+.doc-content th {
+  @apply px-4 py-3 text-left font-semibold text-muted-foreground;
+}
+.doc-content td {
+  @apply px-4 py-3 border-b border-border align-top;
+}
+.doc-content tbody tr:last-child td {
+  border-bottom: none;
+}
+.doc-content tbody tr:hover {
+  background: hsl(var(--tint));
+}
+
+/* ── Mintlify Components ── */
+
+/* Note / Warning / Info blockquotes */
+.doc-content blockquote.note {
+  @apply my-5 pl-4 border-l-4 rounded-r-lg;
+  border-left-color: #3B82F6;
+  background: rgba(59, 130, 246, 0.08);
+}
+.doc-content blockquote.warning {
+  @apply my-5 pl-4 border-l-4 rounded-r-lg;
+  border-left-color: #F59E0B;
+  background: rgba(245, 158, 11, 0.08);
+}
+.doc-content blockquote.info {
+  @apply my-5 pl-4 border-l-4 rounded-r-lg;
+  border-left-color: #10B981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+/* Check mark */
+.doc-content span.check {
+  @apply inline-flex items-center justify-center w-5 h-5 rounded-full mr-1;
+  background: hsl(var(--primary));
+  color: #fff;
+  font-size: 0.75rem;
+}
+
+/* Accordion / Details */
+.doc-content details {
+  @apply my-4 border border-border rounded-lg overflow-hidden;
+}
+.doc-content details summary {
+  @apply px-4 py-3 cursor-pointer font-medium select-none;
+  background: hsl(var(--tint));
+}
+.doc-content details summary:hover {
+  background: hsl(var(--border));
+}
+.doc-content details[open] summary {
+  border-bottom: 1px solid hsl(var(--border));
+}
+.doc-content details > *:not(summary) {
+  @apply px-4 py-3;
+}
+
+/* Accordion Group */
+.doc-content .accordion-group {
+  @apply my-5 space-y-2;
+}
+
+/* Tabs */
+.doc-content .tabs {
+  @apply my-5 border border-border rounded-lg overflow-hidden;
+}
+.doc-content .tab-content {
+  @apply px-4 py-3;
+}
+
+/* Card Grid */
+.doc-content .card-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 gap-4 my-5;
+}
+.doc-content a.card {
+  @apply block p-4 border border-border rounded-lg no-underline transition-colors;
+}
+.doc-content a.card:hover {
+  @apply border-primary/50;
+  background: hsl(var(--tint));
+}
+.doc-content a.card strong {
+  @apply text-foreground;
+}
+
+/* Frame */
+.doc-content .frame {
+  @apply my-5 border border-border rounded-lg overflow-hidden;
+}
+
+/* ── Mermaid Diagrams ── */
+.doc-content .mermaid {
+  @apply my-6 p-4 rounded-lg overflow-x-auto;
+  background: hsl(var(--tint));
+  border: 1px solid hsl(var(--border));
+  text-align: center;
+}
+.doc-content .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+.doc-content .mermaid-error {
+  @apply text-sm text-red-500 whitespace-pre-wrap;
+  background: transparent;
+}
 
 /* Tiptap editor styling */
 .ProseMirror {
@@ -168,6 +324,40 @@
   color: #C4D4F8;
 }
 .ProseMirror pre code { background: transparent; color: inherit; padding: 0; }
+
+/* ProseMirror Table styles */
+.ProseMirror table {
+  @apply w-full my-4 border-collapse text-sm;
+}
+.ProseMirror th {
+  @apply border border-border px-3 py-2 text-left font-semibold;
+  background: hsl(var(--tint));
+}
+.ProseMirror td {
+  @apply border border-border px-3 py-2;
+}
+.ProseMirror th p,
+.ProseMirror td p {
+  @apply my-0;
+}
+.ProseMirror .selectedCell {
+  background: hsl(var(--primary) / 0.1);
+}
+
+/* ProseMirror image */
+.ProseMirror img {
+  @apply rounded-lg my-4 max-w-full h-auto;
+}
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* ProseMirror iframe (video embeds) */
+.ProseMirror iframe {
+  @apply my-4 max-w-full;
+  border-radius: 0.75rem;
+}
 
 /* Glow utility */
 .brand-glow {

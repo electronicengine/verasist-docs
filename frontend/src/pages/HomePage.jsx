@@ -3,8 +3,11 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BookOpen, Search, Zap, Shield, Code2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { t } from "@/lib/translations";
 
 export default function HomePage() {
+  const { lang } = useLanguage();
   const [tabs, setTabs] = useState([]);
   const [sections, setSections] = useState([]);
   const [docs, setDocs] = useState([]);
@@ -36,9 +39,9 @@ export default function HomePage() {
   })();
 
   const features = [
-    { icon: Zap, title: "2 dakikada kurulum", desc: "Docker ile sıfırdan çalışan sesli bota dakikalar içinde ulaşın." },
-    { icon: Shield, title: "Tam kontrol", desc: "Açık kaynak. Kendi sunucunuzda barındırın, kodu özelleştirin." },
-    { icon: Code2, title: "Geliştirici dostu", desc: "REST API, webhook'lar ve modüler eklenti sistemi." },
+    { icon: Zap, key: "features.setup" },
+    { icon: Shield, key: "features.control" },
+    { icon: Code2, key: "features.developer" },
   ];
 
   return (
@@ -56,27 +59,29 @@ export default function HomePage() {
         <div className="relative max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs border border-border bg-secondary/60 text-muted-foreground mb-6">
             <Sparkles className="w-3 h-3" />
-            <span>Türkçe geliştirici dokümantasyonu</span>
+            <span>{t("hero.badge", lang)}</span>
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight">
-            Sesli yapay zekâ ajanları için{" "}
-            <span style={{ color: "hsl(var(--primary))" }}>açık kaynak</span> rehber.
+            {t("hero.heading.prefix", lang) ? (
+              <>{t("hero.heading.prefix", lang)}{" "}</>
+            ) : null}
+            <span style={{ color: "hsl(var(--primary))" }}>{t("hero.heading.openSource", lang)}</span>{" "}
+            {t("hero.heading.suffix", lang)}
           </h1>
           <p className="mt-6 text-base sm:text-lg text-muted-foreground max-w-2xl leading-relaxed">
-            Kurulumdan dağıtıma kadar tüm adımları içeren, takım üyelerinin ortak hafızası
-            haline gelen Türkçe dokümantasyon platformu.
+            {t("hero.description", lang)}
           </p>
           <div className="mt-8 flex flex-wrap gap-3" data-testid="hero-cta">
             <Button asChild size="lg" data-testid="hero-start-btn">
               <Link to={firstDocLink}>
-                Hızlı başlangıç
+                {t("hero.cta.quickStart", lang)}
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" data-testid="hero-browse-btn">
               <Link to="/docs">
                 <BookOpen className="mr-2 w-4 h-4" />
-                Tüm dokümanlar
+                {t("hero.cta.browseDocs", lang)}
               </Link>
             </Button>
           </div>
@@ -87,9 +92,9 @@ export default function HomePage() {
       <section className="mt-16 grid sm:grid-cols-3 gap-4">
         {features.map((f) => (
           <div
-            key={f.title}
+            key={f.key}
             className="p-6 rounded-xl border border-border bg-card hover:border-primary/40 transition-colors"
-            data-testid={`feature-${f.title}`}
+            data-testid={`feature-${f.key}`}
           >
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
@@ -100,8 +105,8 @@ export default function HomePage() {
             >
               <f.icon className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-semibold mb-1">{f.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+            <h3 className="text-base font-semibold mb-1">{t(`${f.key}.title`, lang)}</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">{t(`${f.key}.desc`, lang)}</p>
           </div>
         ))}
       </section>
@@ -110,9 +115,9 @@ export default function HomePage() {
       <section className="mt-20">
         <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-semibold">Dokümantasyon bölümleri</h2>
+            <h2 className="text-2xl font-semibold">{t("sections.heading", lang)}</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Konuya göre düzenlenmiş kapsamlı rehberler
+              {t("sections.subtitle", lang)}
             </p>
           </div>
         </div>
