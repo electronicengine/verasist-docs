@@ -5,6 +5,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import DocsLayout from "@/components/DocsLayout";
 import HomePage from "@/pages/HomePage";
+import VideoPage from "@/pages/VideoPage";
 import DocPage from "@/pages/DocPage";
 import DocsIndexPage from "@/pages/DocsIndexPage";
 import AdminLogin from "@/pages/AdminLogin";
@@ -25,6 +26,7 @@ function App() {
               <Route path="/docs/:tabSlug" element={<DocsIndexPage />} />
               <Route path="/docs/:tabSlug/:docSlug" element={<DocPage />} />
               <Route path="/docs/:slug" element={<DocPage />} />
+              <Route path="/videos" element={<VideoPage />} />
               {/* Catch-all: Mintlify-style paths like /voice-agent/start-call */}
               <Route path="*" element={<DocPage />} />
             </Route>

@@ -96,6 +96,17 @@ class DocumentIn(BaseModel):
     published: bool = True
     lang: str = "tr"
 
+class VideoIn(BaseModel):
+    title: str
+    title_en: str = ""
+    filename: str
+    description: str = ""
+    description_en: str = ""
+    document_id: Optional[str] = None
+    section_id: Optional[str] = None
+    section_ids: Optional[List[str]] = None
+    order: int = 0
+
 # ----- App -----
 app = FastAPI()
 api = APIRouter(prefix="/api")
@@ -305,6 +316,64 @@ async def delete_document(did: str, user: dict = Depends(get_current_user)):
     await db.documents.delete_one({"id": did})
     return {"ok": True}
 
+# ----- Videos -----
+@api.get("/videos")
+async def list_videos(document_id: Optional[str] = None, section_id: Optional[str] = None):
+    q: dict = {}
+    if document_id:
+        q["document_id"] = document_id
+    elif section_id:
+        q["$or"] = [{"section_id": section_id}, {"section_ids": section_id}]
+    videos = await db.videos.find(q, {"_id": 0}).sort("order", 1).to_list(100)
+    return videos
+
+@api.post("/videos")
+async def create_video(body: VideoIn, user: dict = Depends(get_current_user)):
+    video = {
+        "id": str(uuid.uuid4()),
+        "title": body.title,
+        "title_en": body.title_en,
+        "filename": body.filename,
+        "description": body.description,
+        "description_en": body.description_en,
+        "document_id": body.document_id,
+        "section_id": body.section_id,
+        "section_ids": body.section_ids or [],
+        "order": body.order,
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+    }
+    await db.videos.insert_one(video)
+    video.pop("_id", None)
+    return video
+
+@api.put("/videos/{vid}")
+async def update_video(vid: str, body: VideoIn, user: dict = Depends(get_current_user)):
+    upd = {
+        "title": body.title,
+        "title_en": body.title_en,
+        "filename": body.filename,
+        "description": body.description,
+        "description_en": body.description_en,
+        "document_id": body.document_id,
+        "section_id": body.section_id,
+        "section_ids": body.section_ids or [],
+        "order": body.order,
+        "updated_at": now_iso(),
+    }
+    res = await db.videos.update_one({"id": vid}, {"$set": upd})
+    if res.matched_count == 0:
+        raise HTTPException(404, "Video bulunamadı")
+    video = await db.videos.find_one({"id": vid}, {"_id": 0})
+    return video
+
+@api.delete("/videos/{vid}")
+async def delete_video(vid: str, user: dict = Depends(get_current_user)):
+    res = await db.videos.delete_one({"id": vid})
+    if res.deleted_count == 0:
+        raise HTTPException(404, "Video bulunamadı")
+    return {"ok": True}
+
 # ----- Navigation -----
 @api.get("/navigation")
 async def get_navigation(lang: str = Query("tr")):
@@ -423,6 +492,59 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ----- Seeding -----
+
+# Seed video tutorials – filenames map to /public/videos/
+SEED_VIDEOS = [
+    {
+        "title": "Vera Asistanı ve MCP Araçları",
+        "title_en": "Vera Assistant and MCP Tools",
+        "filename": "Vera_Asistanı_ve_MCP_Araçları.mp4",
+        "description": "Sesli asistan oluşturma ve MCP araçlarının kullanımı.",
+        "description_en": "Creating voice assistants and using MCP tools.",
+        "order": 1,
+    },
+    {
+        "title": "Araçlar, Dosyalar ve iframe",
+        "title_en": "Tools, Files and iframe",
+        "filename": "araçlar-dosyalar-iframe_1080p.mp4",
+        "description": "İş akışında araçlar, dosya yükleme ve iframe kullanımı.",
+        "description_en": "Using tools, file uploads and iframes in workflows.",
+        "order": 2,
+    },
+    {
+        "title": "Asistanlar ve Entegrasyon",
+        "title_en": "Assistants and Integration",
+        "filename": "asistanlar_ve_entegrasyon.mp4",
+        "description": "Asistan yapılandırması ve harici entegrasyonlar.",
+        "description_en": "Assistant configuration and external integrations.",
+        "order": 3,
+    },
+    {
+        "title": "İş Akışı ve Test Araması",
+        "title_en": "Workflow and Test Call",
+        "filename": "iş_akışı_ve_test_araması.mp4",
+        "description": "İş akışı düzenleyicisi ve test araması yapma.",
+        "description_en": "Workflow editor and making test calls.",
+        "order": 4,
+    },
+    {
+        "title": "Raporlar ve Çağrı Kayıtları",
+        "title_en": "Reports and Call Records",
+        "filename": "raporlar-çağrı kayıtları_1080p.mp4",
+        "description": "Raporlama paneli ve çağrı kayıtlarının incelenmesi.",
+        "description_en": "Reports dashboard and reviewing call recordings.",
+        "order": 5,
+    },
+    {
+        "title": "Çağrı Planları ve Takvim",
+        "title_en": "Call Plans and Calendar",
+        "filename": "çağrı_planları-takvim.mp4",
+        "description": "Kampanya ve çağrı planlarının takvim ile yönetimi.",
+        "description_en": "Managing campaigns and call plans with calendar.",
+        "order": 6,
+    },
+]
+
 # Sections grouped by Mintlify "Guides" tab structure
 # Maps to: Getting Started, Core Concepts, Configurations, Voice Agent Builder, Telephony, Channels, Integrations
 SEED_SECTIONS = [
@@ -1243,6 +1365,24 @@ async def on_startup():
                 "updated_at": now_iso(),
             })
         logger.info("Tohum içerik yüklendi (%d bölüm, %d doküman).", len(SEED_SECTIONS), len(SEED_DOCS))
+
+    # Seed videos (only if completely empty)
+    if await db.videos.count_documents({}) == 0:
+        for v in SEED_VIDEOS:
+            await db.videos.insert_one({
+                "id": str(uuid.uuid4()),
+                "title": v["title"],
+                "title_en": v["title_en"],
+                "filename": v["filename"],
+                "description": v["description"],
+                "description_en": v["description_en"],
+                "document_id": None,
+                "section_id": None,
+                "order": v["order"],
+                "created_at": now_iso(),
+                "updated_at": now_iso(),
+            })
+        logger.info("Tohum videolar yüklendi (%d video).", len(SEED_VIDEOS))
 
 @app.on_event("shutdown")
 async def on_shutdown():

@@ -3,7 +3,9 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import mermaid from "mermaid";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ChevronRight, Calendar, ArrowLeft, ArrowRight } from "lucide-react";
+import { translateTab, translateSection } from "@/lib/translations";
+import { ChevronRight, ArrowLeft, ArrowRight } from "lucide-react";
+import VideoGrid from "@/components/VideoGrid";
 
 export default function DocPage() {
   const params = useParams();
@@ -25,6 +27,7 @@ export default function DocPage() {
   const [toc, setToc] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [videos, setVideos] = useState([]);
   const contentRef = useRef(null);
 
   // Fetch document by path (Mintlify-style) or slug (legacy)
@@ -133,21 +136,47 @@ export default function DocPage() {
       });
       setToc(items);
 
-      // Render Mermaid diagrams
-      const mermaidEls = el.querySelectorAll(".mermaid");
+      // Render Mermaid diagrams – handles both .mermaid divs and <pre><code class="language-mermaid">
+      const mermaidSelectors = [
+        ".mermaid",
+        "pre code.language-mermaid",
+        'pre code[class*="mermaid"]',
+      ];
+      const mermaidEls = [];
+      mermaidSelectors.forEach((sel) => {
+        try {
+          el.querySelectorAll(sel).forEach((n) => mermaidEls.push(n));
+        } catch (_) {}
+      });
+
       if (mermaidEls.length > 0) {
-        mermaid.initialize({ startOnLoad: false, theme: "default" });
-        mermaidEls.forEach(async (mel, idx) => {
-          const code = mel.textContent || "";
-          const id = `mermaid-${Date.now()}-${idx}`;
-          try {
-            const { svg } = await mermaid.render(id, code);
-            mel.innerHTML = svg;
-          } catch (err) {
-            console.warn("Mermaid render failed:", err);
-            mel.innerHTML = `<pre class="mermaid-error">${code}</pre>`;
-          }
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "default",
+          securityLevel: "loose",
         });
+        (async () => {
+          for (let idx = 0; idx < mermaidEls.length; idx++) {
+            const mel = mermaidEls[idx];
+            const raw = mel.textContent || "";
+            const code = raw
+              .replace(/&gt;/g, ">")
+              .replace(/&lt;/g, "<")
+              .replace(/&amp;/g, "&")
+              .trim();
+            if (!code) continue;
+            const id = `mermaid-${Date.now()}-${idx}`;
+            try {
+              const { svg } = await mermaid.render(id, code);
+              const wrapper = mel.closest("pre") || mel;
+              wrapper.outerHTML = svg;
+            } catch (err) {
+              console.warn("Mermaid render failed:", err);
+              const wrapper = mel.closest("pre") || mel;
+              wrapper.outerHTML = `<pre class="mermaid-error text-xs text-muted-foreground border border-destructive/30 rounded p-3 overflow-x-auto">${raw}</pre>`;
+            }
+          }
+        })();
       }
     }, 50);
   }, [doc]);
@@ -169,6 +198,26 @@ export default function DocPage() {
     });
     return () => observer.disconnect();
   }, [toc]);
+
+  // Fetch related videos for this document (by doc_id first, then by section_id)
+  useEffect(() => {
+    if (!doc?.id) return;
+    api
+      .get("/videos", { params: { document_id: doc.id } })
+      .then(({ data }) => {
+        if (data.length > 0) {
+          setVideos(data);
+        } else if (doc.section_id) {
+          // Fallback: fetch by section
+          return api.get("/videos", { params: { section_id: doc.section_id } });
+        }
+        return { data: [] };
+      })
+      .then((res) => {
+        if (res?.data?.length) setVideos(res.data);
+      })
+      .catch(() => setVideos([]));
+  }, [doc?.id, doc?.section_id]);
 
   if (notFound) {
     return (
@@ -222,14 +271,14 @@ export default function DocPage() {
             <>
               <ChevronRight className="w-3.5 h-3.5" />
               <Link to={`/docs/${tab.slug}`} className="hover:text-foreground">
-                {tab.title}
+                {translateTab(tab, lang).title}
               </Link>
             </>
           )}
           {section && (
             <>
               <ChevronRight className="w-3.5 h-3.5" />
-              <span>{section.title}</span>
+              <span>{translateSection(section, lang).title}</span>
             </>
           )}
           <ChevronRight className="w-3.5 h-3.5" />
@@ -247,16 +296,14 @@ export default function DocPage() {
             {doc.excerpt}
           </p>
         )}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground border-b border-border pb-6 mb-2">
-          <Calendar className="w-3.5 h-3.5" />
-          <span>
-            Güncelleme:{" "}
-            {new Date(doc.updated_at).toLocaleDateString(lang === "tr" ? "tr-TR" : "en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </span>
+
+        {/* Related Video Tutorials */}
+        <div className="mb-8">
+          <VideoGrid
+            videos={videos}
+            title={lang === "en" ? "Related Video Tutorials" : "Bu Konuyla İlgili Videolar"}
+            cols={1}
+          />
         </div>
 
         <div

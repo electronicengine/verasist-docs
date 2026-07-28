@@ -1,23 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, Search, Zap, Shield, Code2, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { t } from "@/lib/translations";
+import VideoGrid from "@/components/VideoGrid";
 
 export default function HomePage() {
   const { lang } = useLanguage();
   const [tabs, setTabs] = useState([]);
   const [sections, setSections] = useState([]);
   const [docs, setDocs] = useState([]);
+  const [videos, setVideos] = useState([]);
 
   useEffect(() => {
-    Promise.all([api.get("/tabs"), api.get("/sections"), api.get("/documents")])
-      .then(([t, s, d]) => {
+    Promise.all([api.get("/tabs"), api.get("/sections"), api.get("/documents"), api.get("/videos")])
+      .then(([t, s, d, v]) => {
         setTabs(t.data);
         setSections(s.data);
         setDocs(d.data);
+        setVideos(v.data);
       })
       .catch(() => {});
   }, []);
@@ -25,91 +27,16 @@ export default function HomePage() {
   const tabForSection = (sec) => tabs.find((t) => t.id === sec.tab_id);
   const linkFor = (sec, docSlug) =>
     `/docs/${tabForSection(sec)?.slug || "guides"}/${docSlug}`;
-  const firstDocLink = (() => {
-    const firstTab = tabs[0];
-    if (!firstTab) return "/docs";
-    const firstSec = sections.find((s) => s.tab_id === firstTab.id);
-    if (!firstSec) return `/docs/${firstTab.slug}`;
-    const firstDoc = docs
-      .filter((d) => d.section_id === firstSec.id && d.published)
-      .sort((a, b) => a.order - b.order)[0];
-    return firstDoc
-      ? `/docs/${firstTab.slug}/${firstDoc.slug}`
-      : `/docs/${firstTab.slug}`;
-  })();
-
-  const features = [
-    { icon: Zap, key: "features.setup" },
-    { icon: Shield, key: "features.control" },
-    { icon: Code2, key: "features.developer" },
-  ];
 
   return (
     <div className="-mt-8 lg:-mt-12">
-      {/* Hero */}
-      <section className="relative overflow-hidden grain rounded-3xl border border-border bg-card px-6 sm:px-12 py-16 sm:py-24 mt-8">
-        <div
-          className="absolute -top-32 -right-32 w-[480px] h-[480px] rounded-full opacity-50 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, hsl(var(--primary) / 0.35), transparent 70%)" }}
+      {/* Video Tutorials */}
+      <div className="mt-8">
+        <VideoGrid
+          videos={videos}
+          title={lang === "en" ? "Video Tutorials" : "Video Eğitimler"}
         />
-        <div
-          className="absolute -bottom-40 -left-20 w-[420px] h-[420px] rounded-full opacity-40 blur-3xl pointer-events-none"
-          style={{ background: "radial-gradient(circle, hsl(var(--brand-mid) / 0.3), transparent 70%)" }}
-        />
-        <div className="relative max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs border border-border bg-secondary/60 text-muted-foreground mb-6">
-            <Sparkles className="w-3 h-3" />
-            <span>{t("hero.badge", lang)}</span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight">
-            {t("hero.heading.prefix", lang) ? (
-              <>{t("hero.heading.prefix", lang)}{" "}</>
-            ) : null}
-            <span style={{ color: "hsl(var(--primary))" }}>{t("hero.heading.openSource", lang)}</span>{" "}
-            {t("hero.heading.suffix", lang)}
-          </h1>
-          <p className="mt-6 text-base sm:text-lg text-muted-foreground max-w-2xl leading-relaxed">
-            {t("hero.description", lang)}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3" data-testid="hero-cta">
-            <Button asChild size="lg" data-testid="hero-start-btn">
-              <Link to={firstDocLink}>
-                {t("hero.cta.quickStart", lang)}
-                <ArrowRight className="ml-2 w-4 h-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" data-testid="hero-browse-btn">
-              <Link to="/docs">
-                <BookOpen className="mr-2 w-4 h-4" />
-                {t("hero.cta.browseDocs", lang)}
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="mt-16 grid sm:grid-cols-3 gap-4">
-        {features.map((f) => (
-          <div
-            key={f.key}
-            className="p-6 rounded-xl border border-border bg-card hover:border-primary/40 transition-colors"
-            data-testid={`feature-${f.key}`}
-          >
-            <div
-              className="w-10 h-10 rounded-lg flex items-center justify-center mb-4"
-              style={{
-                background: "hsl(var(--tint))",
-                color: "hsl(var(--primary))",
-              }}
-            >
-              <f.icon className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-semibold mb-1">{t(`${f.key}.title`, lang)}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{t(`${f.key}.desc`, lang)}</p>
-          </div>
-        ))}
-      </section>
+      </div>
 
       {/* Sections grid */}
       <section className="mt-20">

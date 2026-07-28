@@ -40,15 +40,18 @@ import {
   ExternalLink,
   Moon,
   Sun,
+  Video,
 } from "lucide-react";
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const { theme, toggle } = useTheme();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("docs"); // "docs" | "videos"
   const [sections, setSections] = useState([]);
   const [docs, setDocs] = useState([]);
   const [tabs, setTabs] = useState([]);
+  const [videos, setVideos] = useState([]);
   const [filterSection, setFilterSection] = useState("all");
   const [sectionDialog, setSectionDialog] = useState(false);
   const [editingSection, setEditingSection] = useState(null);
@@ -57,16 +60,30 @@ export default function AdminDashboard() {
   const [sectionOrder, setSectionOrder] = useState(0);
   const [sectionTabId, setSectionTabId] = useState("");
 
+  // Video dialog state
+  const [videoDialog, setVideoDialog] = useState(false);
+  const [editingVideo, setEditingVideo] = useState(null);
+  const [videoTitle, setVideoTitle] = useState("");
+  const [videoTitleEn, setVideoTitleEn] = useState("");
+  const [videoFilename, setVideoFilename] = useState("");
+  const [videoDesc, setVideoDesc] = useState("");
+  const [videoDescEn, setVideoDescEn] = useState("");
+  const [videoDocId, setVideoDocId] = useState("");
+  const [videoSectionId, setVideoSectionId] = useState("");
+  const [videoOrder, setVideoOrder] = useState(0);
+
   const load = async () => {
     try {
-      const [s, d, t] = await Promise.all([
+      const [s, d, t, v] = await Promise.all([
         api.get("/sections"),
         api.get("/documents"),
         api.get("/tabs"),
+        api.get("/videos"),
       ]);
       setSections(s.data);
       setDocs(d.data);
       setTabs(t.data);
+      setVideos(v.data);
     } catch (e) {
       toast.error(formatApiError(e));
     }
@@ -137,6 +154,72 @@ export default function AdminDashboard() {
     }
   };
 
+  // ----- Video CRUD -----
+  const openVideo = (v = null) => {
+    if (v) {
+      setEditingVideo(v);
+      setVideoTitle(v.title);
+      setVideoTitleEn(v.title_en || "");
+      setVideoFilename(v.filename);
+      setVideoDesc(v.description || "");
+      setVideoDescEn(v.description_en || "");
+      setVideoDocId(v.document_id || "");
+      setVideoSectionId(v.section_id || "");
+      setVideoOrder(v.order);
+    } else {
+      setEditingVideo(null);
+      setVideoTitle("");
+      setVideoTitleEn("");
+      setVideoFilename("");
+      setVideoDesc("");
+      setVideoDescEn("");
+      setVideoDocId("");
+      setVideoOrder(videos.length + 1);
+    }
+    setVideoDialog(true);
+  };
+
+  const saveVideo = async () => {
+    if (!videoTitle.trim() || !videoFilename.trim()) {
+      toast.error("Başlık ve dosya adı zorunludur");
+      return;
+    }
+    try {
+      const payload = {
+        title: videoTitle,
+        title_en: videoTitleEn,
+        filename: videoFilename,
+        description: videoDesc,
+        description_en: videoDescEn,
+        document_id: videoDocId || null,
+        section_id: videoSectionId || null,
+        order: Number(videoOrder),
+      };
+      if (editingVideo) {
+        await api.put(`/videos/${editingVideo.id}`, payload);
+        toast.success("Video güncellendi");
+      } else {
+        await api.post("/videos", payload);
+        toast.success("Video eklendi");
+      }
+      setVideoDialog(false);
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+
+  const deleteVideo = async (v) => {
+    if (!window.confirm(`"${v.title}" videosunu silmek istediğinize emin misiniz?`)) return;
+    try {
+      await api.delete(`/videos/${v.id}`);
+      toast.success("Video silindi");
+      load();
+    } catch (e) {
+      toast.error(formatApiError(e));
+    }
+  };
+
   const filteredDocs = docs
     .filter((d) => filterSection === "all" || d.section_id === filterSection)
     .sort((a, b) => a.order - b.order);
@@ -193,6 +276,38 @@ export default function AdminDashboard() {
       </header>
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-10">
+        {/* Tab switcher */}
+        <div className="flex items-center gap-1 mb-8 border-b border-border pb-0">
+          <button
+            onClick={() => setActiveTab("docs")}
+            className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors -mb-[1px] ${
+              activeTab === "docs"
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+            data-testid="admin-tab-docs"
+          >
+            <Folder className="w-4 h-4 inline mr-1.5" />
+            Dokümanlar
+          </button>
+          <button
+            onClick={() => setActiveTab("videos")}
+            className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 transition-colors -mb-[1px] ${
+              activeTab === "videos"
+                ? "border-primary text-primary bg-primary/5"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+            data-testid="admin-tab-videos"
+          >
+            <Video className="w-4 h-4 inline mr-1.5" />
+            Videolar
+          </button>
+          <div className="flex-1 border-b border-border" />
+        </div>
+
+        {/* Docs tab content */}
+        {activeTab === "docs" && (
+          <>
         {/* Sections row */}
         <div className="mb-10">
           <div className="flex items-end justify-between mb-4">
@@ -364,7 +479,6 @@ export default function AdminDashboard() {
             </TableBody>
           </Table>
         </div>
-      </div>
 
       {/* Section dialog */}
       <Dialog open={sectionDialog} onOpenChange={setSectionDialog}>
@@ -420,6 +534,219 @@ export default function AdminDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+          </>
+        )}
+
+        {/* Videos tab content */}
+        {activeTab === "videos" && (
+          <>
+            <div className="flex items-end justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                  <Video className="w-5 h-5 text-primary" /> Videolar
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Eğitim videolarını yönetin — her video bir dokümana bağlanabilir
+                </p>
+              </div>
+              <Button size="sm" onClick={() => openVideo()} data-testid="new-video-btn">
+                <Plus className="w-4 h-4 mr-1.5" />
+                Yeni video
+              </Button>
+            </div>
+
+            <div className="border border-border rounded-xl overflow-hidden bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Başlık</TableHead>
+                    <TableHead>Dosya</TableHead>
+                    <TableHead>Bağlı Doküman</TableHead>
+                    <TableHead>Bağlı Bölüm</TableHead>
+                    <TableHead>Sıra</TableHead>
+                    <TableHead className="text-right">İşlem</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {videos.map((v) => {
+                    const linkedDoc = docs.find((d) => d.id === v.document_id);
+                    const linkedSection = sections.find((s) => s.id === v.section_id);
+                    return (
+                      <TableRow key={v.id} data-testid={`video-row-${v.id}`}>
+                        <TableCell className="font-medium">
+                          <div>{v.title}</div>
+                          {v.title_en && (
+                            <div className="text-xs text-muted-foreground">{v.title_en}</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground font-mono">
+                          /videos/{v.filename}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {linkedDoc ? linkedDoc.title : <span className="italic">—</span>}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {linkedSection ? linkedSection.title : <span className="italic">—</span>}
+                        </TableCell>
+                        <TableCell className="text-sm">{v.order}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openVideo(v)}
+                            aria-label="Düzenle"
+                            data-testid={`edit-video-${v.id}`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteVideo(v)}
+                            aria-label="Sil"
+                            data-testid={`delete-video-${v.id}`}
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {videos.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
+                        Henüz video yok. İlk videoyu ekleyin.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Video dialog */}
+            <Dialog open={videoDialog} onOpenChange={setVideoDialog}>
+              <DialogContent data-testid="video-dialog">
+                <DialogHeader>
+                  <DialogTitle>{editingVideo ? "Videoyu düzenle" : "Yeni video"}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div>
+                    <Label htmlFor="video-title">Başlık (TR)</Label>
+                    <Input
+                      id="video-title"
+                      value={videoTitle}
+                      onChange={(e) => setVideoTitle(e.target.value)}
+                      className="mt-1.5"
+                      data-testid="video-title-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="video-title-en">Başlık (EN)</Label>
+                    <Input
+                      id="video-title-en"
+                      value={videoTitleEn}
+                      onChange={(e) => setVideoTitleEn(e.target.value)}
+                      className="mt-1.5"
+                      data-testid="video-title-en-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="video-filename">Dosya adı</Label>
+                    <Input
+                      id="video-filename"
+                      value={videoFilename}
+                      onChange={(e) => setVideoFilename(e.target.value)}
+                      placeholder="ornek_video.mp4"
+                      className="mt-1.5"
+                      data-testid="video-filename-input"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Dosya <code>public/videos/</code> klasöründe bulunmalıdır.
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="video-desc">Açıklama (TR)</Label>
+                    <Input
+                      id="video-desc"
+                      value={videoDesc}
+                      onChange={(e) => setVideoDesc(e.target.value)}
+                      className="mt-1.5"
+                      data-testid="video-desc-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="video-desc-en">Açıklama (EN)</Label>
+                    <Input
+                      id="video-desc-en"
+                      value={videoDescEn}
+                      onChange={(e) => setVideoDescEn(e.target.value)}
+                      className="mt-1.5"
+                      data-testid="video-desc-en-input"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="video-doc">Bağlı doküman</Label>
+                    <Select value={videoDocId} onValueChange={setVideoDocId}>
+                      <SelectTrigger id="video-doc" className="mt-1.5" data-testid="video-doc-select">
+                        <SelectValue placeholder="Doküman seç (opsiyonel)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">— Bağlı doküman yok —</SelectItem>
+                        {docs
+                          .sort((a, b) => a.title.localeCompare(b.title))
+                          .map((d) => (
+                            <SelectItem key={d.id} value={d.id}>
+                              {d.title}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="video-section">Bağlı bölüm</Label>
+                    <Select value={videoSectionId} onValueChange={setVideoSectionId}>
+                      <SelectTrigger id="video-section" className="mt-1.5" data-testid="video-section-select">
+                        <SelectValue placeholder="Bölüm seç (opsiyonel)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">— Bağlı bölüm yok —</SelectItem>
+                        {sections.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="video-order">Sıra</Label>
+                    <Input
+                      id="video-order"
+                      type="number"
+                      value={videoOrder}
+                      onChange={(e) => setVideoOrder(e.target.value)}
+                      className="mt-1.5"
+                      data-testid="video-order-input"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setVideoDialog(false)}>
+                    İptal
+                  </Button>
+                  <Button
+                    onClick={saveVideo}
+                    disabled={!videoTitle.trim() || !videoFilename.trim()}
+                    data-testid="save-video-btn"
+                  >
+                    Kaydet
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
+        )}
+      </div>
     </div>
   );
 }

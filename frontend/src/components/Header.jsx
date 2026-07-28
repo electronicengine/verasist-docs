@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Moon, Sun, Search, ShieldCheck, LogOut } from "lucide-react";
+import { Moon, Sun, Search, ShieldCheck, LogOut, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -54,6 +54,20 @@ export default function Header({ onSearchClick }) {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1 ml-4" data-testid="tabs-nav">
+          <NavLink
+            to="/videos"
+            className={({ isActive }) =>
+              `text-sm px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${
+                isActive
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              }`
+            }
+            data-testid="tab-videos"
+          >
+            <Play className="w-3.5 h-3.5" />
+            {lang === "en" ? "Videos" : "Videolar"}
+          </NavLink>
           {tabs.map((t) => {
             const isActive = activeTab === t.slug;
             return (

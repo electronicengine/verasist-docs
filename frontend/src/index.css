@@ -176,6 +176,16 @@
   width: 100%;
 }
 
+/* ── Mermaid diagrams ── */
+.doc-content svg[id^="mermaid-"] {
+  @apply max-w-full h-auto my-5 rounded-lg;
+  background: transparent;
+}
+.mermaid-error {
+  @apply text-xs text-muted-foreground border border-destructive/30 rounded p-3 overflow-x-auto my-4;
+  white-space: pre-wrap;
+}
+
 /* ── GFM Tables ── */
 .doc-content table {
   @apply w-full my-6 border-collapse text-sm;

@@ -23,7 +23,7 @@ export default function DocsLayout() {
       <Header onSearchClick={() => setSearchOpen(true)} />
       <div className="flex-1 w-full px-4 sm:px-6 flex gap-8">
         <Sidebar />
-        <main className="flex-1 min-w-0 py-8 lg:py-12 max-w-[860px]" data-testid="docs-main">
+        <main className="flex-1 min-w-0 py-8 lg:py-12 max-w-[860px] mx-auto" data-testid="docs-main">
           <Outlet />
         </main>
       </div>
