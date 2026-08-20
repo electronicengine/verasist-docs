@@ -41,12 +41,12 @@ CHUNK_SIZE = 4000
 # Order matters: longer/more specific patterns first to avoid partial matches.
 TERMINOLOGY_MAP = [
     # Core concepts
-    ("workflow run result", "çağrı kaydı"),
-    ("workflow run results", "çağrı kayıtları"),
+    ("workflow run result", "çalıştırma kaydı"),
+    ("workflow run results", "çalıştırma kayıtları"),
     ("workflow run", "çalıştırma"),
     ("workflow runs", "çalıştırmalar"),
-    ("Workflow Run Result", "Çağrı Kaydı"),
-    ("Workflow Run Results", "Çağrı Kayıtları"),
+    ("Workflow Run Result", "Çalıştırma Kaydı"),
+    ("Workflow Run Results", "Çalıştırma Kayıtları"),
     ("Workflow Run", "Çalıştırma"),
     ("Workflow Runs", "Çalıştırmalar"),
     # Workflow → İş Akışı (but be careful with compound words)
@@ -54,11 +54,11 @@ TERMINOLOGY_MAP = [
     ("workflow", "iş akışı"),
     ("Workflows", "İş Akışları"),
     ("Workflow", "İş Akışı"),
-    # Campaign → Çağrı Planı
-    ("campaigns", "çağrı planları"),
-    ("campaign", "çağrı planı"),
-    ("Campaigns", "Çağrı Planları"),
-    ("Campaign", "Çağrı Planı"),
+    # Campaign → Çalıştırma Planı
+    ("campaigns", "çalıştırma planları"),
+    ("campaign", "çalıştırma planı"),
+    ("Campaigns", "Çalıştırma Planları"),
+    ("Campaign", "Çalıştırma Planı"),
     # Agent → Asistan
     ("voice agent builder", "sesli asistan oluşturucu"),
     ("voice agent", "sesli asistan"),
