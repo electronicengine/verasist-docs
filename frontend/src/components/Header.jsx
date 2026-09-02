@@ -22,7 +22,12 @@ export default function Header({ onSearchClick }) {
   }, []);
 
   const pathParts = location.pathname.split("/").filter(Boolean);
-  const activeTab = pathParts[0] === "docs" ? pathParts[1] : null;
+  const activeTab =
+    pathParts[0] === "docs"
+      ? pathParts[1]
+      : pathParts[0] === "api-referansi"
+        ? "api-referansi"
+        : null;
 
   return (
     <header
@@ -73,7 +78,7 @@ export default function Header({ onSearchClick }) {
             return (
               <NavLink
                 key={t.id}
-                to={`/docs/${t.slug}`}
+                to={t.slug === "api-referansi" ? "/api-referansi" : `/docs/${t.slug}`}
                 className={`text-sm px-3 py-1.5 rounded-md transition-colors ${
                   isActive
                     ? "text-primary bg-primary/10"

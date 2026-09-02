@@ -3,7 +3,87 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translateSection } from "@/lib/translations";
+import { API_REFERENCE_GROUPS } from "@/lib/apiReferenceGroups";
 import { FileText, ChevronRight } from "lucide-react";
+
+const METHOD_COLORS = {
+  GET: "text-blue-600 dark:text-blue-400",
+  POST: "text-green-600 dark:text-green-400",
+  PUT: "text-amber-600 dark:text-amber-400",
+  PATCH: "text-amber-600 dark:text-amber-400",
+  DELETE: "text-red-600 dark:text-red-400",
+};
+
+function MethodTag({ method }) {
+  if (!method) return null;
+  return (
+    <span className={`text-[9px] font-bold tracking-tight w-9 shrink-0 ${METHOD_COLORS[method] || "text-muted-foreground"}`}>
+      {method}
+    </span>
+  );
+}
+
+/** Nav tree for /api-referansi/* — sourced from the static groups config, not the CMS. */
+function ApiReferenceTree({ currentPath, expanded, onToggle, lang }) {
+  const renderEntries = (groupSlug, entries, depth) =>
+    entries.map((entry) => {
+      const active = currentPath === `api-referansi/${groupSlug}/${entry.opSlug}`;
+      const title = lang === "tr" ? entry.title_tr : entry.title_en;
+      if (entry.children) {
+        const key = `${groupSlug}/${entry.opSlug}`;
+        const isOpen = expanded.has(key);
+        return (
+          <li key={key}>
+            <button
+              type="button"
+              onClick={() => onToggle(key)}
+              className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
+              style={{ paddingLeft: `${0.5 + depth * 0.75}rem` }}
+            >
+              <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+              {title}
+            </button>
+            {isOpen && <ul className="space-y-0.5">{renderEntries(groupSlug, entry.children, depth + 1)}</ul>}
+          </li>
+        );
+      }
+      return (
+        <li key={entry.opSlug}>
+          <Link
+            to={`/api-referansi/${groupSlug}/${entry.opSlug}`}
+            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm transition-colors ${
+              active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
+            }`}
+            style={{ paddingLeft: `${0.5 + depth * 0.75 + (depth === 0 ? 1.25 : 0)}rem` }}
+          >
+            <MethodTag method={entry.method} />
+            <span className="truncate">{title}</span>
+          </Link>
+        </li>
+      );
+    });
+
+  return (
+    <nav className="space-y-7" data-testid="apiref-sidebar">
+      {API_REFERENCE_GROUPS.map((group) => {
+        const title = lang === "tr" ? group.title_tr : group.title_en;
+        const groupActive = currentPath === `api-referansi/${group.slug}`;
+        return (
+          <div key={group.slug}>
+            <Link
+              to={`/api-referansi/${group.slug}`}
+              className={`block text-[11px] font-semibold uppercase tracking-[0.12em] mb-2 px-2 ${groupActive ? "text-primary" : "text-muted-foreground"}`}
+              data-testid={`apiref-section-title-${group.slug}`}
+            >
+              {title}
+            </Link>
+            <ul className="space-y-0.5">{renderEntries(group.slug, group.entries, 0)}</ul>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
 
 /**
  * Flatten all docs across tabs and sections into a single lookup.
@@ -208,7 +288,10 @@ export default function Sidebar() {
       className="w-[270px] shrink-0 hidden lg:block sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-4"
       data-testid="docs-sidebar"
     >
-      <nav className="space-y-7">
+      {currentPath === "api-referansi" || currentPath.startsWith("api-referansi/") ? (
+        <ApiReferenceTree currentPath={currentPath} expanded={expanded} onToggle={onToggle} lang={lang} />
+      ) : (
+        <nav className="space-y-7">
         {tabSections.map((s) => {
           const sectionDocs = (s.documents || []).filter(
             (d) => d.published !== false,
@@ -274,7 +357,8 @@ export default function Sidebar() {
             Bu sekmede henüz içerik yok.
           </div>
         )}
-      </nav>
+        </nav>
+      )}
     </aside>
   );
 }

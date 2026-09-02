@@ -8,6 +8,8 @@ import HomePage from "@/pages/HomePage";
 import VideoPage from "@/pages/VideoPage";
 import DocPage from "@/pages/DocPage";
 import DocsIndexPage from "@/pages/DocsIndexPage";
+import ApiReferenceIndexPage from "@/pages/ApiReferenceIndexPage";
+import ApiReferencePage from "@/pages/ApiReferencePage";
 import AdminLogin from "@/pages/AdminLogin";
 import AdminDashboard from "@/pages/AdminDashboard";
 import AdminEditor from "@/pages/AdminEditor";
@@ -26,6 +28,9 @@ function App() {
               <Route path="/docs/:tabSlug" element={<DocsIndexPage />} />
               <Route path="/docs/:tabSlug/:docSlug" element={<DocPage />} />
               <Route path="/docs/:slug" element={<DocPage />} />
+              <Route path="/api-referansi" element={<ApiReferenceIndexPage />} />
+              <Route path="/api-referansi/:groupSlug" element={<ApiReferenceIndexPage />} />
+              <Route path="/api-referansi/:groupSlug/*" element={<ApiReferencePage />} />
               <Route path="/videos" element={<VideoPage />} />
               {/* Catch-all: Mintlify-style paths like /voice-agent/start-call */}
               <Route path="*" element={<DocPage />} />

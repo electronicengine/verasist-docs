@@ -523,6 +523,7 @@ GROUP_TO_SECTION = {
     ("Built-in Tools", "Tools", "Guides"):  ("workflows-tools",        "Tools",                  "rehberler", 4),
     ("Integrations", "Tools", "Guides"):    ("workflows-tools",        "Tools",                  "rehberler", 4),
     ("Custom Tools", "Tools", "Guides"):    ("workflows-tools",        "Tools",                  "rehberler", 4),
+    ("Content Publishing", "Tools", "Guides"): ("workflows-tools",     "Tools",                  "rehberler", 4),
     ("Planning", None, "Guides"):           ("planning",               "Planning",               "rehberler", 5),
     ("Analytics", None, "Guides"):          ("analytics",              "Analytics",              "rehberler", 6),
     # Top-level Integrations and its subgroups
@@ -559,6 +560,7 @@ NESTED_GROUP_PARENTS = {
     ("Built-in Tools", "Tools", "Guides"):     {"parent_section": "workflows-tools", "parent_group": "Tools"},
     ("Integrations", "Tools", "Guides"):       {"parent_section": "workflows-tools", "parent_group": "Tools"},
     ("Custom Tools", "Tools", "Guides"):       {"parent_section": "workflows-tools", "parent_group": "Tools"},
+    ("Content Publishing", "Tools", "Guides"): {"parent_section": "workflows-tools", "parent_group": "Tools"},
     ("API Keys", "Resources", "API Reference"): {"parent_section": "api-keys",        "parent_group": "Resources"},
     ("Agents", "Resources", "API Reference"):   {"parent_section": "agents",          "parent_group": "Resources"},
     ("Runs", "Agents", "API Reference"):        {"parent_section": "runs",            "parent_group": "Agents"},
