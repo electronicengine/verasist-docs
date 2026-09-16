@@ -4,13 +4,13 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package and package-lock files
-COPY submodules/verasist-docs/frontend/package*.json ./
+COPY frontend/package*.json ./
 
 # Install dependencies
 RUN npm ci
 
 # Copy other source files
-COPY submodules/verasist-docs/frontend/ ./
+COPY frontend/ ./
 
 # Build the application
 # We can pass REACT_APP_BACKEND_URL during build phase as CRA embeds environment variables at build-time.
@@ -29,7 +29,7 @@ RUN npm install -g serve
 COPY --from=builder /app/build ./build
 
 # Copy docs images so they are served as /images/*
-COPY docs/images/ ./build/images/
+COPY images/ ./build/images/
 
 EXPOSE 3012
 

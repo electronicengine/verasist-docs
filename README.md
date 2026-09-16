@@ -2,6 +2,8 @@
 
 Bu proje, bir dokümantasyon sitesi ve yönetim paneli için frontend + backend yapısından oluşur.
 
+Sunucuda önce ana Verasist Compose başlatılır. Ardından bu klasörde `.env.example` dosyasını `.env` olarak kopyalayıp değerleri doldurun ve `docker compose up -d --build` çalıştırın. Uygulama, varsayılan `verasist_app-network` ortak ağı üzerinden ana Nginx tarafından yayınlanır.
+
 ## Gereksinimler
 
 - Node.js ve npm

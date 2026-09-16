@@ -1,0 +1,63 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    restart: unless-stopped
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    networks: [private]
+
+  backend:
+    image: local/verasist-docs-backend:dev
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    environment:
+      MONGO_URL: mongodb://mongodb:27017
+      DB_NAME: "${DB_NAME:-verasist_docs}"
+      JWT_SECRET: "${JWT_SECRET:?JWT_SECRET must be set in .env}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:?ADMIN_EMAIL must be set in .env}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set in .env}"
+    volumes:
+      - docs-uploads:/app/uploads
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      private:
+      verasist:
+        aliases: [verasist-docs-backend]
+
+  frontend:
+    image: local/verasist-docs-frontend:dev
+    pull_policy: never
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        REACT_APP_BACKEND_URL: "${REACT_APP_BACKEND_URL:-https://docs.verasist.ai}"
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      verasist:
+        aliases: [verasist-docs-frontend]
+
+volumes:
+  mongodb-data:
+    name: "${DOCS_MONGODB_VOLUME:-verasist_mongodb_data}"
+  docs-uploads:
+    name: "${DOCS_UPLOADS_VOLUME:-verasist_docs_uploads}"
+
+networks:
+  private:
+  verasist:
+    external: true
+    name: "${VERASIST_NETWORK_NAME:-verasist_app-network}"
