@@ -19,10 +19,11 @@ Katalog workflow sürümleri arasında ortaktır. Node bağlantıları kaydedile
 
 Örneğin `sdk_status` yalnızca tanılama node’una, `sdk_move` yalnızca hareket node’una bağlıysa her node sadece kendi aracını kullanabilir. Eksik, `null` veya boş seçim **sıfır SDK aracı** demektir. Genel “tümüne izin ver” davranışı yoktur. Çalıştırma katmanı da aktif node’da izin verilmeyen çağrıyı reddeder.
 
-## TypeScript ile yayımlama
+## Araç şemalarını yayımlama
 
 [Kurulumdaki](/developer/sdks/introduction) ortam değişkenleriyle uygulama sunucusunda çalıştırın:
 
+<CodeGroup>
 ```typescript
 import { VerasistClient, type TextTool } from "@verasist/sdk";
 
@@ -42,11 +43,6 @@ await client.publishToolset(workflowUuid, tools);
 const catalog = await client.getToolset(workflowUuid);
 console.log(catalog.tools.map((tool) => tool.name));
 ```
-
-Aynı `tools` dizisini metin oturumunun `tool_transport` alanına da verin. `publishToolset` içine fonksiyon kodu, token veya callback URL’si göndermeyin.
-
-## Python ile yayımlama
-
 ```python
 import os
 from verasist_sdk import VerasistClient
@@ -66,6 +62,9 @@ with VerasistClient(base_url="https://app.verasist.ai") as client:
     catalog = client.get_toolset(os.environ["WORKFLOW_UUID"])
     print([tool.name for tool in catalog.tools])
 ```
+</CodeGroup>
+
+Aynı `tools` dizisini metin oturumunun `tool_transport` alanına da verin. `publishToolset` içine fonksiyon kodu, token veya callback URL’si göndermeyin.
 
 Sesli oturumda kayıtlı araçların tamamını otomatik yayımlayabilirsiniz:
 

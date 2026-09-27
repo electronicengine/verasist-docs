@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import mermaid from "mermaid";
+import { enhanceCodePanels } from "@/lib/codePanels";
+import "highlight.js/styles/github-dark.css";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translateTab, translateSection } from "@/lib/translations";
@@ -116,6 +118,11 @@ export default function DocPage() {
         .catch(() => {});
     }
   }, [doc, navData, slug]);
+
+  useEffect(() => {
+    if (!doc || !contentRef.current) return;
+    return enhanceCodePanels(contentRef.current, lang);
+  }, [doc, lang]);
 
   // Build TOC from rendered content
   useEffect(() => {

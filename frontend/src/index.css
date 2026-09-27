@@ -399,3 +399,23 @@
 
 /* Skip link */
 .sr-only-focusable:focus { position: static; width: auto; height: auto; }
+
+/* Read-only code panels: shared viewport for equivalent language examples. */
+.doc-content .code-panel {
+  margin: 1.5rem 0; overflow: hidden; border: 1px solid #303b50;
+  border-radius: 12px; background: #0d1117; color: #e6edf3;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 10%); min-width: 0;
+}
+.code-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #161b22; border-bottom: 1px solid #303b50; }
+.code-panel-tabs { display: flex; min-width: 0; overflow-x: auto; }
+.code-panel-tabs button { padding: 12px 16px; color: #9daec6; font-size: 13px; border-bottom: 2px solid transparent; white-space: nowrap; }
+.code-panel-tabs button.active { color: #e6edf3; border-bottom-color: #a78bfa; background: #0d1117; }
+.code-panel-copy { font-size: 12px; padding: 5px 10px; margin-right: 12px; border: 1px solid #44516a; border-radius: 6px; color: #cbd5e1; }
+.code-panel-copy:hover { background: #303b50; }
+.code-panel button:focus-visible, .code-panel-body:focus-visible { outline: 2px solid #a78bfa; outline-offset: -3px; }
+.code-panel-body { display: flex; overflow: auto; max-height: 560px; }
+.code-panel-body[hidden] { display: none; }
+.doc-content .code-panel-body pre { margin: 0; padding: 18px 20px 18px 0; border: 0; border-radius: 0; background: transparent; overflow: visible; flex: 1; }
+.doc-content .code-panel-body pre, .code-panel-lines { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.75; tab-size: 4; }
+.code-panel-lines { padding: 18px 14px; text-align: right; color: #63738c; user-select: none; white-space: pre; flex-shrink: 0; }
+.doc-content .code-panel pre code { display: block; padding: 0; white-space: pre; background: transparent; }

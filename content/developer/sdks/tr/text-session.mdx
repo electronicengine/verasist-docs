@@ -13,6 +13,7 @@ TypeScript SDK’da `client.textSessions` vardır. Python’da aynı endpoint’
 
 Bu örnek uygulama callback’i olmadan oturum açar. Workflow’a bağlı sunucu araçları kullanılmaya devam edebilir:
 
+<CodeGroup>
 ```typescript
 import { randomUUID } from "node:crypto";
 import { VerasistClient } from "@verasist/sdk";
@@ -41,6 +42,35 @@ try {
   await client.textSessions.close(session.run_id);
 }
 ```
+```python
+import os
+from uuid import uuid4
+import httpx
+
+base = "https://app.verasist.ai/api/v1"
+workflow_uuid = os.environ["WORKFLOW_UUID"]
+with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
+    def request(method, path, body=None):
+        response = http.request(method, base + path, json=body)
+        response.raise_for_status()
+        return response.json()
+
+    request("GET", f"/apps/workflows/{workflow_uuid}/check")
+    session = request("POST", f"/apps/workflows/{workflow_uuid}/sessions", {
+        "request_id": str(uuid4()), "initial_context": {"locale": "en"},
+    })
+    run_id = session["run_id"]
+    try:
+        session = request("POST", f"/apps/sessions/{run_id}/execute", {})
+        if not session["closed"]:
+            session = request("POST", f"/apps/sessions/{run_id}/messages", {
+                "text": "Hello", "expected_revision": session["revision"],
+            })
+        print(session["turns"])
+    finally:
+        request("POST", f"/apps/sessions/{run_id}/close", {})
+```
+</CodeGroup>
 
 `create()` oturum durumunu oluşturur. `execute()` ilk asistan turunu üretir veya bekleyen turu sürdürür. `send()` kullanıcı mesajını ekleyip cevabı yürütür. `get()` çalıştırmadan güncel durumu okur. `close()` oturumu bitirir. Yanıtlar durum görüntüsüdür; SSE/token akışı değildir.
 
@@ -128,38 +158,3 @@ async function handleAuthorizedCall(call: {
 ```
 
 Yazan işlemlerde kullanıcı kapsamındaki `call_id` ile kalıcı idempotency kaydı tutun ve yinelenen çağrıya önceki sonucu döndürün. Model argümanındaki kullanıcı/tenant bilgisini, doğrulanmış token bağlamının yerine kullanmayın.
-
-## Python REST örneği
-
-Bu örnek olmayan bir SDK yardımcısı yerine gerçek HTTP endpoint’lerini kullanır:
-
-```python
-import os
-from uuid import uuid4
-import httpx
-
-base = "https://app.verasist.ai/api/v1"
-workflow_uuid = os.environ["WORKFLOW_UUID"]
-with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
-    def request(method, path, body=None):
-        response = http.request(method, base + path, json=body)
-        response.raise_for_status()
-        return response.json()
-
-    request("GET", f"/apps/workflows/{workflow_uuid}/check")
-    session = request("POST", f"/apps/workflows/{workflow_uuid}/sessions", {
-        "request_id": str(uuid4()), "initial_context": {"locale": "en"},
-    })
-    run_id = session["run_id"]
-    try:
-        session = request("POST", f"/apps/sessions/{run_id}/execute", {})
-        if not session["closed"]:
-            session = request("POST", f"/apps/sessions/{run_id}/messages", {
-                "text": "Hello", "expected_revision": session["revision"],
-            })
-        print(session["turns"])
-    finally:
-        request("POST", f"/apps/sessions/{run_id}/close", {})
-```
-
-Python oluşturma JSON’una aynı `tool_transport` nesnesi eklenebilir. Python callback servisi de aynı kimlik doğrulama/sonuç sözleşmesini uygular; `LiveSession` gerekmez.

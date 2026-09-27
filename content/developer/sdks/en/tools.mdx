@@ -19,10 +19,11 @@ All three have different lifecycles. The catalog is shared across workflow versi
 
 For example, connect `sdk_status` only to the diagnostics node and `sdk_move` only to the movement node. Diagnostics cannot call `sdk_move`; movement cannot call `sdk_status` unless you also connect it there. Missing, `null`, and empty node selections all expose **zero** SDK tools. There is no global "allow all" fallback. The execution handler also rejects calls that are not enabled on the active node.
 
-## Publish schemas from TypeScript
+## Publish tool schemas
 
 Run this from your server, with the environment configured in [Setup](/developer/sdks/introduction):
 
+<CodeGroup>
 ```typescript
 import { VerasistClient, type TextTool } from "@verasist/sdk";
 
@@ -42,11 +43,6 @@ await client.publishToolset(workflowUuid, tools);
 const catalog = await client.getToolset(workflowUuid);
 console.log(catalog.tools.map((tool) => tool.name));
 ```
-
-Use the same `tools` array in your text session's `tool_transport`. Do not send function objects, tokens or callback URLs to `publishToolset`.
-
-## Publish schemas from Python
-
 ```python
 import os
 from verasist_sdk import VerasistClient
@@ -66,6 +62,9 @@ with VerasistClient(base_url="https://app.verasist.ai") as client:
     catalog = client.get_toolset(os.environ["WORKFLOW_UUID"])
     print([tool.name for tool in catalog.tools])
 ```
+</CodeGroup>
+
+Use the same `tools` array in your text session's `tool_transport`. Do not send function objects, tokens or callback URLs to `publishToolset`.
 
 A Python `LiveSession` can export all its registered tools for you. This example defines a function you can call before connecting:
 

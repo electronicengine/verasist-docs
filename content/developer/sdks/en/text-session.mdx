@@ -13,6 +13,7 @@ The TypeScript SDK includes `client.textSessions`. Python currently uses the sam
 
 This TypeScript example opens a conversation without application callbacks. It can still use server-side tools configured on the workflow.
 
+<CodeGroup>
 ```typescript
 import { randomUUID } from "node:crypto";
 import { VerasistClient } from "@verasist/sdk";
@@ -41,6 +42,35 @@ try {
   await client.textSessions.close(session.run_id);
 }
 ```
+```python
+import os
+from uuid import uuid4
+import httpx
+
+base = "https://app.verasist.ai/api/v1"
+workflow_uuid = os.environ["WORKFLOW_UUID"]
+with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
+    def request(method, path, body=None):
+        response = http.request(method, base + path, json=body)
+        response.raise_for_status()
+        return response.json()
+
+    request("GET", f"/apps/workflows/{workflow_uuid}/check")
+    session = request("POST", f"/apps/workflows/{workflow_uuid}/sessions", {
+        "request_id": str(uuid4()), "initial_context": {"locale": "en"},
+    })
+    run_id = session["run_id"]
+    try:
+        session = request("POST", f"/apps/sessions/{run_id}/execute", {})
+        if not session["closed"]:
+            session = request("POST", f"/apps/sessions/{run_id}/messages", {
+                "text": "Hello", "expected_revision": session["revision"],
+            })
+        print(session["turns"])
+    finally:
+        request("POST", f"/apps/sessions/{run_id}/close", {})
+```
+</CodeGroup>
 
 `create()` initializes session state; `execute()` generates the initial assistant turn or resumes a pending one. `send()` appends a message and executes its response. `get()` reads the current state without executing anything. `close()` ends the session. HTTP responses contain a state snapshot, not an SSE/token stream.
 
@@ -131,38 +161,3 @@ async function handleAuthorizedCall(call: {
 ```
 
 For writes, persist an idempotency record keyed by the scoped `call_id` and return the recorded result if it is repeated. Never trust a user/tenant ID supplied in model arguments instead of the authenticated callback binding.
-
-## Python REST equivalent
-
-This complete example deliberately uses public HTTP endpoints rather than a nonexistent Python session helper:
-
-```python
-import os
-from uuid import uuid4
-import httpx
-
-base = "https://app.verasist.ai/api/v1"
-workflow_uuid = os.environ["WORKFLOW_UUID"]
-with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
-    def request(method, path, body=None):
-        response = http.request(method, base + path, json=body)
-        response.raise_for_status()
-        return response.json()
-
-    request("GET", f"/apps/workflows/{workflow_uuid}/check")
-    session = request("POST", f"/apps/workflows/{workflow_uuid}/sessions", {
-        "request_id": str(uuid4()), "initial_context": {"locale": "en"},
-    })
-    run_id = session["run_id"]
-    try:
-        session = request("POST", f"/apps/sessions/{run_id}/execute", {})
-        if not session["closed"]:
-            session = request("POST", f"/apps/sessions/{run_id}/messages", {
-                "text": "Hello", "expected_revision": session["revision"],
-            })
-        print(session["turns"])
-    finally:
-        request("POST", f"/apps/sessions/{run_id}/close", {})
-```
-
-You can include the same `tool_transport` object in Python's creation JSON. A Python callback service follows exactly the same authorization and result contract; it does not require `LiveSession`.
