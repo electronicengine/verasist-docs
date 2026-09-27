@@ -1,0 +1,98 @@
+---
+title: "SDK overview and setup"
+description: "Choose Python or TypeScript, authenticate, identify workflows, and start building voice and text integrations"
+---
+
+Use the SDK to build workflows, run conversations, and expose application tools to an assistant. The REST clients share generated endpoints, but their session helpers differ.
+
+## Choose a client
+
+| Capability | Python | TypeScript |
+| --- | --- | --- |
+| Workflow builder and typed nodes | `Workflow`, `verasist_sdk.typed` | `Workflow`, `@verasist/sdk/typed` |
+| REST workflow, tool, calendar and call methods | `snake_case` methods | `camelCase` methods |
+| Device voice connection | `LiveSession` with the `voice` extra | Low-level live-session REST methods; no packaged WebRTC session helper |
+| Application text conversation | REST through `httpx`; no `text_sessions` helper | `client.textSessions` |
+| Publish tool schemas | `client.publish_toolset()` or `await session.publish_toolset()` | `client.publishToolset()` |
+| Execute SDK tools | Python functions on the voice device | Authenticated HTTP callback for text sessions |
+
+## Install
+
+```bash
+pip install verasist-sdk
+# For Python device voice:
+pip install 'verasist-sdk[voice]'
+# For TypeScript server applications:
+npm install @verasist/sdk
+```
+
+These pages describe the SDK in the current repository. A previously downloaded package or a vendored `.tgz` can be older. If `publishToolset` or `publish_toolset` is missing, use the matching source build described in [SDK development](/developer/sdks/development). Updating the API container does not update an application's installed SDK.
+
+## Authenticate from your application server
+
+Create an organization API key in **API Keys**. Keep the key on your server or trusted device, not in browser JavaScript. Both clients send `X-API-Key`.
+
+```bash
+export VERASIST_API_URL='https://app.verasist.ai'
+export VERASIST_API_KEY='YOUR_ORGANIZATION_API_KEY'
+export WORKFLOW_UUID='YOUR_WORKFLOW_UUID'
+```
+
+Python reads these variables automatically and provides a synchronous REST client:
+
+```python
+from verasist_sdk import VerasistClient
+
+with VerasistClient(timeout=60) as client:
+    for workflow in client.list_workflows():
+        print(workflow.id, workflow.workflow_uuid, workflow.name)
+```
+
+TypeScript REST methods return promises:
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient({ timeoutMs: 60_000 });
+const workflows = await client.listWorkflows();
+for (const workflow of workflows) {
+  console.log(workflow.id, workflow.workflow_uuid, workflow.name);
+}
+```
+
+You can override environment values with Python `base_url`/`api_key` or TypeScript `baseUrl`/`apiKey`. The default base URL is `http://localhost:8000`. Supply the origin without `/api/v1`; the client adds that prefix. Python `timeout` is in seconds; TypeScript `timeoutMs` is in milliseconds. TypeScript also accepts a `fetch` override for tests or a custom transport.
+
+## Use the correct identifier
+
+| Identifier | Example purpose | Where to get it |
+| --- | --- | --- |
+| Numeric workflow ID | `load_workflow(135)`, `saveWorkflow(135, workflow)`, phone calls | Workflow list or editor URL |
+| Workflow UUID | Toolset publication; text and voice session creation | Workflow settings/header or `workflow_uuid` in a workflow response |
+| Trigger UUID | Alternative voice entry point | API Trigger node |
+| Run ID | Read/send/execute/close a text conversation | `run_id` in a text-session response |
+| Voice session token | Signaling and TURN credentials | Live-session creation response; `LiveSession` handles it |
+
+A trigger UUID and workflow UUID are not interchangeable. `LiveSession.connect()` accepts exactly one when it creates a new session. `publish_toolset` always takes the **workflow UUID**.
+
+## Understand the lifecycle
+
+1. Create or edit a workflow and configure its models.
+2. Define application tool schemas and handlers.
+3. Publish schemas to the workflow's SDK catalog.
+4. Connect tools to the nodes that may use them, save, and publish the workflow.
+5. Start a session with those tools registered in its runtime transport.
+6. Close the session when the conversation ends.
+
+**Only SDK tools connected to the active node are available to the LLM.** A node with no connections cannot use SDK tools, even if they exist in the published catalog or were registered at session startup. Node transitions replace the available tool list.
+
+Publishing a catalog does not deploy code, create a conversation, or publish a workflow draft. See [SDK tools](/developer/sdks/tools) for the full distinction.
+
+## Continue
+
+- [Build and edit workflows](/developer/sdks/build-an-agent)
+- [Voice sessions, audio and camera](/developer/sdks/live-voice-session)
+- [Text sessions and callbacks](/developer/sdks/text-session)
+- [Publish and connect SDK tools](/developer/sdks/tools)
+- [Outbound calls](/developer/sdks/outbound-calls)
+- [Other SDK methods and errors](/developer/sdks/api-capabilities)
+- [Develop, test and package the SDK](/developer/sdks/development)

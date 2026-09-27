@@ -1,0 +1,140 @@
+---
+title: "Publish and connect SDK tools"
+description: "Publish a workflow tool catalog, connect SDK tools to individual nodes, and execute them in voice or text sessions"
+---
+
+## Prerequisites
+
+You need an organization API key, a workflow UUID owned by that organization, a matching SDK/API version, and application-side handlers. For text callbacks, also configure an allowed callback origin as described in [Text sessions](/developer/sdks/text-session).
+
+## Catalog, connection and execution
+
+| Layer | Stores | What it does |
+| --- | --- | --- |
+| Workflow SDK catalog | Names, descriptions and parameter schemas | Makes tools discoverable in the editor |
+| Node connection | `sdk_tool_names` | Allows that active node to use those SDK tools |
+| Session registration | Schemas plus a device connection or HTTP callback | Provides the implementation that actually runs |
+
+All three have different lifecycles. The catalog is shared across workflow versions; node connections belong to the saved workflow definition. Runtime registration lasts for the session.
+
+For example, connect `sdk_status` only to the diagnostics node and `sdk_move` only to the movement node. Diagnostics cannot call `sdk_move`; movement cannot call `sdk_status` unless you also connect it there. Missing, `null`, and empty node selections all expose **zero** SDK tools. There is no global "allow all" fallback. The execution handler also rejects calls that are not enabled on the active node.
+
+## Publish schemas from TypeScript
+
+Run this from your server, with the environment configured in [Setup](/developer/sdks/introduction):
+
+```typescript
+import { VerasistClient, type TextTool } from "@verasist/sdk";
+
+const client = new VerasistClient();
+const workflowUuid = process.env.WORKFLOW_UUID!;
+const tools: TextTool[] = [{
+  name: "sdk_status",
+  description: "Read the current device status.",
+  parameters: {
+    type: "object",
+    properties: {},
+    additionalProperties: false,
+  },
+}];
+
+await client.publishToolset(workflowUuid, tools);
+const catalog = await client.getToolset(workflowUuid);
+console.log(catalog.tools.map((tool) => tool.name));
+```
+
+Use the same `tools` array in your text session's `tool_transport`. Do not send function objects, tokens or callback URLs to `publishToolset`.
+
+## Publish schemas from Python
+
+```python
+import os
+from verasist_sdk import VerasistClient
+
+tools = [{
+    "name": "sdk_status",
+    "description": "Read the current device status.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+}]
+
+with VerasistClient() as client:
+    client.publish_toolset(os.environ["WORKFLOW_UUID"], tools)
+    catalog = client.get_toolset(os.environ["WORKFLOW_UUID"])
+    print([tool.name for tool in catalog.tools])
+```
+
+A Python `LiveSession` can export all its registered tools for you. This example defines a function you can call before connecting:
+
+```python
+from verasist_sdk import LiveSession, VerasistClient
+
+async def prepare_device(client: VerasistClient, workflow_uuid: str) -> LiveSession:
+    session = LiveSession(client)
+
+    @session.tool(name="sdk_status", description="Read the device status")
+    def status():
+        return {"online": True}  # Replace with your device's actual status.
+
+    await session.publish_toolset(workflow_uuid)
+    return session
+```
+
+`publish_toolset()` sends schemas only. It neither invokes the handler nor connects the voice session. Register tools before `start()`/`connect()`; adding a handler after session creation does not update the remote session registry.
+
+## Connect tools in the workflow editor
+
+1. Open the workflow and the **SDK tools** tab in the add-node panel.
+2. Click **Refresh** after publishing a catalog.
+3. Click a colored SDK tool card to add its icon to the canvas.
+4. Connect the icon to a start/agent node's tool input.
+5. Repeat for other nodes, or select SDK tools in each node's resource settings.
+6. Save and publish the workflow for application sessions.
+
+Connections survive saving and reopening the workflow. Removing an SDK icon detaches that tool from the node; it does not delete the catalog or application handler. Removing the last connection leaves the node with no SDK access.
+
+You can declare the same selection when building a node in code:
+
+```python
+from verasist_sdk import VerasistClient, Workflow
+
+with VerasistClient() as client:
+    workflow = Workflow(client=client, name="device_diagnostics")
+    diagnostics = workflow.add(
+        type="startCall", name="diagnostics",
+        prompt="Use sdk_status to check the device.",
+        sdk_tool_names=["sdk_status"],
+    )
+    done = workflow.add(type="endCall", name="done", prompt="Say goodbye.")
+    workflow.edge(diagnostics, done, label="done", condition="The check is complete.")
+    print(workflow.to_json())
+```
+
+A connection alone does not make a missing runtime handler available. The runtime exposes the intersection of the active node's names and the session's registered tool schemas. The catalog is editor metadata, not executable code.
+
+## Replace or clear a catalog
+
+Publication replaces the **whole** catalog for that workflow. Repeating the same request does not create duplicates. Keep one authoritative manifest if several developers or deployments share a workflow; the last publication wins.
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+async function clearCatalog(client: VerasistClient, workflowUuid: string) {
+  return client.publishToolset(workflowUuid, []);
+}
+```
+
+Python equivalent: `client.publish_toolset(workflow_uuid, [])`. Clearing the catalog does not remove saved node connections or tools already registered in existing sessions. The editor marks selected names missing from the catalog so you can remove them deliberately. To revoke use, remove node connections and publish the workflow; start new sessions with the updated definition and registry.
+
+## Schema limits
+
+- Catalog: at most 128 tools and a serialized size limit of 512,000 bytes.
+- Names: 1–64 characters, starting with a letter or underscore; remaining characters may include letters, digits, underscores and hyphens.
+- Descriptions: at most 12,000 characters.
+- Parameters: a valid JSON Schema with root `type: "object"`; duplicate names are rejected.
+- Text transport has stricter limits: 1–32 tools, nonempty descriptions, and names matching `sdk_` followed by 1–60 letters, digits or underscores. Prefer this naming convention for tools shared by voice and text.
+
+Treat schemas as the LLM's interface. Validate arguments again in your handler before reading private data or changing application state. Schema publication does not upload or validate your implementation.

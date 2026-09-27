@@ -1,0 +1,98 @@
+---
+title: "SDK kurulumu ve genel bakış"
+description: "Python ve TypeScript SDK seçenekleri, kimlik doğrulama, workflow kimlikleri ve oturum yaşam döngüsü"
+---
+
+SDK ile workflow oluşturabilir, konuşma başlatabilir ve uygulamanızdaki araçları asistana açabilirsiniz. Üretilen REST metotları ortak olsa da iki dilin hazır oturum yardımcıları aynı değildir.
+
+## İstemci seçimi
+
+| Özellik | Python | TypeScript |
+| --- | --- | --- |
+| Workflow oluşturma ve tipli node’lar | `Workflow`, `verasist_sdk.typed` | `Workflow`, `@verasist/sdk/typed` |
+| REST metotları | `snake_case` | `camelCase` |
+| Cihaz üzerinden sesli oturum | `voice` eklentisiyle `LiveSession` | Oturum oluşturma REST metotları var; hazır WebRTC istemcisi yok |
+| Uygulama metin oturumu | `httpx` ile REST; `text_sessions` yardımcısı yok | `client.textSessions` |
+| Araç şeması yayımlama | `client.publish_toolset()` veya `await session.publish_toolset()` | `client.publishToolset()` |
+| Araç çalıştırma | Sesli oturumda cihazdaki Python fonksiyonu | Metin oturumunda kimliği doğrulanmış HTTP callback |
+
+## Kurulum
+
+```bash
+pip install verasist-sdk
+# For Python device voice:
+pip install 'verasist-sdk[voice]'
+# For TypeScript server applications:
+npm install @verasist/sdk
+```
+
+Bu sayfalar mevcut repository kodunu anlatır. Daha önce indirdiğiniz paket veya `vendor/` içindeki `.tgz` daha eski olabilir. `publishToolset`/`publish_toolset` bulunmuyorsa [SDK geliştirme](/developer/sdks/development) sayfasındaki kaynak kurulumunu kullanın. API container’ını yenilemek uygulamanın SDK paketini güncellemez.
+
+## Kimlik doğrulama
+
+**API Anahtarları** bölümünden organizasyonunuza ait anahtarı oluşturun. Anahtarı uygulama sunucusunda veya güvenilir cihazda tutun; tarayıcıya göndermeyin. İstemciler `X-API-Key` başlığını kullanır.
+
+```bash
+export VERASIST_API_URL='https://app.verasist.ai'
+export VERASIST_API_KEY='YOUR_ORGANIZATION_API_KEY'
+export WORKFLOW_UUID='YOUR_WORKFLOW_UUID'
+```
+
+Python ortam değişkenlerini otomatik okur. REST istemcisi senkrondur; `with` bloğu sonunda bağlantıları kapatır:
+
+```python
+from verasist_sdk import VerasistClient
+
+with VerasistClient(timeout=60) as client:
+    for workflow in client.list_workflows():
+        print(workflow.id, workflow.workflow_uuid, workflow.name)
+```
+
+TypeScript metotları promise döndürür:
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient({ timeoutMs: 60_000 });
+const workflows = await client.listWorkflows();
+for (const workflow of workflows) {
+  console.log(workflow.id, workflow.workflow_uuid, workflow.name);
+}
+```
+
+Python’da `base_url`/`api_key`, TypeScript’te `baseUrl`/`apiKey` ile değerleri açıkça verebilirsiniz. Varsayılan adres `http://localhost:8000` olur. Adrese `/api/v1` eklemeyin; istemci ekler. Python `timeout` saniye, TypeScript `timeoutMs` milisaniyedir. TypeScript `fetch` seçeneği test veya özel taşıma katmanı içindir.
+
+## Doğru kimliği kullanın
+
+| Kimlik | Kullanımı | Kaynağı |
+| --- | --- | --- |
+| Sayısal workflow ID | Yükleme, kaydetme, telefon araması | Workflow listesi veya editör URL’si |
+| Workflow UUID | Araç yayımlama, metin/ses oturumu | Workflow ayarları/başlığı veya API’deki `workflow_uuid` |
+| Trigger UUID | Sesli oturum için alternatif giriş | API Trigger node’u |
+| Run ID | Metin oturumunu okuma, mesaj, devam, kapatma | Yanıttaki `run_id` |
+| Ses oturumu token’ı | Signaling ve TURN | Oturum yanıtı; `LiveSession` yönetir |
+
+Trigger UUID ile workflow UUID birbirinin yerine geçmez. Yeni ses oturumu oluştururken yalnızca birini verin. Araç kataloğu yayımlamak için her zaman **workflow UUID** kullanın.
+
+## Yaşam döngüsü
+
+1. Workflow’u ve modellerini yapılandırın.
+2. Uygulama araçlarının şemalarını ve handler’larını tanımlayın.
+3. Şemaları workflow’un SDK kataloğuna yayımlayın.
+4. Araçları kullanabilecek node’lara bağlayın, workflow’u kaydedip yayımlayın.
+5. Araçları çalışma zamanında da kaydederek oturumu başlatın.
+6. Konuşma bitince oturumu kapatın.
+
+**LLM yalnızca aktif node’a bağlı SDK araçlarını kullanabilir.** Node’da bağlantı yoksa katalogda veya oturumda kayıtlı araçlar da kullanılamaz. Node değişince kullanılabilir araç listesi değişir.
+
+Katalog yayımlamak uygulama kodunu dağıtmaz, oturum açmaz ve workflow taslağını yayımlamaz.
+
+## Rehberler
+
+- [Workflow oluşturma](/developer/sdks/build-an-agent)
+- [Sesli oturum, ses ve kamera](/developer/sdks/live-voice-session)
+- [Metin oturumları](/developer/sdks/text-session)
+- [SDK araçlarını yayımlama ve bağlama](/developer/sdks/tools)
+- [Telefon aramaları](/developer/sdks/outbound-calls)
+- [Diğer metotlar ve hatalar](/developer/sdks/api-capabilities)
+- [SDK geliştirme ve paketleme](/developer/sdks/development)

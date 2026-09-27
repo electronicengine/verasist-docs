@@ -1,0 +1,168 @@
+---
+title: "Text sessions and application callbacks"
+description: "Create persistent text conversations, send revision-safe messages, resume pending turns, and execute SDK tools through HTTP"
+---
+
+## Prerequisites
+
+Use a server-side organization API key and a published workflow UUID. Assign a usable model package to the workflow; `textSessions.check()` checks that configuration. Application sessions use the published definition, not the editor draft. Text sessions do not open WebRTC or use microphone/speaker tracks.
+
+The TypeScript SDK includes `client.textSessions`. Python currently uses the same REST endpoints through `httpx`; there is no `client.text_sessions` helper.
+
+## Create, execute, send and close
+
+This TypeScript example opens a conversation without application callbacks. It can still use server-side tools configured on the workflow.
+
+```typescript
+import { randomUUID } from "node:crypto";
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient({ timeoutMs: 120_000 });
+const workflowUuid = process.env.WORKFLOW_UUID!;
+await client.textSessions.check(workflowUuid);
+
+// Persist this ID before sending create; reuse it only to retry this creation.
+const requestId = randomUUID();
+let session = await client.textSessions.create(workflowUuid, {
+  request_id: requestId,
+  initial_context: { locale: "en" },
+  instructions: "Keep responses concise and explain tool failures clearly.",
+});
+
+try {
+  session = await client.textSessions.execute(session.run_id);
+  if (!session.closed) {
+    session = await client.textSessions.send(
+      session.run_id, "Hello, what can you help me with?", session.revision,
+    );
+  }
+  console.log(session.turns);
+} finally {
+  await client.textSessions.close(session.run_id);
+}
+```
+
+`create()` initializes session state; `execute()` generates the initial assistant turn or resumes a pending one. `send()` appends a message and executes its response. `get()` reads the current state without executing anything. `close()` ends the session. HTTP responses contain a state snapshot, not an SSE/token stream.
+
+| Response field | Meaning |
+| --- | --- |
+| `run_id` | Persist this identifier to resume the conversation |
+| `revision` | Send the latest value as `expected_revision` for the next message |
+| `status` | Session execution state, including `pending_assistant_turn` |
+| `closed` | Whether the run has ended |
+| `turns` | Turn IDs/statuses and user/assistant text |
+
+## Retry and concurrency rules
+
+- A creation `request_id` is a UUID. Reusing it for the same organization/user returns the existing session; it does not replace callback credentials or instructions. Use a new UUID for a new conversation or workflow.
+- Serialize writes to a session. Concurrent operations, stale revisions, a closed session, or a turn already pending can return 409.
+- After a timeout, 409 or 502, call `get(run_id)` and inspect the state. The request may already have changed the session.
+- If `status` is `pending_assistant_turn`, use `execute(run_id)` to resume that turn rather than sending the same user message again.
+- Do not blindly retry application mutations or LLM turns; a callback may already have performed its action.
+- Sessions are bound to the API key's organization and underlying user. Do not assume a different key/user can resume another actor's run.
+
+A helper for inspecting a recoverable state:
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+async function resumePending(client: VerasistClient, runId: number) {
+  const current = await client.textSessions.get(runId);
+  if (!current.closed && current.status === "pending_assistant_turn") {
+    return client.textSessions.execute(runId);
+  }
+  return current;
+}
+```
+
+## Add application tools
+
+First [publish the schemas and connect their names to nodes](/developer/sdks/tools), then save and publish the workflow. The session must also register those schemas and a callback transport:
+
+```typescript
+import { randomBytes, randomUUID } from "node:crypto";
+import { VerasistClient, type TextTool } from "@verasist/sdk";
+
+async function createWithTools(client: VerasistClient, workflowUuid: string,
+  callbackUrl: string, registerToken: (token: string) => Promise<void>) {
+  const tools: TextTool[] = [{
+    name: "sdk_status", description: "Read the application's status.",
+    parameters: { type: "object", properties: {}, additionalProperties: false },
+  }];
+  const token = randomBytes(32).toString("hex");
+  await registerToken(token); // Bind to the authenticated app user before creation.
+  return client.textSessions.create(workflowUuid, {
+    request_id: randomUUID(),
+    tool_transport: { url: callbackUrl, token, tools },
+  });
+}
+```
+
+`registerToken` is your application storage adapter, not an SDK method. Store the token's user/tenant binding and expiration before creating the session. Revoke it when the session closes.
+
+On the **Verasist API server**, set `SDK_TOOL_CALLBACK_ORIGINS` to a comma-separated list of exact allowed origins, for example `https://your-app.example`. The configured callback URL can include a path such as `/api/sdk/tools`, but must not include userinfo, a query or fragment. Redirects are not followed. The callback must be reachable from the API server; `localhost` inside a container refers to that container.
+
+Transport limits: 1–32 tools; names start with `sdk_` and contain 1–60 following letters/digits/underscores; nonempty descriptions up to 12,000 characters; object parameter schemas; token length 40–256 characters. Calls have a 20-second HTTP timeout.
+
+## Handle a callback
+
+The API sends `Authorization: Bearer <session-token>` and this JSON shape:
+
+```json
+{"name":"sdk_status","arguments":{},"call_id":"tool-call-id"}
+```
+
+Return a JSON result. Non-2xx responses and network/JSON failures become tool errors. The TypeScript helper dispatches only explicitly registered handlers; **you** authenticate the request and enforce application ownership.
+
+```typescript
+import { dispatchTextTool } from "@verasist/sdk";
+
+// Call only after your HTTP layer validates the token, JSON shape and user scope.
+async function handleAuthorizedCall(call: {
+  name: string; arguments: Record<string, unknown>; call_id: string;
+}) {
+  return dispatchTextTool({
+    sdk_status: async (args, callId) => {
+      if (Object.keys(args).length !== 0) throw new Error("Unexpected arguments");
+      return { online: true, call_id: callId };
+    },
+  }, call);
+}
+```
+
+For writes, persist an idempotency record keyed by the scoped `call_id` and return the recorded result if it is repeated. Never trust a user/tenant ID supplied in model arguments instead of the authenticated callback binding.
+
+## Python REST equivalent
+
+This complete example deliberately uses public HTTP endpoints rather than a nonexistent Python session helper:
+
+```python
+import os
+from uuid import uuid4
+import httpx
+
+base = os.environ["VERASIST_API_URL"].rstrip("/") + "/api/v1"
+workflow_uuid = os.environ["WORKFLOW_UUID"]
+with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
+    def request(method, path, body=None):
+        response = http.request(method, base + path, json=body)
+        response.raise_for_status()
+        return response.json()
+
+    request("GET", f"/apps/workflows/{workflow_uuid}/check")
+    session = request("POST", f"/apps/workflows/{workflow_uuid}/sessions", {
+        "request_id": str(uuid4()), "initial_context": {"locale": "en"},
+    })
+    run_id = session["run_id"]
+    try:
+        session = request("POST", f"/apps/sessions/{run_id}/execute", {})
+        if not session["closed"]:
+            session = request("POST", f"/apps/sessions/{run_id}/messages", {
+                "text": "Hello", "expected_revision": session["revision"],
+            })
+        print(session["turns"])
+    finally:
+        request("POST", f"/apps/sessions/{run_id}/close", {})
+```
+
+You can include the same `tool_transport` object in Python's creation JSON. A Python callback service follows exactly the same authorization and result contract; it does not require `LiveSession`.

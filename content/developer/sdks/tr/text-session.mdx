@@ -1,0 +1,165 @@
+---
+title: "Metin oturumları ve uygulama callback’leri"
+description: "Kalıcı metin konuşması oluşturun, revision ile mesaj gönderin, bekleyen turları sürdürün ve HTTP üzerinden SDK aracı çalıştırın"
+---
+
+## Ön koşullar
+
+Sunucuda organizasyon API anahtarı ve yayımlanmış workflow UUID’si kullanın. Workflow’a kullanılabilir model paketi atayın; `textSessions.check()` bunu kontrol eder. Uygulama oturumları editör taslağını değil yayımlanmış tanımı kullanır. WebRTC veya mikrofon/hoparlör bağlantısı açılmaz.
+
+TypeScript SDK’da `client.textSessions` vardır. Python’da aynı endpoint’leri `httpx` ile çağırın; `client.text_sessions` yardımcısı yoktur.
+
+## Oluşturma, yürütme, mesaj ve kapatma
+
+Bu örnek uygulama callback’i olmadan oturum açar. Workflow’a bağlı sunucu araçları kullanılmaya devam edebilir:
+
+```typescript
+import { randomUUID } from "node:crypto";
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient({ timeoutMs: 120_000 });
+const workflowUuid = process.env.WORKFLOW_UUID!;
+await client.textSessions.check(workflowUuid);
+
+// Persist this ID before sending create; reuse it only to retry this creation.
+const requestId = randomUUID();
+let session = await client.textSessions.create(workflowUuid, {
+  request_id: requestId,
+  initial_context: { locale: "en" },
+  instructions: "Keep responses concise and explain tool failures clearly.",
+});
+
+try {
+  session = await client.textSessions.execute(session.run_id);
+  if (!session.closed) {
+    session = await client.textSessions.send(
+      session.run_id, "Hello, what can you help me with?", session.revision,
+    );
+  }
+  console.log(session.turns);
+} finally {
+  await client.textSessions.close(session.run_id);
+}
+```
+
+`create()` oturum durumunu oluşturur. `execute()` ilk asistan turunu üretir veya bekleyen turu sürdürür. `send()` kullanıcı mesajını ekleyip cevabı yürütür. `get()` çalıştırmadan güncel durumu okur. `close()` oturumu bitirir. Yanıtlar durum görüntüsüdür; SSE/token akışı değildir.
+
+| Yanıt alanı | Anlamı |
+| --- | --- |
+| `run_id` | Konuşmayı sürdürmek için saklanacak kimlik |
+| `revision` | Sonraki mesajın `expected_revision` değeri |
+| `status` | `pending_assistant_turn` dahil yürütme durumu |
+| `closed` | Run’ın bitip bitmediği |
+| `turns` | Tur ID/durumu ve kullanıcı/asistan metni |
+
+## Tekrar deneme ve eşzamanlılık
+
+Oluşturma için UUID biçiminde `request_id` üretip istekten önce saklayın. Aynı organizasyon/kullanıcı için aynı ID yeniden gönderilirse mevcut oturum döner; callback kimlik bilgileri veya talimatları değiştirilmez. Yeni konuşma veya workflow için yeni ID kullanın.
+
+Aynı oturuma yazma işlemlerini sırayla yapın. Eşzamanlı işlem, eski revision, kapalı oturum veya bekleyen tur 409 döndürebilir. Timeout, 409 veya 502 sonrasında `get(run_id)` ile durumu okuyun; istek zaten uygulanmış olabilir. `pending_assistant_turn` varsa aynı mesajı yeniden eklemek yerine `execute(run_id)` kullanın. Araç bir işlemi zaten gerçekleştirmiş olabileceği için körlemesine tekrar denemeyin.
+
+Oturum API anahtarının organizasyonuna ve bağlı kullanıcıya aittir. Başka bir anahtar/kullanıcının aynı run’a erişebileceğini varsaymayın.
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+async function resumePending(client: VerasistClient, runId: number) {
+  const current = await client.textSessions.get(runId);
+  if (!current.closed && current.status === "pending_assistant_turn") {
+    return client.textSessions.execute(runId);
+  }
+  return current;
+}
+```
+
+## Uygulama araçlarını ekleme
+
+Önce [şemaları yayımlayıp node’lara bağlayın](/developer/sdks/tools), workflow’u kaydedip yayımlayın. Oturum oluştururken aynı şemalar ve callback taşıması da verilmelidir:
+
+```typescript
+import { randomBytes, randomUUID } from "node:crypto";
+import { VerasistClient, type TextTool } from "@verasist/sdk";
+
+async function createWithTools(client: VerasistClient, workflowUuid: string,
+  callbackUrl: string, registerToken: (token: string) => Promise<void>) {
+  const tools: TextTool[] = [{
+    name: "sdk_status", description: "Read the application's status.",
+    parameters: { type: "object", properties: {}, additionalProperties: false },
+  }];
+  const token = randomBytes(32).toString("hex");
+  await registerToken(token); // Bind to the authenticated app user before creation.
+  return client.textSessions.create(workflowUuid, {
+    request_id: randomUUID(),
+    tool_transport: { url: callbackUrl, token, tools },
+  });
+}
+```
+
+`registerToken` SDK metodu değil, uygulamanızın saklama adaptörüdür. Token’ı doğrulanmış kullanıcı/tenant ve son kullanma süresiyle eşleyin; oturum bitince iptal edin.
+
+**Verasist API sunucusunda** `SDK_TOOL_CALLBACK_ORIGINS` değerine izin verilen tam origin’leri virgülle ayırarak ekleyin; örneğin `https://your-app.example`. Callback URL’si `/api/sdk/tools` gibi path içerebilir; kullanıcı bilgisi, query veya fragment içeremez. Yönlendirmeler takip edilmez. URL API sunucusundan erişilebilir olmalıdır; container içindeki `localhost` aynı container’ı gösterir.
+
+Taşıma sınırları: 1–32 araç; `sdk_` ve ardından 1–60 harf/rakam/alt çizgi; boş olmayan ve en fazla 12.000 karakter açıklama; nesne parametre şeması; 40–256 karakter token. HTTP çağrı zaman aşımı 20 saniyedir.
+
+## Callback karşılama
+
+API, `Authorization: Bearer <session-token>` başlığıyla şu JSON’u gönderir:
+
+```json
+{"name":"sdk_status","arguments":{},"call_id":"tool-call-id"}
+```
+
+JSON sonuç döndürün. Non-2xx yanıtlar ile ağ/JSON hataları araç hatasına çevrilir. `dispatchTextTool` yalnızca açıkça kayıtlı handler’lara yönlendirir; HTTP isteğini doğrulamak ve kullanıcı sahipliğini denetlemek uygulamanızın görevidir.
+
+```typescript
+import { dispatchTextTool } from "@verasist/sdk";
+
+// Call only after your HTTP layer validates the token, JSON shape and user scope.
+async function handleAuthorizedCall(call: {
+  name: string; arguments: Record<string, unknown>; call_id: string;
+}) {
+  return dispatchTextTool({
+    sdk_status: async (args, callId) => {
+      if (Object.keys(args).length !== 0) throw new Error("Unexpected arguments");
+      return { online: true, call_id: callId };
+    },
+  }, call);
+}
+```
+
+Yazan işlemlerde kullanıcı kapsamındaki `call_id` ile kalıcı idempotency kaydı tutun ve yinelenen çağrıya önceki sonucu döndürün. Model argümanındaki kullanıcı/tenant bilgisini, doğrulanmış token bağlamının yerine kullanmayın.
+
+## Python REST örneği
+
+Bu örnek olmayan bir SDK yardımcısı yerine gerçek HTTP endpoint’lerini kullanır:
+
+```python
+import os
+from uuid import uuid4
+import httpx
+
+base = os.environ["VERASIST_API_URL"].rstrip("/") + "/api/v1"
+workflow_uuid = os.environ["WORKFLOW_UUID"]
+with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
+    def request(method, path, body=None):
+        response = http.request(method, base + path, json=body)
+        response.raise_for_status()
+        return response.json()
+
+    request("GET", f"/apps/workflows/{workflow_uuid}/check")
+    session = request("POST", f"/apps/workflows/{workflow_uuid}/sessions", {
+        "request_id": str(uuid4()), "initial_context": {"locale": "en"},
+    })
+    run_id = session["run_id"]
+    try:
+        session = request("POST", f"/apps/sessions/{run_id}/execute", {})
+        if not session["closed"]:
+            session = request("POST", f"/apps/sessions/{run_id}/messages", {
+                "text": "Hello", "expected_revision": session["revision"],
+            })
+        print(session["turns"])
+    finally:
+        request("POST", f"/apps/sessions/{run_id}/close", {})
+```
+
+Python oluşturma JSON’una aynı `tool_transport` nesnesi eklenebilir. Python callback servisi de aynı kimlik doğrulama/sonuç sözleşmesini uygular; `LiveSession` gerekmez.

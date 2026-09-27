@@ -1,0 +1,140 @@
+---
+title: "SDK araçlarını yayımlama ve node’a bağlama"
+description: "Araç kataloğunu yayımlayın, her node’un araç erişimini belirleyin ve ses/metin oturumunda handler çalıştırın"
+---
+
+## Ön koşullar
+
+Organizasyon API anahtarı, aynı organizasyona ait workflow UUID’si, uyumlu SDK/API sürümü ve uygulama handler’ları gerekir. Metin callback’leri için ayrıca [izin verilen callback origin’ini](/developer/sdks/text-session) yapılandırın.
+
+## Katalog, bağlantı ve çalışma zamanı
+
+| Katman | Sakladığı bilgi | Görevi |
+| --- | --- | --- |
+| Workflow SDK kataloğu | Ad, açıklama, parametre şeması | Aracı editörde listeler |
+| Node bağlantısı | `sdk_tool_names` | Aktif node’un kullanabileceği araçları belirler |
+| Oturum kaydı | Şemalar ve cihaz bağlantısı/HTTP callback | Gerçekte çalışacak uygulamayı sağlar |
+
+Katalog workflow sürümleri arasında ortaktır. Node bağlantıları kaydedilen workflow tanımına aittir; çalışma zamanı kayıtları oturumla sınırlıdır.
+
+Örneğin `sdk_status` yalnızca tanılama node’una, `sdk_move` yalnızca hareket node’una bağlıysa her node sadece kendi aracını kullanabilir. Eksik, `null` veya boş seçim **sıfır SDK aracı** demektir. Genel “tümüne izin ver” davranışı yoktur. Çalıştırma katmanı da aktif node’da izin verilmeyen çağrıyı reddeder.
+
+## TypeScript ile yayımlama
+
+[Kurulumdaki](/developer/sdks/introduction) ortam değişkenleriyle uygulama sunucusunda çalıştırın:
+
+```typescript
+import { VerasistClient, type TextTool } from "@verasist/sdk";
+
+const client = new VerasistClient();
+const workflowUuid = process.env.WORKFLOW_UUID!;
+const tools: TextTool[] = [{
+  name: "sdk_status",
+  description: "Read the current device status.",
+  parameters: {
+    type: "object",
+    properties: {},
+    additionalProperties: false,
+  },
+}];
+
+await client.publishToolset(workflowUuid, tools);
+const catalog = await client.getToolset(workflowUuid);
+console.log(catalog.tools.map((tool) => tool.name));
+```
+
+Aynı `tools` dizisini metin oturumunun `tool_transport` alanına da verin. `publishToolset` içine fonksiyon kodu, token veya callback URL’si göndermeyin.
+
+## Python ile yayımlama
+
+```python
+import os
+from verasist_sdk import VerasistClient
+
+tools = [{
+    "name": "sdk_status",
+    "description": "Read the current device status.",
+    "parameters": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": False,
+    },
+}]
+
+with VerasistClient() as client:
+    client.publish_toolset(os.environ["WORKFLOW_UUID"], tools)
+    catalog = client.get_toolset(os.environ["WORKFLOW_UUID"])
+    print([tool.name for tool in catalog.tools])
+```
+
+Sesli oturumda kayıtlı araçların tamamını otomatik yayımlayabilirsiniz:
+
+```python
+from verasist_sdk import LiveSession, VerasistClient
+
+async def prepare_device(client: VerasistClient, workflow_uuid: str) -> LiveSession:
+    session = LiveSession(client)
+
+    @session.tool(name="sdk_status", description="Read the device status")
+    def status():
+        return {"online": True}  # Replace with your device's actual status.
+
+    await session.publish_toolset(workflow_uuid)
+    return session
+```
+
+Bu yardımcı fonksiyon bağlantıdan önce çağrılabilir. Yayımlama sadece şema gönderir; handler’ı çalıştırmaz ve ses oturumu açmaz. Araçları `start()`/`connect()` öncesinde kaydedin. Sonradan handler eklemek sunucudaki oturum kaydını güncellemez.
+
+## Editörde bağlama
+
+1. Workflow’u açıp node ekleme panelindeki **SDK araçları** sekmesine geçin.
+2. Katalog yayımladıktan sonra **Yenile** düğmesine basın.
+3. Renkli araç kartına tıklayıp ikonu tuvale ekleyin.
+4. İkonu başlangıç/asistan node’unun araç girişine bağlayın.
+5. Diğer node’lar için tekrarlayın veya node’un kaynak ayarlarından seçim yapın.
+6. Workflow’u kaydedip uygulama oturumları için yayımlayın.
+
+Bağlantılar kaydedilip yeniden açıldığında korunur. Tuvalden SDK ikonu kaldırmak katalog veya handler’ı silmez, ilgili node’dan ayırır. Son bağlantının kaldırılması node’u SDK erişimsiz bırakır.
+
+Kodla node oluştururken aynı seçimi yapabilirsiniz:
+
+```python
+from verasist_sdk import VerasistClient, Workflow
+
+with VerasistClient() as client:
+    workflow = Workflow(client=client, name="device_diagnostics")
+    diagnostics = workflow.add(
+        type="startCall", name="diagnostics",
+        prompt="Use sdk_status to check the device.",
+        sdk_tool_names=["sdk_status"],
+    )
+    done = workflow.add(type="endCall", name="done", prompt="Say goodbye.")
+    workflow.edge(diagnostics, done, label="done", condition="The check is complete.")
+    print(workflow.to_json())
+```
+
+Çalışma zamanı, aktif node’daki isimler ile oturumda kayıtlı şemaların kesişimini sunar. Bağlantı yapılmış ama oturumda kaydedilmemiş araç kullanılamaz; katalog çalıştırılabilir kod değildir.
+
+## Kataloğu değiştirme veya temizleme
+
+Yayımlama workflow’un **tüm kataloğunu değiştirir**. Aynı isteği tekrar göndermek kopya oluşturmaz. Aynı workflow’u paylaşan uygulamalar için tek yetkili manifest kullanın; son yayımlama geçerlidir.
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+async function clearCatalog(client: VerasistClient, workflowUuid: string) {
+  return client.publishToolset(workflowUuid, []);
+}
+```
+
+Python karşılığı `client.publish_toolset(workflow_uuid, [])` olur. Kataloğu temizlemek mevcut node bağlantılarını veya açık oturumların kayıtlarını silmez. Editör katalogdan kaldırılmış seçili isimleri eksik gösterir. Kullanımı kaldırmak için node bağlantılarını kaldırıp workflow’u yayımlayın ve güncel tanım/kayıtlarla yeni oturum açın.
+
+## Şema sınırları
+
+- Katalog en fazla 128 araç ve serileştirilmiş 512.000 bayt olabilir.
+- Ad 1–64 karakterdir; harf veya alt çizgiyle başlar, devamında harf/rakam/alt çizgi/tire olabilir.
+- Açıklama en fazla 12.000 karakterdir.
+- Parametreler kökü `type: "object"` olan geçerli JSON Schema olmalıdır; yinelenen adlar reddedilir.
+- Metin taşıması daha dar sınırlar uygular: 1–32 araç, boş olmayan açıklama ve `sdk_` sonrasında 1–60 harf/rakam/alt çizgi. Ses ve metin arasında ortak araçlar için bu adlandırmayı tercih edin.
+
+Şema LLM’in arayüzüdür. Özellikle veri yazan veya cihaz hareketi başlatan handler’da argümanları ayrıca doğrulayın. Şema yayımlamak uygulama kodunu yüklemez veya doğrulamaz.

@@ -1,0 +1,197 @@
+---
+title: "Build an agent"
+description: "Assemble a Verasist voice agent programmatically with the SDK and save it as a draft"
+---
+
+The SDK mirrors the node-and-edge model of the [Voice Agent Builder](/guides/workflows/introduction). You create a `Workflow`, add nodes (`startCall`, `agentNode`, `endCall`, …) with `add()`, connect them with `edge()`, and persist the result via `save_workflow`.
+
+## Prerequisites
+
+- A Verasist [API key](/developer/configurations/api-keys) exported as `VERASIST_API_KEY`
+- An existing agent ID to save drafts against (create one in the Verasist UI, or via [`POST /api/v1/workflow/create/definition`](/api-reference/agents/create-from-definition))
+
+## Build and save
+
+The example below builds a three-node loan-qualification agent and saves it as a **draft** on an existing agent. Your published agent keeps serving calls until you explicitly publish the draft.
+
+<CodeGroup>
+```python Python
+from verasist_sdk import VerasistClient, Workflow
+
+with VerasistClient(api_key="YOUR_API_KEY") as client:
+    wf = Workflow(client=client, name="loan_qualification")
+
+    greeting = wf.add(
+        type="startCall",
+        name="greeting",
+        prompt="You are Sarah from Acme Loans. Greet the caller warmly.",
+    )
+    qualify = wf.add(
+        type="agentNode",
+        name="qualify",
+        prompt="Ask about loan amount, purpose, and monthly income.",
+    )
+    done = wf.add(
+        type="endCall",
+        name="done",
+        prompt="Thank them and end the call politely.",
+    )
+
+    wf.edge(greeting, qualify, label="interested", condition="Caller wants to continue.")
+    wf.edge(qualify, done, label="done", condition="All qualification questions answered.")
+
+    client.save_workflow(workflow_id=123, workflow=wf)
+```
+```typescript TypeScript
+import { VerasistClient, Workflow } from "@verasist/sdk";
+
+const client = new VerasistClient({ apiKey: "YOUR_API_KEY" });
+const wf = new Workflow({ client, name: "loan_qualification" });
+
+const greeting = await wf.add({
+    type: "startCall",
+    name: "greeting",
+    prompt: "You are Sarah from Acme Loans. Greet the caller warmly.",
+});
+const qualify = await wf.add({
+    type: "agentNode",
+    name: "qualify",
+    prompt: "Ask about loan amount, purpose, and monthly income.",
+});
+const done = await wf.add({
+    type: "endCall",
+    name: "done",
+    prompt: "Thank them and end the call politely.",
+});
+
+wf.edge(greeting, qualify, { label: "interested", condition: "Caller wants to continue." });
+wf.edge(qualify, done, { label: "done", condition: "All qualification questions answered." });
+
+await client.saveWorkflow(123, wf);
+```
+</CodeGroup>
+
+## Edit an existing agent
+
+Load an agent into an editable `Workflow`, mutate it, then save:
+
+<CodeGroup>
+```python Python
+from verasist_sdk import VerasistClient
+
+with VerasistClient() as client:
+    wf = client.load_workflow(workflow_id=123)
+    wf.name = "loan_qualification_v2"
+    client.save_workflow(workflow_id=123, workflow=wf)
+```
+```typescript TypeScript
+import { VerasistClient, Workflow } from "@verasist/sdk";
+
+const client = new VerasistClient();
+const original = await client.loadWorkflow(123);
+const edited = await Workflow.fromJson({ ...original.toJson() }, {
+  client, name: "loan_qualification_v2",
+});
+await client.saveWorkflow(123, edited);
+```
+</CodeGroup>
+
+## Discover node types
+
+Each node's `type` string and required fields come from the backend's node-spec catalog. Fetch it at runtime to validate what you can build:
+
+<CodeGroup>
+```python Python
+from verasist_sdk import VerasistClient
+
+with VerasistClient() as client:
+    types = client.list_node_types()
+    for spec in types.node_types:
+        print(spec.name, [p.name for p in spec.properties])
+```
+```typescript TypeScript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient();
+const types = await client.listNodeTypes();
+for (const spec of types.node_types) {
+    console.log(spec.name, spec.properties.map(p => p.name));
+}
+```
+</CodeGroup>
+
+<Note>
+For a full description of each node type and its fields, see the [Nodes](/guides/workflows/start-call) section of the Voice Agent Builder docs.
+</Note>
+
+## Create a new workflow
+
+`save_workflow`/`saveWorkflow` requires an existing numeric ID. Use the creation method when you need a new workflow row. Given a `Workflow` you have built as above:
+
+```python
+from verasist_sdk import VerasistClient, Workflow
+from verasist_sdk._generated_models import CreateWorkflowRequest
+
+def create_new(client: VerasistClient, workflow: Workflow):
+    return client.create_workflow(body=CreateWorkflowRequest(
+        name=workflow.name, workflow_definition=workflow.to_json(),
+    ))
+```
+
+```typescript
+import { VerasistClient, Workflow } from "@verasist/sdk";
+
+async function createNew(client: VerasistClient, workflow: Workflow) {
+  return client.createWorkflow({ body: {
+    name: workflow.name, workflow_definition: { ...workflow.toJson() },
+  } });
+}
+```
+
+Creation stores the first definition as published. Configure its models and inspect the graph before using it for real conversations. Updating an existing workflow saves or updates its draft; it does not publish that draft. Publish from the workflow editor when ready. The current generated SDK does not have a `publishWorkflow` method.
+
+## Typed nodes
+
+Typed nodes provide editor autocomplete while using the same runtime validation and wire format:
+
+```python
+from verasist_sdk import VerasistClient, Workflow
+from verasist_sdk.typed import StartCall, EndCall
+
+with VerasistClient() as client:
+    workflow = Workflow(client=client, name="typed_example")
+    start = workflow.add_typed(StartCall(
+        name="status", prompt="Read the device status using sdk_status.",
+        sdk_tool_names=["sdk_status"],
+    ))
+    end = workflow.add_typed(EndCall(name="done", prompt="Say goodbye."))
+    workflow.edge(start, end, label="done", condition="Status has been explained.")
+    print(workflow.to_json())
+```
+
+```typescript
+import { VerasistClient, Workflow } from "@verasist/sdk";
+import { startCall, endCall } from "@verasist/sdk/typed";
+
+const typedWorkflow = new Workflow({ client: new VerasistClient(), name: "typed_example" });
+const first = await typedWorkflow.addTyped(startCall({
+  name: "status", prompt: "Read the device status using sdk_status.",
+  sdk_tool_names: ["sdk_status"],
+}));
+const last = await typedWorkflow.addTyped(endCall({ name: "done", prompt: "Say goodbye." }));
+typedWorkflow.edge(first, last, { label: "done", condition: "Status has been explained." });
+console.log(typedWorkflow.toJson());
+```
+
+`tool_uuids` selects server tools, `sdk_tool_names` selects session SDK tools, and `document_uuids` selects knowledge documents. These fields are independent. To expose an MCP function, include its server tool UUID and the node's `mcp_tool_filters` allowlist for the relevant function names. See [SDK tools](/developer/sdks/tools).
+
+## Export, import and inspect
+
+- Python: `workflow.to_json()` and `Workflow.from_json(payload, client=client, name="copy")`.
+- TypeScript: `workflow.toJson()` and `await Workflow.fromJson(payload, {client, name: "copy"})`.
+- `load_workflow(id)`/`loadWorkflow(id)` hydrates the draft if one exists, otherwise the published definition.
+- `find_node(id)`/`findNode(id)` returns a node reference for connecting edges. It is not a mutable node-data editor.
+- To change existing node data, edit an exported graph's `nodes[i].data`, rehydrate it, and save. Keep node IDs and edge references consistent.
+- `spec_version`/`specVersion` is populated after node-spec discovery. Unknown node types or invalid fields should be resolved against that backend's catalog rather than guessed.
+
+Client-side validation catches obvious mistakes early; the API still validates the graph on save. A valid JSON shape does not guarantee working models, available handlers or a complete conversational design.

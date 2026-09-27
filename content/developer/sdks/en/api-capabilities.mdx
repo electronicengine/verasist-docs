@@ -1,0 +1,108 @@
+---
+title: "SDK methods and error handling"
+description: "Discover resources, use the generated client methods, distinguish session transports, and handle API and validation failures"
+---
+
+## Prerequisites
+
+Initialize an authenticated `VerasistClient` as shown in [Setup](/developer/sdks/introduction). Resources are scoped to the API key's organization. Use resource IDs returned by that organization; do not substitute another tenant's IDs.
+
+## Available method families
+
+Python names are shown below. TypeScript uses camelCase, for example `list_documents` becomes `listDocuments`. Python keyword bodies use generated Pydantic models; TypeScript takes `{body: {...}}`.
+
+| Family | Methods | Notes |
+| --- | --- | --- |
+| Node specs | `list_node_types`, `get_node_type` | Discover supported node types and properties |
+| Workflows | `list_workflows`, `get_workflow`, `create_workflow`, `update_workflow`, `delete_workflow` | Numeric IDs; deletion is destructive |
+| Builder helpers | `load_workflow`, `save_workflow` | Hydrate/export a local `Workflow` |
+| SDK catalog | `publish_toolset`, `get_toolset` | Workflow UUID; replaces/reads schemas, not executable handlers |
+| Server tools | `list_tools`, `create_tool`, `ensure_builtin_verasist_mcp_tool` | Separate from SDK session tools |
+| Documents | `list_documents` | Optional status, limit and offset |
+| Audio recordings | `list_recordings` | Optional workflow/provider/model/voice filters |
+| Credentials | `list_credentials` | Discover organization credential metadata |
+| Calendar | `list_calendar_entries`, `create_calendar_entry`, `update_calendar_entry`, `delete_calendar_entry` | Generated request models define fields |
+| Campaign ranges | `list_campaign_date_ranges` | Lists available campaign date ranges; not a campaign runner |
+| Phone calls | `test_phone_call` | See [Outbound calls](/developer/sdks/outbound-calls) |
+| Channel initiation | `initiate_channel_outbound` | Channel type, configuration ID, mode, target and workflow ID |
+| Low-level voice | `start_live_session`, `start_live_session_by_workflow`, `get_live_session_turn_credentials` | Returns session/TURN metadata; media transport remains your responsibility |
+
+For generated request/response fields, inspect `verasist_sdk._generated_models` in Python or the TypeScript method signature. Routes without the backend's `sdk_expose` marker are not automatically available as client methods. In particular, workflow publishing and run-history retrieval should not be called using invented SDK method names; use the editor or documented REST API.
+
+## Discover resources
+
+```python
+from verasist_sdk import VerasistClient
+
+with VerasistClient() as client:
+    tools = client.list_tools(status="active")
+    documents = client.list_documents(limit=20, offset=0)
+    recordings = client.list_recordings(workflow_id=135)
+    print([tool.name for tool in tools])
+    print(documents.model_dump())
+    print(recordings.model_dump())
+```
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient();
+const tools = await client.listTools({ status: "active" });
+const documents = await client.listDocuments({ limit: 20, offset: 0 });
+const recordings = await client.listRecordings({ workflowId: 135 });
+console.log(tools.map((tool) => tool.name), documents, recordings);
+```
+
+The SDK's TypeScript method option names are camelCase, but JSON request body fields retain the API's snake_case names. For example, `listRecordings({workflowId: 135})` differs from `testPhoneCall({body: {workflow_id: 135, ...}})`.
+
+## Catch errors deliberately
+
+Python SDK exceptions include `ApiError`, `ValidationError`, `SpecMismatchError`, and their base `VerasistSdkError`. Network failures can be `httpx` exceptions; they are not all converted to `ApiError`.
+
+```python
+import httpx
+from verasist_sdk import ApiError, SpecMismatchError, ValidationError, VerasistClient
+
+with VerasistClient() as client:
+    try:
+        workflow = client.load_workflow(135)
+        print(workflow.name)
+    except ApiError as error:
+        print("API status:", error.status_code)
+    except (SpecMismatchError, ValidationError) as error:
+        print("Workflow contract error:", str(error))
+    except httpx.RequestError:
+        print("Network failure; inspect the operation before retrying.")
+```
+
+TypeScript `ApiError` exposes `statusCode` and `body`; network/abort failures can be other exceptions:
+
+```typescript
+import { ApiError, VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient();
+try {
+  console.log((await client.getWorkflow(135)).name);
+} catch (error) {
+  if (error instanceof ApiError) {
+    console.error("API status:", error.statusCode);
+  } else {
+    throw error;
+  }
+}
+```
+
+| Status/symptom | What to check |
+| --- | --- |
+| 400 | Selected organization, callback origin policy, malformed configuration |
+| 401/403 | API key, caller permissions and application authentication |
+| 402 | Organization quota/billing before starting or executing a run |
+| 404 | Resource ID and organization ownership; text-session actor ownership |
+| 409 | Publish/model prerequisites or text-session state/revision conflict |
+| 422 | Request fields, duplicate tool names, JSON Schema and naming constraints |
+| 502 on a text turn | Read the session; inspect a pending turn before executing again |
+| Missing client method | Installed SDK artifact is older than the source/API |
+
+Log status and your own correlation/run IDs. Avoid logging API keys, session callback tokens or private request/response bodies. A transport timeout does not prove that a write, tool action or phone call did not occur.
+
+See [Text sessions](/developer/sdks/text-session) for revision-safe recovery and [Voice sessions](/developer/sdks/live-voice-session) for ICE/media troubleshooting.

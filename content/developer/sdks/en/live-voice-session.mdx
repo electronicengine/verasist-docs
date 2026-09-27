@@ -1,0 +1,151 @@
+---
+title: "Voice sessions, audio and camera"
+description: "Create Python WebRTC sessions, register device tools, handle transcripts and voice events, and attach camera images"
+---
+
+## Prerequisites
+
+- Install `verasist-sdk[voice]` and configure `VERASIST_API_URL`, `VERASIST_API_KEY`, and `WORKFLOW_UUID`.
+- Configure and publish the workflow, including its voice models and SDK tool connections.
+- Provide an `aiortc` audio track for your microphone or input file, and an audio consumer for the assistant's returned track.
+- Ensure signaling and TURN are reachable from the device.
+
+`LiveSession` is currently a **Python helper**. TypeScript has live-session REST methods but no equivalent packaged WebRTC client. Creating the HTTP session alone does not capture a microphone or play audio.
+
+## Create and connect a session
+
+The following example streams an audio file into the call and records the assistant to `assistant.wav`. Set `AUDIO_INPUT` to an existing audio file. For a system microphone, set `AUDIO_INPUT` and `AUDIO_FORMAT` to values supported by your local FFmpeg/aiortc installation, for example a PulseAudio device on Linux. Audio drivers and playback are application responsibilities.
+
+Before running, publish the `sdk_status` schema and connect it to the relevant workflow node using [SDK tools](/developer/sdks/tools). Publication is a setup step, not something you need to repeat for every call.
+
+```python
+import asyncio
+import os
+import socket
+from aiortc.contrib.media import MediaPlayer, MediaRecorder
+from verasist_sdk import LiveSession, VerasistClient
+
+async def main():
+    with VerasistClient() as client:
+        session = LiveSession(client, initial_context={"device_name": socket.gethostname()})
+
+        @session.tool(name="sdk_status", description="Read the connected device hostname")
+        def status():
+            return {"hostname": socket.gethostname()}
+
+        player = MediaPlayer(os.environ["AUDIO_INPUT"], format=os.getenv("AUDIO_FORMAT"))
+        recorder = MediaRecorder("assistant.wav")
+        recording_tasks = []
+        if player.audio is None:
+            raise RuntimeError("AUDIO_INPUT must contain an audio track")
+
+        @session.on_track
+        def on_track(track):
+            if track.kind == "audio":
+                recorder.addTrack(track)
+                recording_tasks.append(asyncio.create_task(recorder.start()))
+
+        @session.on_transcript
+        def on_transcript(event):
+            if event["final"]:
+                print(event["role"], event["text"])
+
+        @session.on_connection_state
+        def on_connection_state(state):
+            print("WebRTC:", state)
+
+        try:
+            await session.connect(
+                workflow_uuid=os.environ["WORKFLOW_UUID"],
+                tracks=[player.audio],
+                call_context_vars={"locale": "en"},
+                ice_timeout_secs=30,
+            )
+            print("Run:", session.workflow_run_id)
+            print("Closed:", await session.wait_closed())
+        finally:
+            await session.close()
+            if recording_tasks:
+                await asyncio.gather(*recording_tasks)
+            await recorder.stop()
+            player.audio.stop()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+For real-time speaker output, consume the received track's `recv()` frames in your audio playback implementation instead of a file recorder. The repository's `examples/python/live_voice_session.py` demonstrates an ALSA microphone/speaker implementation; its device names and audio-processing dependencies are hardware-specific.
+
+## Session lifecycle
+
+| Method/property | Meaning |
+| --- | --- |
+| `await session.start(workflow_uuid=...)` | Creates the HTTP session and stores `session_token` and `workflow_run_id`; no media connection yet |
+| `await session.connect(workflow_uuid=..., tracks=[...])` | Starts the session if needed, gets TURN credentials, opens signaling and sends the WebRTC offer |
+| `await session.wait_closed()` | Waits for call end, connection failure or local close; returns the close payload when available |
+| `await session.close()` | Closes local signaling and peer-connection resources; use in `finally` |
+| `session.pc` | Underlying peer connection for application diagnostics |
+
+To use an API Trigger node instead, supply `trigger_uuid` instead of `workflow_uuid`. Do not supply both. If you call `start()` explicitly, register all tools first and then call `connect(tracks=[...])` on that same session. Create a fresh `LiveSession` for a new conversation.
+
+`connect()` initiates negotiation; it is not proof that the media path is ready. Observe `on_connection_state`. `ice_timeout_secs` defaults to 30; `None` disables the watchdog. `wait_closed()` can report `ice_timeout` or `ice_failed`. Check TURN reachability and local microphone/speaker configuration when signaling works but audio does not.
+
+## Device tool handlers
+
+`@session.tool(name=..., description=..., parameters=...)` registers a synchronous or asynchronous Python function. Its name defaults to the function name; parameters default to an empty object schema. Arguments are passed as keyword arguments. Return a JSON-serializable value. Handler exceptions are returned as tool errors.
+
+The SDK calls synchronous handlers directly. Move blocking hardware or file operations into `asyncio.to_thread()` inside an async handler, so signaling remains responsive. Validate and constrain device actions in your application.
+
+Only handlers also connected to the **active node** can be called. Moving to a different node removes access to the previous node's SDK tools. A persisted catalog does not substitute for registering the handler in the session.
+
+## Transcripts and voice events
+
+Callbacks are synchronous notifications. Schedule asynchronous work with `asyncio.create_task()` and handle task exceptions in your application.
+
+- `on_transcript`: `{role, text, final}`. User transcripts can be interim; assistant text is final.
+- `on_connection_state`: the peer connection's state string.
+- `on_voice_event`: `{type, payload}` for `rtf-bot-started-speaking`, `rtf-bot-stopped-speaking`, `rtf-bot-interrupted`, `rtf-user-mute-started`, `rtf-user-mute-stopped`, `rtf-user-turn-started`, `rtf-user-turn-final`, and `rtf-camera-attachment`.
+
+## Send a camera snapshot
+
+Call this helper after the session connects. Supply already encoded JPEG, PNG or WebP bytes, not raw pixels:
+
+```python
+from pathlib import Path
+from verasist_sdk import LiveSession
+
+async def send_snapshot(session: LiveSession, image_path: str):
+    return await session.send_image(
+        image_bytes=Path(image_path).read_bytes(),
+        mime_type="image/jpeg",
+        prompt="Describe what is visible.",
+        trigger_response=True,
+        timeout=30,
+    )
+```
+
+The result acknowledges image acceptance; it is not the assistant's answer. The answer arrives through normal transcript/audio events. The backend checks size, dimensions, format and rate limits.
+
+Set `trigger_response=False` when adding context to an already-running response, to avoid requesting a second answer. A compatible multimodal model is required. This snapshot API is not a continuous-video transport.
+
+## Attach an image to a specific user turn
+
+Compatible STT/LLM/TTS and device Gemini Live workflows support turn-bound attachments. After connecting, enable them with `await session.configure_camera_turns(True)`. When `on_voice_event` reports `rtf-user-turn-started`, read `event["payload"]["turn_id"]` and schedule your camera work.
+
+```python
+from verasist_sdk import LiveSession
+
+async def attach_camera_turn(session: LiveSession, turn_id: str, jpeg: bytes | None):
+    try:
+        if jpeg is not None:
+            await session.send_image(
+                image_bytes=jpeg,
+                mime_type="image/jpeg",
+                turn_id=turn_id,
+                trigger_response=False,
+            )
+    finally:
+        await session.complete_camera_turn(turn_id)
+```
+
+Complete the turn even when an image is unavailable. Keep the original turn ID; late images must not be reassigned to another turn. Unsupported servers/workflows reject camera-turn configuration explicitly. Inspect `rtf-camera-attachment` for the outcome.

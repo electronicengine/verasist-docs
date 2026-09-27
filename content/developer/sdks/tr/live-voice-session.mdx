@@ -1,0 +1,148 @@
+---
+title: "Sesli oturum, ses ve kamera"
+description: "Python WebRTC oturumu oluşturun; cihaz araçlarını, transkriptleri, ses olaylarını ve kamera görüntülerini kullanın"
+---
+
+## Ön koşullar
+
+`verasist-sdk[voice]` kurulu olmalı; `VERASIST_API_URL`, `VERASIST_API_KEY` ve `WORKFLOW_UUID` ayarlanmalı. Workflow’u ses modelleriyle yapılandırıp SDK araçlarını node’lara bağlayarak yayımlayın. Cihazdan signaling ve TURN erişilebilir olmalı.
+
+`LiveSession` **Python** yardımcısıdır. TypeScript’te oturum oluşturma REST metotları vardır ama paketlenmiş WebRTC istemcisi yoktur. HTTP oturumu oluşturmak mikrofonu açmaz veya hoparlörden ses oynatmaz. Mikrofon için `aiortc` track’i ve gelen sesi tüketen bir uygulama bileşeni gerekir.
+
+## Oturum oluşturup bağlanma
+
+Aşağıdaki örnek ses dosyasını asistana gönderir ve yanıtı `assistant.wav` dosyasına kaydeder. `AUDIO_INPUT` var olan bir ses dosyası olmalıdır. Sistem mikrofonu için yerel FFmpeg/aiortc kurulumunuza uygun `AUDIO_INPUT` ve `AUDIO_FORMAT` değerlerini kullanın; örneğin Linux’ta PulseAudio cihazı. Sürücü ve ses oynatma uygulamanızın sorumluluğundadır.
+
+Çalıştırmadan önce `sdk_status` şemasını [yayımlayıp ilgili node’a bağlayın](/developer/sdks/tools). Katalog yayımlamayı her aramada tekrarlamanız gerekmez.
+
+```python
+import asyncio
+import os
+import socket
+from aiortc.contrib.media import MediaPlayer, MediaRecorder
+from verasist_sdk import LiveSession, VerasistClient
+
+async def main():
+    with VerasistClient() as client:
+        session = LiveSession(client, initial_context={"device_name": socket.gethostname()})
+
+        @session.tool(name="sdk_status", description="Read the connected device hostname")
+        def status():
+            return {"hostname": socket.gethostname()}
+
+        player = MediaPlayer(os.environ["AUDIO_INPUT"], format=os.getenv("AUDIO_FORMAT"))
+        recorder = MediaRecorder("assistant.wav")
+        recording_tasks = []
+        if player.audio is None:
+            raise RuntimeError("AUDIO_INPUT must contain an audio track")
+
+        @session.on_track
+        def on_track(track):
+            if track.kind == "audio":
+                recorder.addTrack(track)
+                recording_tasks.append(asyncio.create_task(recorder.start()))
+
+        @session.on_transcript
+        def on_transcript(event):
+            if event["final"]:
+                print(event["role"], event["text"])
+
+        @session.on_connection_state
+        def on_connection_state(state):
+            print("WebRTC:", state)
+
+        try:
+            await session.connect(
+                workflow_uuid=os.environ["WORKFLOW_UUID"],
+                tracks=[player.audio],
+                call_context_vars={"locale": "en"},
+                ice_timeout_secs=30,
+            )
+            print("Run:", session.workflow_run_id)
+            print("Closed:", await session.wait_closed())
+        finally:
+            await session.close()
+            if recording_tasks:
+                await asyncio.gather(*recording_tasks)
+            await recorder.stop()
+            player.audio.stop()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Gerçek zamanlı hoparlör çıkışı için dosya kaydı yerine gelen track’in `recv()` karelerini ses çıkışınıza aktarın. Repository’deki `examples/python/live_voice_session.py` ALSA mikrofon/hoparlör örneğidir; cihaz adlarını ve ses işleme bağımlılıklarını donanımınıza göre ayarlayın.
+
+## Oturum yaşam döngüsü
+
+| Metot/alan | İşlev |
+| --- | --- |
+| `await session.start(workflow_uuid=...)` | HTTP oturumu oluşturur; `session_token` ve `workflow_run_id` saklanır, henüz medya bağlantısı yoktur |
+| `await session.connect(workflow_uuid=..., tracks=[...])` | Gerekirse oturum açar, TURN bilgilerini alır, signaling açıp WebRTC teklifi gönderir |
+| `await session.wait_closed()` | Bitiş, bağlantı hatası veya yerel kapatmayı bekler; varsa kapanış payload’ını verir |
+| `await session.close()` | Signaling ve peer connection kaynaklarını kapatır; `finally` içinde kullanın |
+| `session.pc` | Tanılama için alttaki peer connection |
+
+API Trigger kullanacaksanız `workflow_uuid` yerine `trigger_uuid` verin; ikisini birlikte vermeyin. `start()` ayrı çağrılmışsa aynı session üzerinde `connect(tracks=[...])` yeterlidir. Her yeni konuşma için yeni `LiveSession` oluşturun.
+
+`connect()` medya yolunun hazır olduğunu garanti etmez. `on_connection_state` olayını izleyin. ICE watchdog varsayılanı 30 saniyedir; `ice_timeout_secs=None` kapatır. `wait_closed()` sonucundaki `ice_timeout`/`ice_failed` durumlarında TURN erişimini ve cihaz ses ayarlarını kontrol edin.
+
+## Cihaz araçları
+
+`@session.tool(name=..., description=..., parameters=...)` senkron veya asenkron fonksiyon kaydeder. Varsayılan ad fonksiyon adıdır; varsayılan parametre şeması boş nesnedir. Argümanlar keyword argüman olarak verilir. JSON’a çevrilebilir sonuç döndürün; handler istisnaları araç hatası olarak iletilir.
+
+Araçları `start()`/`connect()` öncesinde kaydedin. Sonradan yerel fonksiyon eklemek sunucudaki oturum listesini güncellemez. Bloklayan cihaz/dosya işini async handler içinde `asyncio.to_thread()` ile yürütün; senkron handler doğrudan çağrılır ve signaling’i bekletebilir. Cihaz komutlarını uygulamanızda doğrulayın.
+
+LLM yalnızca **aktif node’a bağlı** ve oturumda kayıtlı araçları kullanabilir. Katalog kaydı tek başına yeterli değildir.
+
+## Transkript ve ses olayları
+
+Callback’ler senkron bildirimlerdir. Asenkron iş için `asyncio.create_task()` kullanın ve görev hatalarını yönetin.
+
+- `on_transcript`: `{role, text, final}`. Kullanıcı metni ara sonuç olabilir; asistan metni finaldir.
+- `on_connection_state`: peer connection durum metni.
+- `on_voice_event`: `{type, payload}`. Desteklenen olaylar: `rtf-bot-started-speaking`, `rtf-bot-stopped-speaking`, `rtf-bot-interrupted`, `rtf-user-mute-started`, `rtf-user-mute-stopped`, `rtf-user-turn-started`, `rtf-user-turn-final`, `rtf-camera-attachment`.
+
+## Kamera görüntüsü gönderme
+
+Oturum bağlandıktan sonra JPEG, PNG veya WebP olarak kodlanmış baytları gönderin; ham piksel verisi göndermeyin:
+
+```python
+from pathlib import Path
+from verasist_sdk import LiveSession
+
+async def send_snapshot(session: LiveSession, image_path: str):
+    return await session.send_image(
+        image_bytes=Path(image_path).read_bytes(),
+        mime_type="image/jpeg",
+        prompt="Describe what is visible.",
+        trigger_response=True,
+        timeout=30,
+    )
+```
+
+Dönen sonuç görüntünün kabul edildiğini bildirir, asistanın cevabı değildir. Cevap normal transkript/ses olaylarından gelir. Sunucu boyut, çözünürlük, biçim ve hız sınırlarını uygular. Uyumlu çok modlu model gerekir; bu API sürekli video taşımaz.
+
+Devam eden bir yanıta bağlam eklerken ikinci yanıtı tetiklememek için `trigger_response=False` kullanın.
+
+## Görüntüyü belirli kullanıcı turuna bağlama
+
+Uyumlu STT/LLM/TTS ve cihaz Gemini Live workflow’larında bağlantı sonrasında `await session.configure_camera_turns(True)` çağırın. `rtf-user-turn-started` olayında `event["payload"]["turn_id"]` değerini alıp kamera işini başlatın:
+
+```python
+from verasist_sdk import LiveSession
+
+async def attach_camera_turn(session: LiveSession, turn_id: str, jpeg: bytes | None):
+    try:
+        if jpeg is not None:
+            await session.send_image(
+                image_bytes=jpeg,
+                mime_type="image/jpeg",
+                turn_id=turn_id,
+                trigger_response=False,
+            )
+    finally:
+        await session.complete_camera_turn(turn_id)
+```
+
+Görüntü alınamasa da turu tamamlayın. İlk turn ID’sini koruyun; geciken görüntüyü başka tura atamayın. Desteklemeyen sunucu/workflow yapılandırmayı hata ile reddeder. Sonucu `rtf-camera-attachment` olayından izleyin.

@@ -1,0 +1,65 @@
+---
+title: "SDK ile telefon araması"
+description: "Workflow üzerinden test telefon araması başlatın, sağlayıcı seçin ve run sonucunu takip edin"
+---
+
+## Ön koşullar
+
+Organizasyon API anahtarı, sayısal workflow ID’si ve yapılandırılmış [telefon sağlayıcısı](/guides/integrations/telephony/overview) gerekir. Hedef numarayı ve sağlayıcının çağrı desteğini doğrulayın.
+
+Bu metot arayüzdeki test aramasıyla aynı endpoint’i kullanır. Yeni run oluşturulurken `use_draft=True` kullanılır; henüz yayımlanmamış taslağı da test edebilir. Yalnızca yayımlanmış tanımı kullanan uygulama metin oturumlarıyla karıştırmayın. `workflow_run_id` verilirse mevcut run üzerinde çalışır.
+
+## Arama başlatma
+
+```python Python
+from verasist_sdk import VerasistClient
+from verasist_sdk._generated_models import InitiateCallRequest
+
+with VerasistClient(api_key="YOUR_API_KEY") as client:
+    client.test_phone_call(
+        body=InitiateCallRequest(
+            workflow_id=123,
+            phone_number="+14155551234",
+        )
+    )
+```
+
+```typescript TypeScript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient({ apiKey: "YOUR_API_KEY" });
+
+await client.testPhoneCall({
+    body: {
+        workflow_id: 123,
+        phone_number: "+14155551234",
+    },
+});
+```
+
+Örneklerdeki anahtarı, workflow ID’sini ve hedef numarayı kendi değerlerinizle değiştirin. Bu kod gerçek arama başlatır.
+
+## Sağlayıcı seçme
+
+`telephony_configuration_id` organizasyonunuza ait telefon yapılandırmasını seçer. Belirli bir çıkış numarası için `from_phone_number_id` verilebilir. Alanlar verilmezse sunucu varsayılanları çözümler.
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+async function callWithProvider(client: VerasistClient, workflowId: number,
+  phoneNumber: string, configurationId: number) {
+  return client.testPhoneCall({ body: {
+    workflow_id: workflowId,
+    phone_number: phoneNumber,
+    telephony_configuration_id: configurationId,
+  } });
+}
+```
+
+## Sonucu izleme
+
+İstek kabul edilmesi karşı tarafın telefonu açtığı anlamına gelmez. Dönen JSON’u ve workflow çalışma geçmişini kontrol edin; ayrıntılar [Aramalar ve çalışmalar](/developer/core-concepts/calls-and-runs) ve [Runs API](/api-reference/agents/runs/list) sayfalarındadır. Zaman aşımında otomatik tekrar arama yapmayın: ilk istek aramayı başlatmış olabilir.
+
+Çok sayıda çağrı için `test_phone_call` döngüsü yerine [Kampanyalar](/developer/core-concepts/campaigns) kullanın; hız, tekrar deneme ve ilerleme burada yönetilir.
+
+Telefon araması Python cihaz oturumu veya metin callback taşıması kurmaz. Katalog yayımlamak, normal telefon run’ında uygulama SDK handler’larını kullanılabilir hale getirmez. Sunucu araçları kendi yapılandırılmış entegrasyonlarıyla çalışır.

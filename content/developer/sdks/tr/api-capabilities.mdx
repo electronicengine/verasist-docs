@@ -1,0 +1,106 @@
+---
+title: "SDK metotları ve hata yönetimi"
+description: "Kaynak keşfi, workflow ve araç metotları, oturum ayrımları ve API hatalarını ele alma"
+---
+
+## Ön koşullar
+
+[Kurulumdaki](/developer/sdks/introduction) gibi doğrulanmış `VerasistClient` oluşturun. Kaynaklar API anahtarının organizasyonuyla sınırlıdır; farklı tenant’ın ID’lerini kullanmayın.
+
+## Metot aileleri
+
+Aşağıda Python adları kullanılmıştır; TypeScript karşılıkları camelCase’tir. Python body parametresi üretilen Pydantic modeliyle, TypeScript `{body: {...}}` ile verilir.
+
+| Aile | Python metotları | Not |
+| --- | --- | --- |
+| Node şemaları | `list_node_types`, `get_node_type` | Desteklenen alanları keşfeder |
+| Workflow | `list_workflows`, `get_workflow`, `create_workflow`, `update_workflow`, `delete_workflow` | Sayısal ID; silme yıkıcıdır |
+| Builder | `load_workflow`, `save_workflow` | Yerel `Workflow` yükler/kaydeder |
+| SDK kataloğu | `publish_toolset`, `get_toolset` | Workflow UUID; şema saklar, handler çalıştırmaz |
+| Sunucu araçları | `list_tools`, `create_tool`, `ensure_builtin_verasist_mcp_tool` | SDK oturum araçlarından ayrıdır |
+| Dokümanlar | `list_documents` | Status, limit, offset filtreleri |
+| Ses kayıtları | `list_recordings` | Workflow/sağlayıcı/model/ses filtreleri |
+| Kimlik bilgileri | `list_credentials` | Organizasyon credential metadata’sı |
+| Takvim | `list_calendar_entries`, `create_calendar_entry`, `update_calendar_entry`, `delete_calendar_entry` | Alanlar üretilen modellerdedir |
+| Kampanya tarihleri | `list_campaign_date_ranges` | Kampanya çalıştırma yardımcısı değildir |
+| Telefon | `test_phone_call` | Test araması başlatır |
+| Kanal | `initiate_channel_outbound` | Kanal türü, yapılandırma ID, mod, hedef, workflow ID |
+| Düşük seviyeli ses | `start_live_session`, `start_live_session_by_workflow`, `get_live_session_turn_credentials` | Oturum/TURN metadata’sı; medya istemcisi ayrıca gerekir |
+
+Python’da `verasist_sdk._generated_models`, TypeScript’te metot imzası alanların kaynağıdır. Backend’de `sdk_expose` olmayan her endpoint otomatik SDK metodu olmaz. Workflow yayımlama veya run geçmişi için olmayan metot adları uydurmayın; editörü veya REST API’yi kullanın.
+
+## Kaynak keşfi
+
+```python
+from verasist_sdk import VerasistClient
+
+with VerasistClient() as client:
+    tools = client.list_tools(status="active")
+    documents = client.list_documents(limit=20, offset=0)
+    recordings = client.list_recordings(workflow_id=135)
+    print([tool.name for tool in tools])
+    print(documents.model_dump())
+    print(recordings.model_dump())
+```
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient();
+const tools = await client.listTools({ status: "active" });
+const documents = await client.listDocuments({ limit: 20, offset: 0 });
+const recordings = await client.listRecordings({ workflowId: 135 });
+console.log(tools.map((tool) => tool.name), documents, recordings);
+```
+
+TypeScript metot seçenekleri camelCase, JSON body alanları snake_case kalır. Örneğin `listRecordings({workflowId: 135})` ile `testPhoneCall({body: {workflow_id: 135, ...}})` farklıdır.
+
+## Hataları yakalama
+
+Python SDK’da `ApiError`, `ValidationError`, `SpecMismatchError` ve taban sınıf `VerasistSdkError` vardır. Ağ hataları `httpx` istisnası olabilir; hepsi `ApiError` içine sarılmaz.
+
+```python
+import httpx
+from verasist_sdk import ApiError, SpecMismatchError, ValidationError, VerasistClient
+
+with VerasistClient() as client:
+    try:
+        workflow = client.load_workflow(135)
+        print(workflow.name)
+    except ApiError as error:
+        print("API status:", error.status_code)
+    except (SpecMismatchError, ValidationError) as error:
+        print("Workflow contract error:", str(error))
+    except httpx.RequestError:
+        print("Network failure; inspect the operation before retrying.")
+```
+
+TypeScript `ApiError`, `statusCode` ve `body` alanlarını sağlar. Ağ/abort hataları başka türde olabilir:
+
+```typescript
+import { ApiError, VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient();
+try {
+  console.log((await client.getWorkflow(135)).name);
+} catch (error) {
+  if (error instanceof ApiError) {
+    console.error("API status:", error.statusCode);
+  } else {
+    throw error;
+  }
+}
+```
+
+| Durum | Kontrol |
+| --- | --- |
+| 400 | Seçili organizasyon, callback origin politikası, yapılandırma |
+| 401/403 | API anahtarı ve izinler |
+| 402 | Run başlatma/yürütme öncesi kota ve bakiye |
+| 404 | ID, organizasyon ve metin oturumu kullanıcı sahipliği |
+| 409 | Yayımlama/model gereksinimi veya oturum revision/durum çatışması |
+| 422 | Alanlar, yinelenen araç adları, şema ve isim sınırları |
+| Metin turunda 502 | Oturumu okuyup bekleyen turu inceleyin |
+| İstemcide metot yok | Kurulu paket kaynak/API sürümünden eskidir |
+
+Loglarda durum ve run/korelasyon ID’sini kullanın; API anahtarı, callback token’ı veya özel verili body’leri yazmayın. Timeout, işlemin yapılmadığını kanıtlamaz. [Metin oturumları](/developer/sdks/text-session) ve [sesli oturumlar](/developer/sdks/live-voice-session) sayfalarındaki kurtarma adımlarını izleyin.

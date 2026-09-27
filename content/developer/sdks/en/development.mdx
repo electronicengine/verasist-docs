@@ -1,0 +1,96 @@
+---
+title: "Develop and package the SDK"
+description: "Work on the SDK sources, regenerate clients and typed nodes, test changes, and update applications using local packages"
+---
+
+## Prerequisites
+
+Use a checkout of the Verasist repository, its backend Python environment, Node/npm, and installed SDK development dependencies. Backend-backed tests must use `api/.env.test`, never development/production credentials. Follow the repository README for local setup.
+
+## Source ownership
+
+| Location | Responsibility |
+| --- | --- |
+| `sdk/python/src/verasist_sdk/client.py` | Python authentication, HTTP transport and ergonomic wrappers |
+| `sdk/python/src/verasist_sdk/live_session.py` | Python WebRTC, tool dispatch, events and images |
+| `sdk/typescript/src/client.ts` | TypeScript authentication, transport and wrappers |
+| `sdk/typescript/src/text-session.ts` | Text session operations and `dispatchTextTool` |
+| `sdk/*/src/.../workflow.*` | Runtime workflow builder and validation |
+| `api/services/workflow/dto.py` and `node_specs/` | Authoritative node fields and editor metadata |
+| `api/sdk_expose.py` | Endpoint opt-in for generated SDK methods |
+| `sdk/codegen/client_codegen.py` | Shared REST method generator |
+| `_generated_client.*`, `_generated_models.*`, `typed/` | Generated outputs; regenerate instead of hand-editing |
+
+The Python `typed/_base.py` is handwritten. `client.py`/`client.ts` may override a generated method with a friendlier signature. A handwritten session helper is not created automatically by adding an API route.
+
+## Use source builds
+
+From the repository root:
+
+```bash
+python -m pip install -e './sdk/python[voice,dev]'
+npm --prefix sdk/typescript ci
+npm --prefix sdk/typescript run build
+```
+
+To package TypeScript for another application:
+
+```bash
+cd sdk/typescript
+npm run build
+npm pack
+```
+
+Install the produced `.tgz` in the application and update its lockfile. If the application uses a `vendor/` tarball, replace that artifact as well. Rebuild the application so its installed dependency matches the new SDK. For a Python wheel, run `python -m pip wheel ./sdk/python --no-deps --wheel-dir /tmp/verasist-sdk-wheels` from the repository root and install the resulting wheel in the consuming environment.
+
+These commands create local artifacts; they do not publish to npm or PyPI. Package version changes, registry credentials and a release are separate steps. Do not assume the public registry already contains a method added to your checkout.
+
+## Add or change a REST method
+
+1. Define the route request/response models in the backend and enforce organization ownership.
+2. Add `sdk_expose(method="your_method", description="...")` to that route's decorator if it belongs in the generated client.
+3. Add business logic at the owning service layer, with database access through a DB client.
+4. Add focused API tests for validation, ownership and the resulting behavior.
+5. Regenerate both SDKs, typecheck, and test request construction.
+
+`sdk_expose` generates Python snake_case and TypeScript camelCase methods. Use the existing toolset routes as a concrete example of a shared API plus ergonomic wrappers. Avoid adding private application endpoints to the generated surface merely to create a session helper; `textSessions` is a separate handwritten wrapper.
+
+## Regenerate after API or node changes
+
+Activate your backend environment first. The generation script loads `api/.env` when it exists to import backend configuration. It does not run migrations, but it must not be used as a substitute for the test environment setup.
+
+```bash
+./scripts/generate_sdk.sh
+npm --prefix ui run generate-client
+```
+
+The first command generates Python/TypeScript typed nodes, SDK-scoped OpenAPI models, REST clients, and `docs/api-reference/openapi.json`. It needs `datamodel-codegen`, a Node version capable of the repository's `.mts` scripts, and the SDK's `openapi-typescript` dependency. The second regenerates the UI API client from the full OpenAPI file.
+
+Inspect generated diffs. Updating a node's description or default can affect both languages. Preserve the distinction between omitted, null and empty values when those values change behavior; for SDK tool selection, all three mean no access at runtime, while explicit empty lists must survive save/load operations.
+
+## Verify
+
+Run from the repository root with your Python environment active:
+
+```bash
+set -a
+source api/.env.test
+set +a
+python -m pytest api/tests/test_sdk_toolset.py api/tests/test_sdk_text_tools.py api/tests/test_sdk_sync.py api/tests/test_verasist_sdk.py api/tests/test_verasist_sdk_typed.py sdk/python/tests/test_live_session.py
+npm --prefix sdk/typescript test
+npm --prefix sdk/typescript run typecheck
+```
+
+`test_sdk_sync.py` checks that committed typed files match the node-spec generator. Voice unit tests mock signaling and media; they do not prove microphone playback, TURN reachability or a particular provider's behavior. Perform a separate device smoke test for media changes. Test text callbacks with a controlled endpoint and valid origin policy before using an application that changes real data.
+
+## Deploy matching server and client changes
+
+For the repository's main Docker Compose deployment:
+
+```bash
+docker compose up -d --build api ui
+```
+
+API startup runs Alembic up to `ALEMBIC_TARGET_REVISION`, which defaults to `head`. Check for an explicit older override if code expects a missing database column. Update consumer SDK packages independently; rebuilding API/UI does not replace a Python environment or an application's vendored `.tgz`.
+
+After publishing a tool catalog, refresh the editor, connect the tools to nodes, save/publish the workflow, and create a new session. Test with different node selections so a tool connected to one node cannot be called from another.

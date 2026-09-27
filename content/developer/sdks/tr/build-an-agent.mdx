@@ -1,0 +1,190 @@
+---
+title: "Workflow oluşturma ve düzenleme"
+description: "Python ve TypeScript ile node ve bağlantı oluşturun, tipli node’ları kullanın, workflow kaydedin ve şemaları keşfedin"
+---
+
+## Ön koşullar
+
+Organizasyon API anahtarı ve kurulu SDK gerekir. [Kurulum](/developer/sdks/introduction) sayfasındaki ortam değişkenlerini ayarlayın. Mevcut workflow’a taslak kaydetmek için UUID değil sayısal ID kullanın; örneklerdeki `123` değerini değiştirin.
+
+## Workflow oluşturup taslak kaydetme
+
+`Workflow.add()` node oluşturur, `edge()` node’ları koşullu geçişlerle bağlar. Python örneği:
+
+```python Python
+from verasist_sdk import VerasistClient, Workflow
+
+with VerasistClient(api_key="YOUR_API_KEY") as client:
+    wf = Workflow(client=client, name="loan_qualification")
+
+    greeting = wf.add(
+        type="startCall",
+        name="greeting",
+        prompt="You are Sarah from Acme Loans. Greet the caller warmly.",
+    )
+    qualify = wf.add(
+        type="agentNode",
+        name="qualify",
+        prompt="Ask about loan amount, purpose, and monthly income.",
+    )
+    done = wf.add(
+        type="endCall",
+        name="done",
+        prompt="Thank them and end the call politely.",
+    )
+
+    wf.edge(greeting, qualify, label="interested", condition="Caller wants to continue.")
+    wf.edge(qualify, done, label="done", condition="All qualification questions answered.")
+
+    client.save_workflow(workflow_id=123, workflow=wf)
+```
+
+TypeScript’te node ekleme asenkrondur:
+
+```typescript TypeScript
+import { VerasistClient, Workflow } from "@verasist/sdk";
+
+const client = new VerasistClient({ apiKey: "YOUR_API_KEY" });
+const wf = new Workflow({ client, name: "loan_qualification" });
+
+const greeting = await wf.add({
+    type: "startCall",
+    name: "greeting",
+    prompt: "You are Sarah from Acme Loans. Greet the caller warmly.",
+});
+const qualify = await wf.add({
+    type: "agentNode",
+    name: "qualify",
+    prompt: "Ask about loan amount, purpose, and monthly income.",
+});
+const done = await wf.add({
+    type: "endCall",
+    name: "done",
+    prompt: "Thank them and end the call politely.",
+});
+
+wf.edge(greeting, qualify, { label: "interested", condition: "Caller wants to continue." });
+wf.edge(qualify, done, { label: "done", condition: "All qualification questions answered." });
+
+await client.saveWorkflow(123, wf);
+```
+
+`save_workflow`/`saveWorkflow` mevcut workflow’un taslağını oluşturur veya günceller. Yayımlanmış sürümü değiştirmez. Hazır olduğunda editörden yayımlayın; üretilen SDK’da şu anda `publishWorkflow` metodu yoktur.
+
+## Mevcut workflow’u düzenleme
+
+Yükleme işlemi varsa taslağı, yoksa yayımlanmış tanımı getirir:
+
+```python Python
+from verasist_sdk import VerasistClient
+
+with VerasistClient() as client:
+    wf = client.load_workflow(workflow_id=123)
+    wf.name = "loan_qualification_v2"
+    client.save_workflow(workflow_id=123, workflow=wf)
+```
+
+```typescript TypeScript
+import { VerasistClient, Workflow } from "@verasist/sdk";
+
+const client = new VerasistClient();
+const original = await client.loadWorkflow(123);
+const edited = await Workflow.fromJson({ ...original.toJson() }, {
+  client, name: "loan_qualification_v2",
+});
+await client.saveWorkflow(123, edited);
+```
+
+## Node türlerini keşfetme
+
+Tür adları ve alanları sunucunun node-spec kataloğundan gelir. Desteklenmeyen alanları tahmin etmek yerine şemayı okuyun:
+
+```python Python
+from verasist_sdk import VerasistClient
+
+with VerasistClient() as client:
+    types = client.list_node_types()
+    for spec in types.node_types:
+        print(spec.name, [p.name for p in spec.properties])
+```
+
+```typescript TypeScript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient();
+const types = await client.listNodeTypes();
+for (const spec of types.node_types) {
+    console.log(spec.name, spec.properties.map(p => p.name));
+}
+```
+
+## Yeni workflow kaydı oluşturma
+
+Elinizde bir `Workflow` varsa aşağıdaki yardımcılarla yeni kayıt oluşturabilirsiniz:
+
+```python
+from verasist_sdk import VerasistClient, Workflow
+from verasist_sdk._generated_models import CreateWorkflowRequest
+
+def create_new(client: VerasistClient, workflow: Workflow):
+    return client.create_workflow(body=CreateWorkflowRequest(
+        name=workflow.name, workflow_definition=workflow.to_json(),
+    ))
+```
+
+```typescript
+import { VerasistClient, Workflow } from "@verasist/sdk";
+
+async function createNew(client: VerasistClient, workflow: Workflow) {
+  return client.createWorkflow({ body: {
+    name: workflow.name, workflow_definition: { ...workflow.toJson() },
+  } });
+}
+```
+
+Oluşturma işlemi ilk tanımı yayımlanmış olarak saklar. Gerçek konuşma başlatmadan önce model ayarlarını ve grafiği kontrol edin. Bu davranış mevcut workflow’a taslak kaydetmekten farklıdır.
+
+## Tipli node kullanımı
+
+Tipli sınıflar IDE tamamlama sağlar; aynı runtime doğrulamasını ve JSON biçimini kullanır:
+
+```python
+from verasist_sdk import VerasistClient, Workflow
+from verasist_sdk.typed import StartCall, EndCall
+
+with VerasistClient() as client:
+    workflow = Workflow(client=client, name="typed_example")
+    start = workflow.add_typed(StartCall(
+        name="status", prompt="Read the device status using sdk_status.",
+        sdk_tool_names=["sdk_status"],
+    ))
+    end = workflow.add_typed(EndCall(name="done", prompt="Say goodbye."))
+    workflow.edge(start, end, label="done", condition="Status has been explained.")
+    print(workflow.to_json())
+```
+
+```typescript
+import { VerasistClient, Workflow } from "@verasist/sdk";
+import { startCall, endCall } from "@verasist/sdk/typed";
+
+const typedWorkflow = new Workflow({ client: new VerasistClient(), name: "typed_example" });
+const first = await typedWorkflow.addTyped(startCall({
+  name: "status", prompt: "Read the device status using sdk_status.",
+  sdk_tool_names: ["sdk_status"],
+}));
+const last = await typedWorkflow.addTyped(endCall({ name: "done", prompt: "Say goodbye." }));
+typedWorkflow.edge(first, last, { label: "done", condition: "Status has been explained." });
+console.log(typedWorkflow.toJson());
+```
+
+`tool_uuids` sunucu araçlarını, `sdk_tool_names` oturumun SDK araçlarını, `document_uuids` bilgi bankası dokümanlarını seçer. MCP için sunucu araç UUID’sine ek olarak `mcp_tool_filters` içinde ilgili fonksiyon adlarını seçin. SDK aracı ancak aktif node’a bağlıysa ve oturumda da kayıtlıysa kullanılabilir.
+
+## JSON dışa/içe aktarma
+
+- Python: `workflow.to_json()` ve `Workflow.from_json(payload, client=client, name="copy")`.
+- TypeScript: `workflow.toJson()` ve `await Workflow.fromJson(payload, {client, name: "copy"})`.
+- `find_node(id)`/`findNode(id)` bağlantı kurmak için node referansı döndürür; veri düzenleyicisi değildir.
+- Var olan node verisini değiştirmek için dışa aktarılan grafiğin `nodes[i].data` alanını düzenleyin, tekrar `Workflow` oluşturun ve kaydedin. Node ID’lerini ve edge referanslarını tutarlı tutun.
+- `spec_version`/`specVersion`, node-spec keşfinden sonra doldurulur.
+
+İstemci temel alan hatalarını erken yakalar; API kaydederken ayrıca doğrular. Şemanın geçerli olması modellerin, handler’ların veya konuşma akışının çalıştığını tek başına kanıtlamaz.
