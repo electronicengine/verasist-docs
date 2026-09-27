@@ -32,13 +32,15 @@ export function fetchOpenApiSpec(baseUrl) {
 }
 
 /** Resolve a `{"$ref": "#/components/..."}` pointer against the full spec. */
-export function resolveSchema(spec, schemaOrRef) {
+export function resolveSchema(spec, schemaOrRef, seen = new Set()) {
   if (!schemaOrRef) return null;
   if (schemaOrRef.$ref) {
-    const parts = schemaOrRef.$ref.replace(/^#\//, "").split("/");
+    if (seen.has(schemaOrRef.$ref)) return null;
+    seen.add(schemaOrRef.$ref);
+    const parts = schemaOrRef.$ref.replace(/^#\//, "").split("/").map((part) => part.replace(/~1/g, "/").replace(/~0/g, "~"));
     let node = spec;
     for (const part of parts) node = node?.[part];
-    return node || null;
+    return node ? { ...resolveSchema(spec, node, seen), ...Object.fromEntries(Object.entries(schemaOrRef).filter(([key]) => key !== "$ref")) } : null;
   }
   return schemaOrRef;
 }
@@ -47,7 +49,14 @@ export function resolveSchema(spec, schemaOrRef) {
 export function getOperation(spec, method, path) {
   const pathItem = spec?.paths?.[path];
   if (!pathItem) return null;
-  return pathItem[method.toLowerCase()] || null;
+  const operation = pathItem[method.toLowerCase()];
+  if (!operation) return null;
+  const parameters = new Map();
+  for (const raw of [...(pathItem.parameters || []), ...(operation.parameters || [])]) {
+    const parameter = resolveSchema(spec, raw);
+    if (parameter) parameters.set(`${parameter.in}:${parameter.name}`, parameter);
+  }
+  return { ...operation, parameters: [...parameters.values()], requestBody: resolveSchema(spec, operation.requestBody) };
 }
 
 /** Build a best-effort example payload from a (possibly $ref'd) JSON schema. */
@@ -56,6 +65,12 @@ export function buildExampleFromSchema(spec, schemaOrRef, depth = 0) {
   if (!schema || depth > 6) return null;
   if (schema.example !== undefined) return schema.example;
   if (schema.default !== undefined) return schema.default;
+  if (schema.const !== undefined) return schema.const;
+  if (schema.enum?.length) return schema.enum[0];
+  if (schema.anyOf || schema.oneOf) {
+    const option = (schema.anyOf || schema.oneOf).find((item) => resolveSchema(spec, item)?.type !== "null");
+    return option ? buildExampleFromSchema(spec, option, depth + 1) : null;
+  }
 
   if (schema.allOf) {
     return schema.allOf.reduce(
@@ -69,7 +84,10 @@ export function buildExampleFromSchema(spec, schemaOrRef, depth = 0) {
       const props = schema.properties || {};
       const obj = {};
       for (const key of Object.keys(props)) {
-        obj[key] = buildExampleFromSchema(spec, props[key], depth + 1);
+        const property = resolveSchema(spec, props[key]);
+        if (schema.required?.includes(key) || (property?.default !== undefined && property.default !== null)) {
+          obj[key] = buildExampleFromSchema(spec, props[key], depth + 1);
+        }
       }
       return obj;
     }
@@ -79,7 +97,7 @@ export function buildExampleFromSchema(spec, schemaOrRef, depth = 0) {
       return schema.enum?.[0] ?? "";
     case "integer":
     case "number":
-      return 0;
+      return schema.minimum ?? (typeof schema.exclusiveMinimum === "number" ? schema.exclusiveMinimum + 1 : 0);
     case "boolean":
       return false;
     default:

@@ -22,7 +22,7 @@ export const API_REFERENCE_GROUPS = [
     title_en: "API Keys",
     entries: [
       { opSlug: "create", method: "POST", path: "/user/api-keys", title_tr: "API anahtarı oluştur", title_en: "Create an API key", description_tr: "Programatik erişim için yeni bir API anahtarı oluşturur.", description_en: "Create a new API key for programmatic access." },
-      { opSlug: "list", method: "GET", path: "/user/api-keys", title_tr: "API anahtarlarını listele", title_en: "List API keys", description_tr: "Organizasyonunuza ait tüm API anahtarlarını getirir.", description_en: "Retrieve all API keys for your organization." },
+      { opSlug: "list", method: "GET", path: "/user/api-keys", title_tr: "API anahtarlarını listele", title_en: "List API keys", description_tr: "Organizasyonunuzun API anahtarlarını listeler. Arşivlenmiş anahtarları dahil etmek için include_archived=true gönderin.", description_en: "List your organization’s API keys. Send include_archived=true to include archived keys." },
       { opSlug: "archive", method: "DELETE", path: "/user/api-keys/{api_key_id}", title_tr: "API anahtarını arşivle", title_en: "Archive an API key", description_tr: "Bir API anahtarını ID'sine göre devre dışı bırakır; anahtar hemen geçersiz olur.", description_en: "Deactivate an API key by ID. The key is revoked immediately." },
       { opSlug: "reactivate", method: "PUT", path: "/user/api-keys/{api_key_id}/reactivate", title_tr: "API anahtarını yeniden etkinleştir", title_en: "Reactivate an API key", description_tr: "Daha önce arşivlenmiş bir API anahtarını yeniden etkinleştirir.", description_en: "Reactivate a previously archived API key." },
     ],
@@ -47,7 +47,7 @@ export const API_REFERENCE_GROUPS = [
         title_tr: "Çalıştırmalar",
         title_en: "Runs",
         children: [
-          { opSlug: "create", method: "POST", path: "/workflow/{workflow_id}/runs", title_tr: "Test çalıştırması oluştur", title_en: "Create test run", description_tr: "Gerçek bir telefon çağrısı yapmadan iş akışını test amaçlı çalıştırır.", description_en: "Execute a workflow without placing a real phone call." },
+          { opSlug: "create", method: "POST", path: "/workflow/{workflow_id}/runs", title_tr: "Test çalıştırması oluştur", title_en: "Create test run", description_tr: "Taslak workflow tanımından seçilen modda bir test çalıştırma kaydı oluşturur. Tek başına telefon araması başlatmaz.", description_en: "Create a test run from the workflow draft in the selected mode. This endpoint alone does not place a phone call." },
           { opSlug: "list", method: "GET", path: "/workflow/{workflow_id}/runs", title_tr: "Çalıştırmaları listele", title_en: "List runs", description_tr: "Bir iş akışına ait tüm çalıştırmaları listeler.", description_en: "Retrieve all runs for a workflow." },
           { opSlug: "get", method: "GET", path: "/workflow/{workflow_id}/runs/{run_id}", title_tr: "Çalıştırmayı getir", title_en: "Get a run", description_tr: "Tek bir iş akışı çalıştırmasını ID'sine göre getirir.", description_en: "Retrieve a single workflow run by ID." },
         ],

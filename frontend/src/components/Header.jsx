@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Moon, Sun, Search, ShieldCheck, LogOut, Play } from "lucide-react";
+import { Moon, Sun, Search, ShieldCheck, LogOut, Play, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { translateTab, t } from "@/lib/translations";
 
-export default function Header({ onSearchClick }) {
+export default function Header({ onSearchClick, onMenuClick, menuOpen }) {
   const { theme, toggle } = useTheme();
   const { lang, toggleLang } = useLanguage();
   const { user, logout } = useAuth();
@@ -35,6 +35,11 @@ export default function Header({ onSearchClick }) {
       data-testid="site-header"
     >
       <div className="max-w-[1400px] mx-auto flex items-center gap-3 h-16 px-4 sm:px-6">
+        <Button variant="ghost" size="icon" className="lg:hidden shrink-0"
+          onClick={onMenuClick} aria-label={lang === "tr" ? "Menüyü aç" : "Open menu"}
+          aria-expanded={menuOpen} aria-controls="mobile-docs-menu" data-testid="open-menu-mobile">
+          <Menu className="w-5 h-5" />
+        </Button>
         <Link to="/" className="flex items-center gap-2.5 group shrink-0" data-testid="logo-link">
           <div className="relative flex items-center justify-center w-11 h-11 rounded-xl overflow-hidden border border-border/70 bg-background shadow-sm">
             <img

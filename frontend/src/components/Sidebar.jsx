@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { translateSection } from "@/lib/translations";
+import { translateSection, translateTab } from "@/lib/translations";
 import { API_REFERENCE_GROUPS } from "@/lib/apiReferenceGroups";
 import { FileText, ChevronRight } from "lucide-react";
 
@@ -25,36 +25,38 @@ function MethodTag({ method }) {
 
 /** Nav tree for /api-referansi/* — sourced from the static groups config, not the CMS. */
 function ApiReferenceTree({ currentPath, expanded, onToggle, lang }) {
-  const renderEntries = (groupSlug, entries, depth) =>
+  const renderEntries = (groupSlug, entries, depth, prefix = "") =>
     entries.map((entry) => {
-      const active = currentPath === `api-referansi/${groupSlug}/${entry.opSlug}`;
+      const slug = prefix ? `${prefix}/${entry.opSlug}` : entry.opSlug;
+      const active = currentPath === `api-referansi/${groupSlug}/${slug}`;
       const title = lang === "tr" ? entry.title_tr : entry.title_en;
       if (entry.children) {
-        const key = `${groupSlug}/${entry.opSlug}`;
+        const key = `${groupSlug}/${slug}`;
         const isOpen = expanded.has(key);
         return (
           <li key={key}>
             <button
               type="button"
               onClick={() => onToggle(key)}
+              aria-expanded={isOpen}
               className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/40 transition-colors"
-              style={{ paddingLeft: `${0.5 + depth * 0.75}rem` }}
+              style={{ paddingLeft: `${0.5 + depth * 1.25}rem` }}
             >
               <ChevronRight className={`w-3.5 h-3.5 shrink-0 transition-transform ${isOpen ? "rotate-90" : ""}`} />
               {title}
             </button>
-            {isOpen && <ul className="space-y-0.5">{renderEntries(groupSlug, entry.children, depth + 1)}</ul>}
+            {isOpen && <ul className="space-y-0.5">{renderEntries(groupSlug, entry.children, depth + 1, slug)}</ul>}
           </li>
         );
       }
       return (
         <li key={entry.opSlug}>
           <Link
-            to={`/api-referansi/${groupSlug}/${entry.opSlug}`}
+            to={`/api-referansi/${groupSlug}/${slug}`}
             className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm transition-colors ${
               active ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:text-foreground hover:bg-secondary/40"
             }`}
-            style={{ paddingLeft: `${0.5 + depth * 0.75 + (depth === 0 ? 1.25 : 0)}rem` }}
+            style={{ paddingLeft: `${1.75 + depth * 1.25}rem` }}
           >
             <MethodTag method={entry.method} />
             <span className="truncate">{title}</span>
@@ -111,7 +113,7 @@ function buildDocLookup(navData) {
   return map;
 }
 
-export default function Sidebar() {
+export default function Sidebar({ mobile = false, onNavigate }) {
   const [navData, setNavData] = useState([]);
   const [expanded, setExpanded] = useState(new Set());
   const location = useLocation();
@@ -179,6 +181,15 @@ export default function Sidebar() {
 
   // Auto-expand ancestors of the active doc when URL changes
   useEffect(() => {
+    if (currentPath.startsWith("api-referansi/")) {
+      const parts = currentPath.split("/").slice(1);
+      setExpanded((previous) => {
+        const next = new Set(previous);
+        for (let i = 2; i < parts.length; i++) next.add(parts.slice(0, i).join("/"));
+        return next;
+      });
+      return;
+    }
     if (!navData.length) return;
     const lookup = docLookup;
     const match = lookup.get(currentPath);
@@ -285,9 +296,15 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="w-[270px] shrink-0 hidden lg:block sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-4"
+      className={mobile ? "w-full py-5" : "w-[270px] shrink-0 hidden lg:block sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto py-8 pr-4"}
+      onClick={(event) => { if (event.target.closest("a")) onNavigate?.(); }}
       data-testid="docs-sidebar"
     >
+      {mobile && <nav aria-label={lang === "tr" ? "Bölümler" : "Sections"} className="mb-6 pb-4 border-b space-y-1">
+        {navData.map((tab) => <Link key={tab.id} className="block px-2 py-2 text-sm font-medium rounded hover:bg-secondary"
+          to={tab.slug === "api-referansi" ? "/api-referansi" : `/docs/${tab.slug}`}>{translateTab(tab, lang).title}</Link>)}
+        <Link className="block px-2 py-2 text-sm" to="/videos">{lang === "tr" ? "Videolar" : "Videos"}</Link>
+      </nav>}
       {currentPath === "api-referansi" || currentPath.startsWith("api-referansi/") ? (
         <ApiReferenceTree currentPath={currentPath} expanded={expanded} onToggle={onToggle} lang={lang} />
       ) : (
@@ -312,12 +329,12 @@ export default function Sidebar() {
                     <li key={doc.id}>
                       <div
                         className="flex items-center group"
-                        style={{ paddingLeft: depth * 12 }}
+                        style={{ paddingLeft: depth * 20 }}
                       >
                         {hasChildren ? (
                           <button
                             onClick={() => onToggle(doc.id)}
-                            className="p-1 -ml-1 rounded hover:bg-secondary/60 text-muted-foreground"
+                            className="w-5 h-6 shrink-0 flex items-center justify-center rounded hover:bg-secondary/60 text-muted-foreground"
                             aria-label={isOpen ? "Daralt" : "Genişlet"}
                             data-testid={`toggle-doc-${doc.slug}`}
                           >
@@ -328,19 +345,19 @@ export default function Sidebar() {
                             />
                           </button>
                         ) : (
-                          <span className="w-5" />
+                          <span className="w-5 shrink-0" />
                         )}
                         <Link
                           to={docUrl(doc)}
                           data-testid={`sidebar-doc-${doc.slug}`}
-                          className={`flex-1 flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors ${
+                          className={`flex-1 min-w-0 flex items-center gap-2 px-2 py-1.5 text-sm rounded-md transition-colors ${
                             active
                               ? "sidebar-link-active font-medium"
                               : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                           }`}
                         >
                           {!hasChildren && (
-                            <FileText className="w-3.5 h-3.5 opacity-50" />
+                            <FileText className="w-3.5 h-3.5 shrink-0 opacity-50" />
                           )}
                           <span className="truncate">{doc.title}</span>
                         </Link>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import { Copy, Check, ChevronRight } from "lucide-react";
@@ -8,13 +8,13 @@ import { findGroup, findEntry } from "@/lib/apiReferenceGroups";
 import {
   fetchOpenApiSpec,
   getOperation,
-  resolveSchema,
   buildExampleFromSchema,
   DEFAULT_API_BASE_URL,
 } from "@/lib/apiReferenceSpec";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ApiSchemaFields, { FieldLabel, SchemaField } from "@/components/ApiSchemaFields";
 import { Textarea } from "@/components/ui/textarea";
 
 const API_KEY_STORAGE = "verasist_api_key";
@@ -43,8 +43,9 @@ export default function ApiReferencePage() {
   const { lang } = useLanguage();
 
   const group = findGroup(groupSlug);
-  const entry = findEntry(groupSlug, splat);
+  const entry = useMemo(() => findEntry(groupSlug, splat), [groupSlug, splat]);
 
+  const requestForm = useRef(null);
   const [spec, setSpec] = useState(null);
   const [specError, setSpecError] = useState(null);
   const [baseUrl, setBaseUrl] = useState(
@@ -68,9 +69,11 @@ export default function ApiReferencePage() {
   useEffect(() => {
     setSpec(null);
     setSpecError(null);
+    let active = true;
     fetchOpenApiSpec(baseUrl)
-      .then(setSpec)
-      .catch((err) => setSpecError(err.message || String(err)));
+      .then((value) => { if (active) setSpec(value); })
+      .catch((err) => { if (active) setSpecError(err.message || String(err)); });
+    return () => { active = false; };
   }, [baseUrl]);
 
   const operation = useMemo(() => {
@@ -109,7 +112,7 @@ export default function ApiReferencePage() {
     setResponse(null);
     setBodyText(exampleBody !== null ? JSON.stringify(exampleBody, null, 2) : "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entry?.opSlug, exampleBody]);
+  }, [entry?.method, entry?.path, exampleBody]);
 
   if (!group || !entry) {
     return (
@@ -124,11 +127,11 @@ export default function ApiReferencePage() {
   const entryDescription = lang === "tr" ? entry.description_tr : entry.description_en;
 
   const resolvedPath = entry.path.replace(/\{(\w+)\}/g, (_, name) =>
-    pathValues[name] ? encodeURIComponent(pathValues[name]) : `{${name}}`,
+    pathValues[name] !== undefined && pathValues[name] !== "" ? encodeURIComponent(pathValues[name]) : `{${name}}`,
   );
   const queryString = Object.entries(queryValues)
     .filter(([, v]) => v !== undefined && v !== "")
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(typeof v === "object" ? JSON.stringify(v) : v)}`)
     .join("&");
   const fullUrl = `${baseUrl.replace(/\/+$/, "")}/api/v1${resolvedPath}${queryString ? `?${queryString}` : ""}`;
 
@@ -153,6 +156,7 @@ export default function ApiReferencePage() {
   };
 
   const handleSend = async () => {
+    if (!requestForm.current?.reportValidity()) return;
     setSending(true);
     setResponse(null);
     let parsedBody;
@@ -208,9 +212,9 @@ export default function ApiReferencePage() {
         <span className="font-mono text-sm text-muted-foreground">{entry.path}</span>
       </div>
       <h1 className="text-2xl font-semibold mb-1">{entryTitle}</h1>
-      {(entryDescription || operation?.description) && (
+      {(entryDescription || operation?.description || operation?.summary) && (
         <p className="text-sm text-muted-foreground mb-6">
-          {entryDescription || operation.description}
+          {entryDescription || operation?.description || operation?.summary}
         </p>
       )}
 
@@ -222,15 +226,15 @@ export default function ApiReferencePage() {
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Left: request builder */}
-        <div className="space-y-6">
+        <form ref={requestForm} onSubmit={(event) => { event.preventDefault(); handleSend(); }} className="space-y-6 min-w-0">
           <div>
-            <label className="text-sm font-medium block mb-1">{t("apiRef.baseUrl", lang)}</label>
-            <Input value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} data-testid="apiref-base-url" />
+            <FieldLabel name={t("apiRef.baseUrl", lang)} inputId="api-base-url" lang={lang} hint={lang === "tr" ? "Verasist API adresi. /api/v1 yolu otomatik eklenir." : "Verasist API origin. The /api/v1 prefix is added automatically."} />
+            <Input id="api-base-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} data-testid="apiref-base-url" />
           </div>
           <div>
-            <label className="text-sm font-medium block mb-1">{t("apiRef.apiKeyLabel", lang)}</label>
+            <FieldLabel name={t("apiRef.apiKeyLabel", lang)} inputId="api-secret" lang={lang} hint={lang === "tr" ? "Organizasyonunuzun API anahtarı. İstekte X-API-Key başlığı olarak gönderilir." : "Your organization API key, sent in the X-API-Key header."} />
             <Input
-              type="password"
+              id="api-secret" type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={t("apiRef.apiKeyPlaceholder", lang)}
@@ -242,34 +246,8 @@ export default function ApiReferencePage() {
             <div>
               <h3 className="text-sm font-medium mb-2">{t("apiRef.parameters", lang)}</h3>
               <div className="space-y-2">
-                {pathParams.map((p) => (
-                  <div key={p.name} className="flex items-center gap-3">
-                    <label className="text-xs font-mono w-40 shrink-0 truncate" title={p.name}>
-                      {p.name}
-                      {p.required && <span className="text-destructive"> *</span>}
-                    </label>
-                    <Input
-                      value={pathValues[p.name] || ""}
-                      onChange={(e) => setPathValues((v) => ({ ...v, [p.name]: e.target.value }))}
-                      placeholder={`path · ${resolveSchema(spec, p.schema)?.type || "string"}`}
-                      data-testid={`apiref-param-${p.name}`}
-                    />
-                  </div>
-                ))}
-                {queryParams.map((p) => (
-                  <div key={p.name} className="flex items-center gap-3">
-                    <label className="text-xs font-mono w-40 shrink-0 truncate" title={p.name}>
-                      {p.name}
-                      {p.required && <span className="text-destructive"> *</span>}
-                    </label>
-                    <Input
-                      value={queryValues[p.name] || ""}
-                      onChange={(e) => setQueryValues((v) => ({ ...v, [p.name]: e.target.value }))}
-                      placeholder={`query · ${resolveSchema(spec, p.schema)?.type || "string"}`}
-                      data-testid={`apiref-param-${p.name}`}
-                    />
-                  </div>
-                ))}
+                {pathParams.map((p) => <SchemaField key={`path-${p.name}`} spec={spec} name={p.name} schema={p.schema || { type: "string" }} required value={pathValues[p.name]} description={p.description} lang={lang} optionalToggle={false} onChange={(value) => setPathValues((current) => ({ ...current, [p.name]: value }))} />)}
+                {queryParams.map((p) => <SchemaField key={`query-${p.name}`} spec={spec} name={p.name} schema={p.schema || { type: "string" }} required={p.required} value={queryValues[p.name]} description={p.description} lang={lang} optionalToggle={false} onChange={(value) => setQueryValues((current) => ({ ...current, [p.name]: value }))} />)}
               </div>
             </div>
           )}
@@ -286,23 +264,26 @@ export default function ApiReferencePage() {
                   {t("apiRef.resetExample", lang)}
                 </button>
               </div>
-              <Textarea
-                value={bodyText}
-                onChange={(e) => setBodyText(e.target.value)}
-                rows={10}
-                className="font-mono text-xs"
-                data-testid="apiref-request-body"
-              />
+              {(() => {
+                try {
+                  const value = JSON.parse(bodyText || "{}");
+                  return <ApiSchemaFields spec={spec} schema={requestBodySchema} value={value} lang={lang} onChange={(next) => setBodyText(JSON.stringify(next, null, 2))} />;
+                } catch (_) { return <p className="text-sm text-destructive">{t("apiRef.invalidJson", lang)}</p>; }
+              })()}
+              <details className="mt-4">
+                <summary className="cursor-pointer text-xs text-muted-foreground">{lang === "tr" ? "JSON olarak düzenle" : "Edit as JSON"}</summary>
+                <Textarea aria-label="JSON" value={bodyText} onChange={(event) => setBodyText(event.target.value)} rows={10} className="font-mono text-xs mt-2" data-testid="apiref-request-body" />
+              </details>
             </div>
           )}
 
-          <Button onClick={handleSend} disabled={sending || !spec} data-testid="apiref-send-btn">
+          <Button type="submit" disabled={sending || !operation} data-testid="apiref-send-btn">
             {sending ? t("apiRef.sending", lang) : t("apiRef.tryIt", lang)}
           </Button>
-        </div>
+        </form>
 
         {/* Right: curl preview + response */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <div>
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-sm font-medium">cURL</h3>
