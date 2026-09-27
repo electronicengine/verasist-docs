@@ -17,7 +17,7 @@ Bu örnek uygulama callback’i olmadan oturum açar. Workflow’a bağlı sunuc
 import { randomUUID } from "node:crypto";
 import { VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient({ timeoutMs: 120_000 });
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai", timeoutMs: 120_000 });
 const workflowUuid = process.env.WORKFLOW_UUID!;
 await client.textSessions.check(workflowUuid);
 
@@ -97,7 +97,7 @@ async function createWithTools(client: VerasistClient, workflowUuid: string,
 
 `registerToken` SDK metodu değil, uygulamanızın saklama adaptörüdür. Token’ı doğrulanmış kullanıcı/tenant ve son kullanma süresiyle eşleyin; oturum bitince iptal edin.
 
-**Verasist API sunucusunda** `SDK_TOOL_CALLBACK_ORIGINS` değerine izin verilen tam origin’leri virgülle ayırarak ekleyin; örneğin `https://your-app.example`. Callback URL’si `/api/sdk/tools` gibi path içerebilir; kullanıcı bilgisi, query veya fragment içeremez. Yönlendirmeler takip edilmez. URL API sunucusundan erişilebilir olmalıdır; container içindeki `localhost` aynı container’ı gösterir.
+Callback için uygulamanızın HTTPS adresini kullanın; örneğin `https://your-app.example/api/sdk/tools`. Adresin Verasist tarafından erişilebilir olması ve origin’inin izinli olması gerekir. Origin reddedilirse Verasist desteğiyle iletişime geçin. URL kullanıcı bilgisi, query veya fragment içeremez; yönlendirmeler takip edilmez.
 
 Taşıma sınırları: 1–32 araç; `sdk_` ve ardından 1–60 harf/rakam/alt çizgi; boş olmayan ve en fazla 12.000 karakter açıklama; nesne parametre şeması; 40–256 karakter token. HTTP çağrı zaman aşımı 20 saniyedir.
 
@@ -138,7 +138,7 @@ import os
 from uuid import uuid4
 import httpx
 
-base = os.environ["VERASIST_API_URL"].rstrip("/") + "/api/v1"
+base = "https://app.verasist.ai/api/v1"
 workflow_uuid = os.environ["WORKFLOW_UUID"]
 with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
     def request(method, path, body=None):

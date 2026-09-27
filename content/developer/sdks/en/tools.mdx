@@ -26,7 +26,7 @@ Run this from your server, with the environment configured in [Setup](/developer
 ```typescript
 import { VerasistClient, type TextTool } from "@verasist/sdk";
 
-const client = new VerasistClient();
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
 const workflowUuid = process.env.WORKFLOW_UUID!;
 const tools: TextTool[] = [{
   name: "sdk_status",
@@ -61,7 +61,7 @@ tools = [{
     },
 }]
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     client.publish_toolset(os.environ["WORKFLOW_UUID"], tools)
     catalog = client.get_toolset(os.environ["WORKFLOW_UUID"])
     print([tool.name for tool in catalog.tools])
@@ -101,7 +101,7 @@ You can declare the same selection when building a node in code:
 ```python
 from verasist_sdk import VerasistClient, Workflow
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     workflow = Workflow(client=client, name="device_diagnostics")
     diagnostics = workflow.add(
         type="startCall", name="diagnostics",

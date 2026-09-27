@@ -17,7 +17,7 @@ This TypeScript example opens a conversation without application callbacks. It c
 import { randomUUID } from "node:crypto";
 import { VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient({ timeoutMs: 120_000 });
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai", timeoutMs: 120_000 });
 const workflowUuid = process.env.WORKFLOW_UUID!;
 await client.textSessions.check(workflowUuid);
 
@@ -100,7 +100,7 @@ async function createWithTools(client: VerasistClient, workflowUuid: string,
 
 `registerToken` is your application storage adapter, not an SDK method. Store the token's user/tenant binding and expiration before creating the session. Revoke it when the session closes.
 
-On the **Verasist API server**, set `SDK_TOOL_CALLBACK_ORIGINS` to a comma-separated list of exact allowed origins, for example `https://your-app.example`. The configured callback URL can include a path such as `/api/sdk/tools`, but must not include userinfo, a query or fragment. Redirects are not followed. The callback must be reachable from the API server; `localhost` inside a container refers to that container.
+Use your application’s HTTPS callback URL, for example `https://your-app.example/api/sdk/tools`. It must be reachable by Verasist and its origin must be allowed. Contact Verasist support if the origin is rejected. The URL must not contain userinfo, a query or fragment; redirects are not followed.
 
 Transport limits: 1–32 tools; names start with `sdk_` and contain 1–60 following letters/digits/underscores; nonempty descriptions up to 12,000 characters; object parameter schemas; token length 40–256 characters. Calls have a 20-second HTTP timeout.
 
@@ -141,7 +141,7 @@ import os
 from uuid import uuid4
 import httpx
 
-base = os.environ["VERASIST_API_URL"].rstrip("/") + "/api/v1"
+base = "https://app.verasist.ai/api/v1"
 workflow_uuid = os.environ["WORKFLOW_UUID"]
 with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
     def request(method, path, body=None):

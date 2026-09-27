@@ -14,7 +14,7 @@ Organizasyon API anahtarı ve kurulu SDK gerekir. [Kurulum](/developer/sdks/intr
 ```python Python
 from verasist_sdk import VerasistClient, Workflow
 
-with VerasistClient(api_key="YOUR_API_KEY") as client:
+with VerasistClient(base_url="https://app.verasist.ai", api_key="YOUR_API_KEY") as client:
     wf = Workflow(client=client, name="loan_qualification")
 
     greeting = wf.add(
@@ -44,7 +44,7 @@ TypeScript’te node ekleme asenkrondur:
 ```typescript TypeScript
 import { VerasistClient, Workflow } from "@verasist/sdk";
 
-const client = new VerasistClient({ apiKey: "YOUR_API_KEY" });
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai", apiKey: "YOUR_API_KEY" });
 const wf = new Workflow({ client, name: "loan_qualification" });
 
 const greeting = await wf.add({
@@ -78,7 +78,7 @@ Yükleme işlemi varsa taslağı, yoksa yayımlanmış tanımı getirir:
 ```python Python
 from verasist_sdk import VerasistClient
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     wf = client.load_workflow(workflow_id=123)
     wf.name = "loan_qualification_v2"
     client.save_workflow(workflow_id=123, workflow=wf)
@@ -87,7 +87,7 @@ with VerasistClient() as client:
 ```typescript TypeScript
 import { VerasistClient, Workflow } from "@verasist/sdk";
 
-const client = new VerasistClient();
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
 const original = await client.loadWorkflow(123);
 const edited = await Workflow.fromJson({ ...original.toJson() }, {
   client, name: "loan_qualification_v2",
@@ -102,7 +102,7 @@ Tür adları ve alanları sunucunun node-spec kataloğundan gelir. Desteklenmeye
 ```python Python
 from verasist_sdk import VerasistClient
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     types = client.list_node_types()
     for spec in types.node_types:
         print(spec.name, [p.name for p in spec.properties])
@@ -111,7 +111,7 @@ with VerasistClient() as client:
 ```typescript TypeScript
 import { VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient();
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
 const types = await client.listNodeTypes();
 for (const spec of types.node_types) {
     console.log(spec.name, spec.properties.map(p => p.name));
@@ -152,7 +152,7 @@ Tipli sınıflar IDE tamamlama sağlar; aynı runtime doğrulamasını ve JSON b
 from verasist_sdk import VerasistClient, Workflow
 from verasist_sdk.typed import StartCall, EndCall
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     workflow = Workflow(client=client, name="typed_example")
     start = workflow.add_typed(StartCall(
         name="status", prompt="Read the device status using sdk_status.",
@@ -167,7 +167,7 @@ with VerasistClient() as client:
 import { VerasistClient, Workflow } from "@verasist/sdk";
 import { startCall, endCall } from "@verasist/sdk/typed";
 
-const typedWorkflow = new Workflow({ client: new VerasistClient(), name: "typed_example" });
+const typedWorkflow = new Workflow({ client: new VerasistClient({ baseUrl: "https://app.verasist.ai" }), name: "typed_example" });
 const first = await typedWorkflow.addTyped(startCall({
   name: "status", prompt: "Read the device status using sdk_status.",
   sdk_tool_names: ["sdk_status"],

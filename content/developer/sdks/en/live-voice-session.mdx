@@ -26,7 +26,7 @@ from aiortc.contrib.media import MediaPlayer, MediaRecorder
 from verasist_sdk import LiveSession, VerasistClient
 
 async def main():
-    with VerasistClient() as client:
+    with VerasistClient(base_url="https://app.verasist.ai") as client:
         session = LiveSession(client, initial_context={"device_name": socket.gethostname()})
 
         @session.tool(name="sdk_status", description="Read the connected device hostname")
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-For real-time speaker output, consume the received track's `recv()` frames in your audio playback implementation instead of a file recorder. The repository's `examples/python/live_voice_session.py` demonstrates an ALSA microphone/speaker implementation; its device names and audio-processing dependencies are hardware-specific.
+For speaker output, consume the received track’s `recv()` frames in your application’s audio playback implementation.
 
 ## Session lifecycle
 

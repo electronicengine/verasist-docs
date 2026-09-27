@@ -20,7 +20,7 @@ The test-call endpoint creates new runs with `use_draft=True`. It can therefore 
 from verasist_sdk import VerasistClient
 from verasist_sdk._generated_models import InitiateCallRequest
 
-with VerasistClient(api_key="YOUR_API_KEY") as client:
+with VerasistClient(base_url="https://app.verasist.ai", api_key="YOUR_API_KEY") as client:
     client.test_phone_call(
         body=InitiateCallRequest(
             workflow_id=123,
@@ -31,7 +31,7 @@ with VerasistClient(api_key="YOUR_API_KEY") as client:
 ```typescript TypeScript
 import { VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient({ apiKey: "YOUR_API_KEY" });
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai", apiKey: "YOUR_API_KEY" });
 
 await client.testPhoneCall({
     body: {

@@ -26,7 +26,6 @@ pip install 'verasist-sdk[voice]'
 npm install @verasist/sdk
 ```
 
-Bu sayfalar mevcut repository kodunu anlatır. Daha önce indirdiğiniz paket veya `vendor/` içindeki `.tgz` daha eski olabilir. `publishToolset`/`publish_toolset` bulunmuyorsa [SDK geliştirme](/developer/sdks/development) sayfasındaki kaynak kurulumunu kullanın. API container’ını yenilemek uygulamanın SDK paketini güncellemez.
 
 ## Kimlik doğrulama
 
@@ -43,7 +42,7 @@ Python ortam değişkenlerini otomatik okur. REST istemcisi senkrondur; `with` b
 ```python
 from verasist_sdk import VerasistClient
 
-with VerasistClient(timeout=60) as client:
+with VerasistClient(base_url="https://app.verasist.ai", timeout=60) as client:
     for workflow in client.list_workflows():
         print(workflow.id, workflow.workflow_uuid, workflow.name)
 ```
@@ -53,14 +52,14 @@ TypeScript metotları promise döndürür:
 ```typescript
 import { VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient({ timeoutMs: 60_000 });
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai", timeoutMs: 60_000 });
 const workflows = await client.listWorkflows();
 for (const workflow of workflows) {
   console.log(workflow.id, workflow.workflow_uuid, workflow.name);
 }
 ```
 
-Python’da `base_url`/`api_key`, TypeScript’te `baseUrl`/`apiKey` ile değerleri açıkça verebilirsiniz. Varsayılan adres `http://localhost:8000` olur. Adrese `/api/v1` eklemeyin; istemci ekler. Python `timeout` saniye, TypeScript `timeoutMs` milisaniyedir. TypeScript `fetch` seçeneği test veya özel taşıma katmanı içindir.
+Python `base_url` ve TypeScript `baseUrl` değerini `https://app.verasist.ai` olarak ayarlayın. `/api/v1` eklemeyin; SDK ekler. Python `timeout` saniye, TypeScript `timeoutMs` milisaniyedir.
 
 ## Doğru kimliği kullanın
 
@@ -95,4 +94,3 @@ Katalog yayımlamak uygulama kodunu dağıtmaz, oturum açmaz ve workflow tasla�
 - [SDK araçlarını yayımlama ve bağlama](/developer/sdks/tools)
 - [Telefon aramaları](/developer/sdks/outbound-calls)
 - [Diğer metotlar ve hatalar](/developer/sdks/api-capabilities)
-- [SDK geliştirme ve paketleme](/developer/sdks/development)

@@ -23,7 +23,7 @@ from aiortc.contrib.media import MediaPlayer, MediaRecorder
 from verasist_sdk import LiveSession, VerasistClient
 
 async def main():
-    with VerasistClient() as client:
+    with VerasistClient(base_url="https://app.verasist.ai") as client:
         session = LiveSession(client, initial_context={"device_name": socket.gethostname()})
 
         @session.tool(name="sdk_status", description="Read the connected device hostname")
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-Gerçek zamanlı hoparlör çıkışı için dosya kaydı yerine gelen track’in `recv()` karelerini ses çıkışınıza aktarın. Repository’deki `examples/python/live_voice_session.py` ALSA mikrofon/hoparlör örneğidir; cihaz adlarını ve ses işleme bağımlılıklarını donanımınıza göre ayarlayın.
+Hoparlörden ses vermek için gelen track’in `recv()` karelerini uygulamanızın ses çıkışına aktarın.
 
 ## Oturum yaşam döngüsü
 

@@ -26,7 +26,6 @@ pip install 'verasist-sdk[voice]'
 npm install @verasist/sdk
 ```
 
-These pages describe the SDK in the current repository. A previously downloaded package or a vendored `.tgz` can be older. If `publishToolset` or `publish_toolset` is missing, use the matching source build described in [SDK development](/developer/sdks/development). Updating the API container does not update an application's installed SDK.
 
 ## Authenticate from your application server
 
@@ -43,7 +42,7 @@ Python reads these variables automatically and provides a synchronous REST clien
 ```python
 from verasist_sdk import VerasistClient
 
-with VerasistClient(timeout=60) as client:
+with VerasistClient(base_url="https://app.verasist.ai", timeout=60) as client:
     for workflow in client.list_workflows():
         print(workflow.id, workflow.workflow_uuid, workflow.name)
 ```
@@ -53,14 +52,14 @@ TypeScript REST methods return promises:
 ```typescript
 import { VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient({ timeoutMs: 60_000 });
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai", timeoutMs: 60_000 });
 const workflows = await client.listWorkflows();
 for (const workflow of workflows) {
   console.log(workflow.id, workflow.workflow_uuid, workflow.name);
 }
 ```
 
-You can override environment values with Python `base_url`/`api_key` or TypeScript `baseUrl`/`apiKey`. The default base URL is `http://localhost:8000`. Supply the origin without `/api/v1`; the client adds that prefix. Python `timeout` is in seconds; TypeScript `timeoutMs` is in milliseconds. TypeScript also accepts a `fetch` override for tests or a custom transport.
+Set Python `base_url` or TypeScript `baseUrl` to `https://app.verasist.ai`. Do not append `/api/v1`; the SDK adds it. Python `timeout` is in seconds; TypeScript `timeoutMs` is in milliseconds.
 
 ## Use the correct identifier
 
@@ -95,4 +94,3 @@ Publishing a catalog does not deploy code, create a conversation, or publish a w
 - [Publish and connect SDK tools](/developer/sdks/tools)
 - [Outbound calls](/developer/sdks/outbound-calls)
 - [Other SDK methods and errors](/developer/sdks/api-capabilities)
-- [Develop, test and package the SDK](/developer/sdks/development)

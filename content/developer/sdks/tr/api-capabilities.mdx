@@ -27,14 +27,14 @@ Aşağıda Python adları kullanılmıştır; TypeScript karşılıkları camelC
 | Kanal | `initiate_channel_outbound` | Kanal türü, yapılandırma ID, mod, hedef, workflow ID |
 | Düşük seviyeli ses | `start_live_session`, `start_live_session_by_workflow`, `get_live_session_turn_credentials` | Oturum/TURN metadata’sı; medya istemcisi ayrıca gerekir |
 
-Python’da `verasist_sdk._generated_models`, TypeScript’te metot imzası alanların kaynağıdır. Backend’de `sdk_expose` olmayan her endpoint otomatik SDK metodu olmaz. Workflow yayımlama veya run geçmişi için olmayan metot adları uydurmayın; editörü veya REST API’yi kullanın.
+İstek alanları için Python’da `verasist_sdk._generated_models`, TypeScript’te metot imzalarını inceleyin. Workflow yayımlamak için editörü; run geçmişi için REST API’yi kullanın.
 
 ## Kaynak keşfi
 
 ```python
 from verasist_sdk import VerasistClient
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     tools = client.list_tools(status="active")
     documents = client.list_documents(limit=20, offset=0)
     recordings = client.list_recordings(workflow_id=135)
@@ -46,7 +46,7 @@ with VerasistClient() as client:
 ```typescript
 import { VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient();
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
 const tools = await client.listTools({ status: "active" });
 const documents = await client.listDocuments({ limit: 20, offset: 0 });
 const recordings = await client.listRecordings({ workflowId: 135 });
@@ -63,7 +63,7 @@ Python SDK’da `ApiError`, `ValidationError`, `SpecMismatchError` ve taban sın
 import httpx
 from verasist_sdk import ApiError, SpecMismatchError, ValidationError, VerasistClient
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     try:
         workflow = client.load_workflow(135)
         print(workflow.name)
@@ -80,7 +80,7 @@ TypeScript `ApiError`, `statusCode` ve `body` alanlarını sağlar. Ağ/abort ha
 ```typescript
 import { ApiError, VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient();
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
 try {
   console.log((await client.getWorkflow(135)).name);
 } catch (error) {
@@ -101,6 +101,6 @@ try {
 | 409 | Yayımlama/model gereksinimi veya oturum revision/durum çatışması |
 | 422 | Alanlar, yinelenen araç adları, şema ve isim sınırları |
 | Metin turunda 502 | Oturumu okuyup bekleyen turu inceleyin |
-| İstemcide metot yok | Kurulu paket kaynak/API sürümünden eskidir |
+| İstemcide metot yok | SDK sürümünüzü kontrol edin; gerekirse destekle iletişime geçin |
 
 Loglarda durum ve run/korelasyon ID’sini kullanın; API anahtarı, callback token’ı veya özel verili body’leri yazmayın. Timeout, işlemin yapılmadığını kanıtlamaz. [Metin oturumları](/developer/sdks/text-session) ve [sesli oturumlar](/developer/sdks/live-voice-session) sayfalarındaki kurtarma adımlarını izleyin.

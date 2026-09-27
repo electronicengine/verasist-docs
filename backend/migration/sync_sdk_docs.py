@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 PAGES = ('introduction', 'build-an-agent', 'live-voice-session', 'text-session',
-         'tools', 'outbound-calls', 'api-capabilities', 'development')
+         'tools', 'outbound-calls', 'api-capabilities')
 
 
 def build():
@@ -47,7 +47,7 @@ async def apply(pages, backup):
     from motor.motor_asyncio import AsyncIOMotorClient
     allowed = {(f'developer/sdks/{page}', lang) for page in PAGES for lang in ('en', 'tr')}
     if len(pages) != len(allowed) or {(p['path'], p['lang']) for p in pages} != allowed:
-        raise ValueError('Payload must contain exactly the 16 SDK pages')
+        raise ValueError('Payload must contain exactly the 14 customer SDK pages')
     client = AsyncIOMotorClient(os.environ['MONGO_URL'])
     try:
         db = client[os.environ.get('DB_NAME', 'verasist_docs')]

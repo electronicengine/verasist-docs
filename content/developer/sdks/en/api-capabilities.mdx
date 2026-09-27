@@ -27,14 +27,14 @@ Python names are shown below. TypeScript uses camelCase, for example `list_docum
 | Channel initiation | `initiate_channel_outbound` | Channel type, configuration ID, mode, target and workflow ID |
 | Low-level voice | `start_live_session`, `start_live_session_by_workflow`, `get_live_session_turn_credentials` | Returns session/TURN metadata; media transport remains your responsibility |
 
-For generated request/response fields, inspect `verasist_sdk._generated_models` in Python or the TypeScript method signature. Routes without the backend's `sdk_expose` marker are not automatically available as client methods. In particular, workflow publishing and run-history retrieval should not be called using invented SDK method names; use the editor or documented REST API.
+For request fields, inspect `verasist_sdk._generated_models` in Python or the TypeScript method signatures. Publish workflows from the editor and use the REST API for run history.
 
 ## Discover resources
 
 ```python
 from verasist_sdk import VerasistClient
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     tools = client.list_tools(status="active")
     documents = client.list_documents(limit=20, offset=0)
     recordings = client.list_recordings(workflow_id=135)
@@ -46,7 +46,7 @@ with VerasistClient() as client:
 ```typescript
 import { VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient();
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
 const tools = await client.listTools({ status: "active" });
 const documents = await client.listDocuments({ limit: 20, offset: 0 });
 const recordings = await client.listRecordings({ workflowId: 135 });
@@ -63,7 +63,7 @@ Python SDK exceptions include `ApiError`, `ValidationError`, `SpecMismatchError`
 import httpx
 from verasist_sdk import ApiError, SpecMismatchError, ValidationError, VerasistClient
 
-with VerasistClient() as client:
+with VerasistClient(base_url="https://app.verasist.ai") as client:
     try:
         workflow = client.load_workflow(135)
         print(workflow.name)
@@ -80,7 +80,7 @@ TypeScript `ApiError` exposes `statusCode` and `body`; network/abort failures ca
 ```typescript
 import { ApiError, VerasistClient } from "@verasist/sdk";
 
-const client = new VerasistClient();
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
 try {
   console.log((await client.getWorkflow(135)).name);
 } catch (error) {
@@ -101,7 +101,7 @@ try {
 | 409 | Publish/model prerequisites or text-session state/revision conflict |
 | 422 | Request fields, duplicate tool names, JSON Schema and naming constraints |
 | 502 on a text turn | Read the session; inspect a pending turn before executing again |
-| Missing client method | Installed SDK artifact is older than the source/API |
+| Missing client method | Check your installed SDK version and contact support |
 
 Log status and your own correlation/run IDs. Avoid logging API keys, session callback tokens or private request/response bodies. A transport timeout does not prove that a write, tool action or phone call did not occur.
 

@@ -790,6 +790,10 @@ async def import_documents(db, pages: list, section_slug_to_id: dict):
             "created_at": now_iso(),
             "updated_at": now_iso(),
         }
+        from customer_publication import customer_document
+        doc = customer_document(doc)
+        if doc is None:
+            continue
         await db.documents.insert_one(doc)
 
         processed += 1
