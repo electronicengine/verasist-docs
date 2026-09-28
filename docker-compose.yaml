@@ -20,6 +20,7 @@ services:
     restart: unless-stopped
     environment:
       MONGO_URL: mongodb://mongodb:27017
+      VERASIST_API_URL: "${VERASIST_API_URL:-http://api:8000}"
       DB_NAME: "${DB_NAME:-verasist_docs}"
       JWT_SECRET: "${JWT_SECRET:?JWT_SECRET must be set in .env}"
       ADMIN_EMAIL: "${ADMIN_EMAIL:?ADMIN_EMAIL must be set in .env}"

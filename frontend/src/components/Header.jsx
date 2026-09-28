@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Moon, Sun, Search, ShieldCheck, LogOut, Play, Menu } from "lucide-react";
+import { Moon, Sun, Search, ShieldCheck, LogOut, Play, Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 import { translateTab, t } from "@/lib/translations";
 
-export default function Header({ onSearchClick, onMenuClick, menuOpen }) {
+export default function Header({ onSearchClick, onMenuClick, menuOpen, onVeraClick, veraOpen }) {
   const { theme, toggle } = useTheme();
   const { lang, toggleLang } = useLanguage();
   const { user, logout } = useAuth();
@@ -101,7 +101,7 @@ export default function Header({ onSearchClick, onMenuClick, menuOpen }) {
 
         <button
           onClick={onSearchClick}
-          className="hidden sm:flex items-center gap-2 px-3 h-9 rounded-md border border-border bg-secondary/40 hover:bg-secondary text-sm text-muted-foreground transition-colors min-w-[200px]"
+          className="hidden xl:flex items-center gap-2 px-3 h-9 rounded-md border border-border bg-secondary/40 hover:bg-secondary text-sm text-muted-foreground transition-colors min-w-[140px]"
           data-testid="open-search-btn"
         >
           <Search className="w-4 h-4" />
@@ -115,11 +115,15 @@ export default function Header({ onSearchClick, onMenuClick, menuOpen }) {
           variant="ghost"
           size="icon"
           onClick={onSearchClick}
-          className="sm:hidden"
+          className="xl:hidden"
           data-testid="open-search-btn-mobile"
           aria-label="Ara"
         >
           <Search className="w-4 h-4" />
+        </Button>
+
+        <Button variant="outline" size="sm" onClick={onVeraClick} aria-expanded={veraOpen} aria-label={lang === "tr" ? "Vera’ya sor" : "Ask Vera"} className="shrink-0 gap-1.5 border-primary/30 text-primary bg-primary/5" data-testid="ask-vera-button">
+          <Sparkles className="w-4 h-4" /><span className="hidden sm:inline">{lang === "tr" ? "Vera’ya sor" : "Ask Vera"}</span>
         </Button>
 
         <Button

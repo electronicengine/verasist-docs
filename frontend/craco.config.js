@@ -23,7 +23,12 @@ if (config.enableHealthCheck) {
 }
 
 let webpackConfig = {
-  jest: { configure: { moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1" } } },
+  jest: { configure: (config) => ({
+    ...config,
+    moduleNameMapper: { "^#(minpath|minproc|minurl)$": "<rootDir>/node_modules/vfile/lib/$1.browser.js", "^@/(.*)$": "<rootDir>/src/$1", "^unist-util-visit-parents/do-not-use-color$": "<rootDir>/node_modules/unist-util-visit-parents/lib/color.js" },
+    // Markdown's unified ecosystem ships ESM; let Babel handle those packages in Jest.
+    transformIgnorePatterns: ["/node_modules/(?!(react-markdown|remark[^/]*|rehype[^/]*|unified|bail|trough|vfile[^/]*|unist[^/]*|mdast[^/]*|hast[^/]*|micromark[^/]*|decode-named-character-reference|character-entities[^/]*|property-information|space-separated-tokens|comma-separated-tokens|trim-lines|ccount|escape-string-regexp|markdown-table|zwitch|devlop|estree-util-is-identifier-name|longest-streak|html-url-attributes|is-plain-obj)/)"],
+  }) },
   eslint: {
     configure: {
       extends: ["plugin:react-hooks/recommended"],

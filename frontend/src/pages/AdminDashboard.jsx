@@ -1,3 +1,4 @@
+import AdminVeraSettings from "@/components/AdminVeraSettings";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, formatApiError } from "@/lib/api";
@@ -302,8 +303,11 @@ export default function AdminDashboard() {
             <Video className="w-4 h-4 inline mr-1.5" />
             Videolar
           </button>
+          <button onClick={() => setActiveTab("vera")} className={`px-4 py-2.5 text-sm font-medium rounded-t-lg border-b-2 -mb-[1px] ${activeTab === "vera" ? "border-primary text-primary bg-primary/5" : "border-transparent text-muted-foreground"}`} data-testid="admin-tab-vera">Vera</button>
           <div className="flex-1 border-b border-border" />
         </div>
+
+        {activeTab === "vera" && <AdminVeraSettings />}
 
         {/* Docs tab content */}
         {activeTab === "docs" && (

@@ -1,0 +1,24 @@
+.vera-markdown { min-width: 0; line-height: 1.65; overflow-wrap: anywhere; white-space: normal; }
+.vera-markdown > :first-child { margin-top: 0; }
+.vera-markdown > :last-child { margin-bottom: 0; }
+.vera-markdown p, .vera-markdown ul, .vera-markdown ol, .vera-markdown blockquote, .vera-markdown pre, .vera-markdown .vera-table-scroll { margin: .75rem 0; }
+.vera-markdown h1, .vera-markdown h2, .vera-markdown h3, .vera-markdown h4, .vera-markdown h5, .vera-markdown h6 { font-weight: 650; line-height: 1.35; margin: 1.1rem 0 .5rem; }
+.vera-markdown h1 { font-size: 1.25rem; }
+.vera-markdown h2 { font-size: 1.125rem; }
+.vera-markdown h3 { font-size: 1rem; }
+.vera-markdown ul { list-style: disc; padding-left: 1.4rem; }
+.vera-markdown ol { list-style: decimal; padding-left: 1.4rem; }
+.vera-markdown li { margin: .25rem 0; }
+.vera-markdown li > p { margin: .25rem 0; }
+.vera-markdown li > ul, .vera-markdown li > ol { margin: .25rem 0; }
+.vera-markdown a { color: hsl(var(--primary)); text-decoration: underline; text-underline-offset: 3px; }
+.vera-markdown code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .85em; border-radius: .25rem; background: hsl(var(--muted)); padding: .15rem .3rem; }
+.vera-markdown pre { max-width: 100%; overflow-x: auto; border: 1px solid hsl(var(--border)); border-radius: .5rem; background: hsl(var(--muted)); padding: .75rem; white-space: pre; overflow-wrap: normal; }
+.vera-markdown pre code { padding: 0; border-radius: 0; background: transparent; font-size: .8rem; }
+.vera-markdown blockquote { border-left: 3px solid hsl(var(--primary)); padding-left: .75rem; color: hsl(var(--muted-foreground)); }
+.vera-markdown .vera-table-scroll { max-width: 100%; overflow-x: auto; border: 1px solid hsl(var(--border)); border-radius: .5rem; }
+.vera-markdown table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+.vera-markdown th, .vera-markdown td { padding: .5rem .65rem; border: 1px solid hsl(var(--border)); min-width: 6rem; vertical-align: top; }
+.vera-markdown th { font-weight: 600; background: hsl(var(--muted)); }
+.vera-markdown hr { margin: 1rem 0; border-color: hsl(var(--border)); }
+.vera-markdown input[type="checkbox"] { margin-right: .4rem; }

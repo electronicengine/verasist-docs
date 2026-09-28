@@ -473,6 +473,9 @@ async def upload_image(file: UploadFile = File(...), user: dict = Depends(get_cu
 async def root():
     return {"status": "ok", "name": "Dökümantasyon API"}
 
+from vera_chat import VeraChat, create_router
+vera_chat = VeraChat(db, JWT_SECRET)
+api.include_router(create_router(vera_chat, get_current_user))
 app.include_router(api)
 
 # Serve uploaded images
@@ -1252,6 +1255,7 @@ LANGFUSE_HOST="https://cloud.langfuse.com"</code></pre>
 
 @app.on_event("startup")
 async def on_startup():
+    await vera_chat.indexes()
     # Indexes
     await db.users.create_index("email", unique=True)
     await db.users.create_index("id", unique=True)

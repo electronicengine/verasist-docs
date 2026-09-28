@@ -5,9 +5,11 @@ import Sidebar from "./Sidebar";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "./ui/sheet";
 import { useLanguage } from "@/contexts/LanguageContext";
 import SearchDialog from "./SearchDialog";
+import VeraChatPanel from "./VeraChatPanel";
 
 export default function DocsLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [veraOpen, setVeraOpen] = useState(false);
   const { lang } = useLanguage();
   const location = useLocation();
   useEffect(() => { setMenuOpen(false); }, [location.pathname]);
@@ -32,7 +34,7 @@ export default function DocsLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Header onSearchClick={() => setSearchOpen(true)} onMenuClick={() => setMenuOpen(true)} menuOpen={menuOpen} />
+      <Header onSearchClick={() => setSearchOpen(true)} onMenuClick={() => setMenuOpen(true)} menuOpen={menuOpen} onVeraClick={() => setVeraOpen(true)} veraOpen={veraOpen} />
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent side="left" id="mobile-docs-menu" className="w-[min(88vw,360px)] overflow-y-auto p-4"
           onCloseAutoFocus={(event) => { event.preventDefault(); document.querySelector('[data-testid="open-menu-mobile"]')?.focus(); }}>
@@ -47,6 +49,7 @@ export default function DocsLayout() {
           <Outlet />
         </main>
       </div>
+      <VeraChatPanel open={veraOpen} onOpenChange={setVeraOpen} />
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
