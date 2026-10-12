@@ -1,3 +1,5 @@
+import runContract from "./runContract.json";
+
 /**
  * Loads and reads the live Verasist product API's OpenAPI schema at runtime
  * (FastAPI auto-serves it, unauthenticated, at /api/v1/openapi.json) so the
@@ -8,6 +10,20 @@
 // Falls back to the hosted app if no build-time override is set; users can
 // still point Try-It at a self-hosted instance via the base URL field in the UI.
 export const DEFAULT_API_BASE_URL = process.env.REACT_APP_VERASIST_API_URL || "https://app.verasist.ai";
+
+export function withRunContract(spec) {
+  const liveStart = spec.paths?.["/api/v1/public/agent/workflow/{workflow_uuid}"]?.post;
+  const liveBody = resolveSchema(spec, liveStart?.requestBody?.content?.["application/json"]?.schema);
+  if (liveBody?.properties?.run_type) return spec;
+  const paths = { ...spec.paths };
+  for (const [path, methods] of Object.entries(runContract.paths)) {
+    paths[path] = { ...paths[path] };
+    for (const [method, operation] of Object.entries(methods)) {
+      paths[path][method] = { ...operation, "x-requires-api-update": true };
+    }
+  }
+  return { ...spec, paths, components: { ...spec.components, schemas: { ...spec.components?.schemas, ...runContract.components.schemas } } };
+}
 
 const cache = new Map(); // baseUrl -> Promise<spec>
 
@@ -21,7 +37,7 @@ export function fetchOpenApiSpec(baseUrl) {
           cache.delete(normalized);
           throw new Error(`OpenAPI şeması alınamadı (${res.status})`);
         }
-        return res.json();
+        return res.json().then(withRunContract);
       }).catch((err) => {
         cache.delete(normalized);
         throw err;

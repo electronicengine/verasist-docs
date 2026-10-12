@@ -11,8 +11,9 @@ SDK ile workflow oluşturabilir, konuşma başlatabilir ve uygulamanızdaki ara�
 | --- | --- | --- |
 | Workflow oluşturma ve tipli node’lar | `Workflow`, `verasist_sdk.typed` | `Workflow`, `@verasist/sdk/typed` |
 | REST metotları | `snake_case` | `camelCase` |
-| Cihaz üzerinden sesli oturum | `voice` eklentisiyle `LiveSession` | Oturum oluşturma REST metotları var; hazır WebRTC istemcisi yok |
-| Uygulama metin oturumu | `httpx` ile REST; `text_sessions` yardımcısı yok | `client.textSessions` |
+| Cihaz üzerinden sesli oturum | `voice` eklentisiyle `LiveSession` | REST + tarayıcı `createDeviceVideoSession` |
+| Sesli ve görüntülü oturum | `LiveSession(client, mode="video_session")` | `@verasist/sdk/video` içinden `createDeviceVideoSession` |
+| Uygulama metin oturumu | `client.text_sessions` (JSON ve streaming) | `client.textSessions` |
 | Araç şeması yayımlama | `client.publish_toolset()` veya `await session.publish_toolset()` | `client.publishToolset()` |
 | Araç çalıştırma | Sesli oturumda cihazdaki Python fonksiyonu | Metin oturumunda kimliği doğrulanmış HTTP callback |
 
@@ -94,3 +95,5 @@ Katalog yayımlamak uygulama kodunu dağıtmaz, oturum açmaz ve workflow tasla�
 - [SDK araçlarını yayımlama ve bağlama](/developer/sdks/tools)
 - [Telefon aramaları](/developer/sdks/outbound-calls)
 - [Diğer metotlar ve hatalar](/developer/sdks/api-capabilities)
+
+Sesli kullanım: `LiveSession(client)` veya `run_type: "voice"`. Görüntülü kullanım: `LiveSession(client, mode="video_session")`; TypeScript’te REST ile oluşturulan tokenı `@verasist/sdk/video` içindeki `createDeviceVideoSession` ile bağlayın. Text için `client.text_sessions` / `client.textSessions` kullanın. Ayrıntılar: [Sesli ve görüntülü oturumlar](/developer/sdks/live-voice-session).

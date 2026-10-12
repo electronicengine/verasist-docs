@@ -1,13 +1,13 @@
 ---
 title: "Text sessions and application callbacks"
-description: "Create persistent text conversations, send revision-safe messages, resume pending turns, and execute SDK tools through HTTP"
+description: "Stream text replies and live tool activity with Python, TypeScript or SSE; reconcile session state and recover after disconnects"
 ---
 
 ## Prerequisites
 
 Use a server-side organization API key and a published workflow UUID. Assign a usable model package to the workflow; `textSessions.check()` checks that configuration. Application sessions use the published definition, not the editor draft. Text sessions do not open WebRTC or use microphone/speaker tracks.
 
-The TypeScript SDK includes `client.textSessions`. Python currently uses the same REST endpoints through `httpx`; there is no `client.text_sessions` helper.
+The TypeScript SDK includes `client.textSessions`; Python includes `client.text_sessions`. Both support JSON responses and incremental text streaming without voice dependencies.
 
 ## Create, execute, send and close
 
@@ -45,34 +45,30 @@ try {
 ```python
 import os
 from uuid import uuid4
-import httpx
+from verasist_sdk import VerasistClient
 
-base = "https://app.verasist.ai/api/v1"
-workflow_uuid = os.environ["WORKFLOW_UUID"]
-with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
-    def request(method, path, body=None):
-        response = http.request(method, base + path, json=body)
-        response.raise_for_status()
-        return response.json()
-
-    request("GET", f"/apps/workflows/{workflow_uuid}/check")
-    session = request("POST", f"/apps/workflows/{workflow_uuid}/sessions", {
-        "request_id": str(uuid4()), "initial_context": {"locale": "en"},
-    })
+with VerasistClient(
+    base_url="https://app.verasist.ai",
+    api_key=os.environ["VERASIST_API_KEY"],
+    timeout=120,
+) as client:
+    client.text_sessions.check(os.environ["WORKFLOW_UUID"])
+    session = client.text_sessions.create(
+        os.environ["WORKFLOW_UUID"], request_id=str(uuid4()),
+        initial_context={"locale": "en"},
+    )
     run_id = session["run_id"]
     try:
-        session = request("POST", f"/apps/sessions/{run_id}/execute", {})
+        session = client.text_sessions.execute(run_id)
         if not session["closed"]:
-            session = request("POST", f"/apps/sessions/{run_id}/messages", {
-                "text": "Hello", "expected_revision": session["revision"],
-            })
+            session = client.text_sessions.send(run_id, "Hello", session["revision"])
         print(session["turns"])
     finally:
-        request("POST", f"/apps/sessions/{run_id}/close", {})
+        client.text_sessions.close(run_id)
 ```
 </CodeGroup>
 
-`create()` initializes session state; `execute()` generates the initial assistant turn or resumes a pending one. `send()` appends a message and executes its response. `get()` reads the current state without executing anything. `close()` ends the session. HTTP responses contain a state snapshot, not an SSE/token stream.
+`create()` initializes session state; `execute()` generates the initial assistant turn or resumes a pending one. `send()` appends a message and executes its response. `get()` reads the current state without executing anything. `close()` ends the session. These non-streaming methods return a JSON state snapshot. Use the streaming methods below to receive text before generation finishes.
 
 | Response field | Meaning |
 | --- | --- |
@@ -82,12 +78,74 @@ with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout
 | `closed` | Whether the run has ended |
 | `turns` | Turn IDs/statuses and user/assistant text |
 
+## Stream responses as they are generated
+
+Create a session, then stream its greeting with `executeStream` / `execute_stream`.
+Use `sendStream` / `send_stream` for subsequent messages. Existing `execute` and
+`send` methods still return the complete JSON state.
+
+<CodeGroup>
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+async function streamGreeting(client: VerasistClient, runId: number) {
+  for await (const event of client.textSessions.executeStream(runId)) {
+    if (event.event === "assistant.delta") process.stdout.write(event.data.delta);
+    if (event.event === "session.completed") return event.data;
+  }
+}
+
+async function streamReply(client: VerasistClient, runId: number, revision: number) {
+  for await (const event of client.textSessions.sendStream(runId, "Hello", revision)) {
+    if (event.event === "assistant.delta") process.stdout.write(event.data.delta);
+    if (event.event === "session.completed") return event.data;
+  }
+}
+```
+
+```python
+from verasist_sdk import VerasistClient
+
+
+def stream_greeting(client: VerasistClient, run_id: int):
+    for event in client.text_sessions.execute_stream(run_id):
+        if event["event"] == "assistant.delta":
+            print(event["data"]["delta"], end="", flush=True)
+        elif event["event"] == "session.completed":
+            return event["data"]
+
+
+def stream_reply(client: VerasistClient, run_id: int, revision: int):
+    for event in client.text_sessions.send_stream(run_id, "Hello", revision):
+        if event["event"] == "assistant.delta":
+            print(event["data"]["delta"], end="", flush=True)
+        elif event["event"] == "session.completed":
+            return event["data"]
+```
+</CodeGroup>
+
+`assistant.delta` includes `run_id`, `turn_id`, `segment_id`, `sequence`, and
+`delta`. Append deltas within each segment, trim each segment, and join segments
+with two newlines to match the final transcript. Sequence numbers increase within
+a turn; a transfer greeting has its own turn ID. Replace provisional messages
+with the authoritative `session.completed` state, which includes the new revision.
+
+The REST endpoints select SSE through `Accept: text/event-stream`. They emit
+`session.started`, `assistant.delta`, `tool.started`, `tool.completed`, and `session.completed`; `session.error`
+becomes an SDK `ApiError`. Heartbeat comments keep idle streams active during tools.
+
+Disconnecting or closing an iterator does **not** cancel server execution. Read
+`get(run_id)` until `status` leaves `pending_assistant_turn`; do not resend the
+message. Concurrent writes return 409 while the active turn holds its lease.
+Streams do not replay missed deltas, but the completed state remains available.
+This applies only to text sessions, not voice or speech-to-speech sessions.
+
 ## Retry and concurrency rules
 
 - A creation `request_id` is a UUID. Reusing it for the same organization/user returns the existing session; it does not replace callback credentials or instructions. Use a new UUID for a new conversation or workflow.
 - Serialize writes to a session. Concurrent operations, stale revisions, a closed session, or a turn already pending can return 409.
 - After a timeout, 409 or 502, call `get(run_id)` and inspect the state. The request may already have changed the session.
-- If `status` is `pending_assistant_turn`, use `execute(run_id)` to resume that turn rather than sending the same user message again.
+- If `status` is `pending_assistant_turn`, first wait for the active request to finish and read the state again. `execute(run_id)` can resume an abandoned pending turn, but returns 409 while another execution still owns it. Never send the same user message again to resume a turn.
 - Do not blindly retry application mutations or LLM turns; a callback may already have performed its action.
 - Sessions are bound to the API key's organization and underlying user. Do not assume a different key/user can resume another actor's run.
 
@@ -161,3 +219,73 @@ async function handleAuthorizedCall(call: {
 ```
 
 For writes, persist an idempotency record keyed by the scoped `call_id` and return the recorded result if it is repeated. Never trust a user/tenant ID supplied in model arguments instead of the authenticated callback binding.
+
+
+## Live tool activity
+
+Tool events arrive while the turn is running. Both SDK iterators expose their
+`run_id`, `turn_id`, `tool_call_id`, `function_name`, and `status` (`running`,
+`completed`, or `failed`); completed events can also include `duration_ms`.
+Track calls by their run, turn, and call IDs so concurrent tools remain separate.
+These public events deliberately exclude tool arguments and results. A dropped
+connection leaves a running call's status unconfirmed; it does not imply success.
+
+
+```typescript
+const tools = new Map<string, unknown>();
+for await (const event of client.textSessions.sendStream(runId, "Hello", revision)) {
+  if (event.event === "tool.started" || event.event === "tool.completed") {
+    const call = event.data;
+    const key = `${call.run_id}:${call.turn_id}:${call.tool_call_id}`;
+    tools.set(key, call); // Update this call's existing UI row.
+  }
+  if (event.event === "assistant.delta") process.stdout.write(event.data.delta);
+  if (event.event === "session.completed") session = event.data;
+}
+```
+
+## SSE over HTTP
+
+The SDK iterators are wrappers around these authenticated POST requests:
+
+| Endpoint | Purpose |
+| --- | --- |
+| `/api/v1/public/agent/runs/{run_id}/execute` | Stream the initial greeting or resume a pending turn; body `{}` |
+| `/api/v1/public/agent/runs/{run_id}/messages` | Stream a reply; body `{"text":"Hello","expected_revision":1}` |
+
+```bash
+curl --no-buffer --request POST \
+  "https://app.verasist.ai/api/v1/public/agent/runs/$RUN_ID/execute" \
+  --header "X-API-Key: $VERASIST_API_KEY" \
+  --header "Accept: text/event-stream" \
+  --header "Content-Type: application/json" \
+  --data '{}'
+```
+
+| Event | Client action |
+| --- | --- |
+| `session.started` | Retain the session identity and initial state |
+| `assistant.delta` | Append `delta` to the matching turn and segment |
+| `tool.started` | Show the identified tool call as running |
+| `tool.completed` | Update that call to completed or failed |
+| `session.completed` | Reconcile with the saved final state and latest revision |
+| `session.error` | Mark partial output incomplete; read the current state before retrying |
+
+HTTP authorization and validation failures occur before the stream starts. Errors after it starts use `session.error`; SDK iterators raise `ApiError`. Transport errors may also raise network exceptions. Heartbeats are SSE comments, not assistant text. A custom parser must handle events and UTF-8 characters split across network packets. Keep the organization API key on your server.
+
+## Application and embed UI
+
+The text-chat test panel, iframe/widget, and application chats display incoming text in the same assistant bubble and show concurrent tool activity. Fixed greetings arrive as one ready-made chunk; model-generated greetings, replies and transfer greetings use generation chunks. These changes apply to `TEXTCHAT`, not voice or speech-to-speech audio.
+
+For a custom UI, group provisional output by run and turn, and append within each segment. A transfer greeting belongs to a new turn. Disable another send while generation is active. Reconcile provisional bubbles with the completed state's turns and attachments instead of appending the final text again. Render text or sanitized Markdown; never insert model output as raw HTML.
+
+A disconnected reader does not cancel the server turn. Read the current state without automatically resending the message; missed chunks are not replayed. Do not mark partial text or a still-running tool as successfully completed. Embed integrations use their session token and allowed origin for state reads rather than an organization API key in the browser.
+
+First text can arrive after model reasoning or tool calls. The server forwards visible text as it is generated; it does not wait for the full answer and split it afterward.
+
+## REST and Try it
+
+Use [Create a text session](/api-referansi/runs/trigger-workflow), [Execute](/api-referansi/runs/text-execute), [Send a message](/api-referansi/runs/text-message), [Read state](/api-referansi/runs/text-get) and [Close](/api-referansi/runs/text-close) in the API reference. Try it uses JSON responses; SDK streaming uses `Accept: text/event-stream`. Creation requires a workflow UUID and a UUID `request_id`. Messages require the current `expected_revision`. For voice or video use the separate [live-session flow](/developer/sdks/live-voice-session).
+
+
+Start voice, video and text through the existing run endpoint with `run_type: "voice" | "video" | "text"`. Omitting the field preserves telephone/channel execution. Text creation requires a UUID `request_id`; message and close operations use `/api/v1/public/agent/runs/{run_id}`. Legacy session addresses remain compatibility aliases.

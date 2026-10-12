@@ -3,10 +3,8 @@
  *
  * This mirrors the hand-curated endpoint set already documented in
  * docs/api-reference/*.mdx (workflows, campaigns, runs, telephony-configs,
- * api-keys) — NOT the raw OpenAPI `tags` field, which is generically
- * "main" for every route (see api/routes/main.py), and NOT the same set
- * as `@sdk_expose`-tagged operations (a different, non-overlapping surface
- * used only for SDK codegen).
+ * api-keys and run operations) — NOT the raw OpenAPI `tags` field, which is generically
+ * "main" for many routes (see api/routes/main.py). Run entries include voice, video and text operations.
  *
  * Each entry either has {method, path} (a leaf endpoint, resolvable in the
  * live OpenAPI spec) or {children} (a nested sub-section, e.g. Workflows→Runs).
@@ -15,6 +13,7 @@
  */
 
 export const API_REFERENCE_GROUPS = [
+
   {
     slug: "api-keys",
     order: 0,
@@ -78,8 +77,16 @@ export const API_REFERENCE_GROUPS = [
     title_tr: "Çalıştırmalar",
     title_en: "Runs",
     entries: [
-      { opSlug: "trigger", method: "POST", path: "/public/agent/{uuid}", title_tr: "API Trigger düğümüyle tetikle", title_en: "Trigger by API Trigger node", description_tr: "Bir API Trigger düğümü UUID'si (trigger_path) kullanarak giden bir ajan çalıştırması başlatır.", description_en: "Start an outbound agent run using an API Trigger node's UUID (trigger_path)." },
-      { opSlug: "trigger-workflow", method: "POST", path: "/public/agent/workflow/{workflow_uuid}", title_tr: "Ajan UUID'siyle tetikle", title_en: "Trigger by Agent UUID", description_tr: "Ajanın sabit Agent UUID'sini kullanarak, bir API Trigger düğümü olmadan giden bir ajan çalıştırması başlatır.", description_en: "Start an outbound agent run using a workflow's stable Agent UUID instead of an API Trigger node." },
+      { opSlug: "trigger", method: "POST", path: "/public/agent/{uuid}", title_tr: "API Trigger düğümüyle tetikle", title_en: "Trigger by API Trigger node", description_tr: "Bir API Trigger düğümü UUID'si (trigger_path) kullanarak sesli, görüntülü veya text çalıştırması başlatır; run_type verilmezse mevcut kanal akışı korunur.", description_en: "Start a voice, video or text run with run_type using an API Trigger node's UUID (trigger_path).", requestExamples: [{"label_en": "Voice", "label_tr": "Sesli", "body": {"run_type": "voice"}}, {"label_en": "Video", "label_tr": "Görüntülü", "body": {"run_type": "video"}}, {"label_en": "Text", "label_tr": "Text", "body": {"run_type": "text"}}] },
+      { opSlug: "trigger-workflow", method: "POST", path: "/public/agent/workflow/{workflow_uuid}", title_tr: "Ajan UUID'siyle tetikle", title_en: "Trigger by Agent UUID", description_tr: "Ajanın sabit Agent UUID'sini kullanarak, bir API Trigger düğümü olmadan sesli, görüntülü veya text çalıştırması başlatır; run_type verilmezse mevcut kanal akışı korunur.", description_en: "Start a voice, video or text run with run_type using a workflow's stable Agent UUID instead of an API Trigger node.", requestExamples: [{"label_en": "Voice", "label_tr": "Sesli", "body": {"run_type": "voice"}}, {"label_en": "Video", "label_tr": "Görüntülü", "body": {"run_type": "video"}}, {"label_en": "Text", "label_tr": "Text", "body": {"run_type": "text"}}] },
+      {"opSlug": "turn-credentials", "method": "GET", "path": "/public/agent/runs/{session_token}/turn-credentials", "title_tr": "Oturum TURN bilgilerini al", "title_en": "Get session TURN credentials", "description_tr": "Live-session yanıtındaki session_token ile TURN bilgilerini alır. API anahtarı gerekmez. Geçersiz token 404, süresi dolmuş token 410, TURN kullanılamıyorsa 503 döner.", "description_en": "Get TURN credentials using the session_token from run creation. No API key is required. Invalid tokens return 404, expired tokens 410, unavailable TURN 503.", "tokenAuth": true},
+      {"opSlug": "text-check", "method": "GET", "path": "/public/agent/workflow/{uuid}/check", "title_tr": "Text workflow uygunluğunu kontrol et", "title_en": "Check text workflow readiness", "description_tr": "Workflow UUID ile yayımlanma ve text araç desteğini kontrol eder. Burada uuid, API Trigger UUID değil workflow UUID değeridir.", "description_en": "Check publication and text-tool support using the workflow UUID. Here uuid is the workflow UUID, not an API Trigger UUID."},
+      {"opSlug": "text-get", "method": "GET", "path": "/public/agent/runs/{run_id}", "title_tr": "Text oturum durumunu al", "title_en": "Get text session state", "description_tr": "Text oturumunun güncel revision, turn ve kapanma durumunu alır. Mesaj öncesinde güncel revision değerini kullanın.", "description_en": "Read the text session revision, turns and closed state. Use its current revision before sending a message."},
+      {"opSlug": "text-execute", "method": "POST", "path": "/public/agent/runs/{run_id}/execute", "title_tr": "Text oturumunu çalıştır", "title_en": "Execute a text session", "description_tr": "Bekleyen text turn’ünü çalıştırır. Kuyrukta HTTP 202 scheduling dönebilir. Try it JSON kullanır; SDK streaming için Accept: text/event-stream kullanabilir.", "description_en": "Execute a pending text turn. Queued execution may return HTTP 202 scheduling. Try it uses JSON; SDK streaming can use Accept: text/event-stream."},
+      {"opSlug": "text-message", "method": "POST", "path": "/public/agent/runs/{run_id}/messages", "title_tr": "Text mesaj gönder", "title_en": "Send a text message", "description_tr": "text ve oturumdan alınan güncel expected_revision ile mesaj gönderir. Eski revision 409 döner; durumu yeniden okuyun. Try it JSON kullanır; SDK streaming için Accept: text/event-stream kullanabilir.", "description_en": "Send text with the current expected_revision from session state. A stale revision returns 409; reread the state. Try it uses JSON; SDK streaming can use Accept: text/event-stream."},
+      {"opSlug": "text-close", "method": "POST", "path": "/public/agent/runs/{run_id}/close", "title_tr": "Text oturumunu kapat", "title_en": "Close a text session", "description_tr": "Text görüşmesini kapatır ve oturum durumunu döndürür. Bu işlem sesli/görüntülü bağlantıyı kapatmak için kullanılmaz.", "description_en": "Close a text conversation and return session state. This operation is not used to close a voice/video connection."},
+      {"opSlug": "scheduling-status", "method": "GET", "path": "/scheduling/runs/{run_id}", "title_tr": "Oturum kuyruk durumunu al", "title_en": "Get session scheduling", "description_tr": "workflow_run_id ile sesli, görüntülü veya text çalıştırmanın kuyruk durumunu alır. Türler webrtc, video ve chat olarak döner.", "description_en": "Get queue state by workflow_run_id for voice, video or text. The corresponding kinds are webrtc, video and chat."},
+      {"opSlug": "scheduling-cancel", "method": "DELETE", "path": "/scheduling/runs/{run_id}", "title_tr": "Planlanan oturumu iptal et", "title_en": "Cancel a scheduled session", "description_tr": "workflow_run_id ile planlanan oturumu iptal eder. Yeni bir çalıştırma oluşturmadan mevcut kuyruğu yönetir.", "description_en": "Cancel a scheduled session by workflow_run_id. Manage the existing queue without creating another run."},
       { opSlug: "get-run", method: "GET", path: "/workflow/{workflow_id}/runs/{run_id}", title_tr: "Çalıştırma ayrıntılarını getir", title_en: "Retrieve agent run details", description_tr: "Bir ajan çalıştırmasının durumunu, dökümünü ve kaydını getirir.", description_en: "Get the details, transcript, and recording for an agent run." },
       { opSlug: "download", method: "GET", path: "/public/download/workflow/{token}/{artifact_type}", title_tr: "Kayıt ve dökümü indir", title_en: "Download recordings and transcripts", description_tr: "Zaman sınırlı genel bir URL üzerinden kayıt veya döküm indirir.", description_en: "Download a recording or transcript using a time-limited public URL." },
       { opSlug: "inbound", method: "POST", path: "/telephony/inbound/{workflow_id}", title_tr: "Gelen çağrı webhook'u", title_en: "Inbound run webhook", description_tr: "Telefon sağlayıcınızın panelinde tanımlanan, gelen çağrılardan ajan çalıştırması başlatan webhook uç noktası.", description_en: "Webhook endpoint, configured in your telephony provider's dashboard, that starts agent runs from inbound calls." },
@@ -115,7 +122,7 @@ export const API_REFERENCE_GROUPS = [
   },
   {
     slug: "api-auth-errors",
-    order: 5,
+    order: 6,
     title_tr: "Kimlik Doğrulama ve Hatalar",
     title_en: "Authentication & Errors",
     // Guide-only group: no try-it operations, just ported overview/authentication/errors content.

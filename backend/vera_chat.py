@@ -3,6 +3,7 @@
 Document access belongs to the workflow's MCP tools. This service never indexes,
 searches, or injects documentation into the conversation.
 """
+import asyncio
 import base64
 import json
 import hashlib
@@ -42,12 +43,12 @@ class MessageInput(BaseModel):
 
 
 class TextSessions:
-    """Async adapter for the same /apps text-session API used by the TS SDK."""
+    """Async adapter for the same unified run API used by the TS SDK."""
     async def request(self, key, method, path, body=None):
         base = os.environ.get("VERASIST_API_URL", "https://app.verasist.ai").rstrip("/")
         try:
             async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
-                response = await client.request(method, base + "/api/v1/apps" + path,
+                response = await client.request(method, base + "/api/v1/public/agent" + path,
                                                 headers={"X-API-Key": key}, json=body)
         except httpx.RequestError:
             raise HTTPException(502, "Vera’ya ulaşılamadı. Aynı mesajı yeniden deneyebilirsiniz.") from None
@@ -55,19 +56,38 @@ class TextSessions:
             code = 409 if response.status_code == 409 else 503 if response.status_code in (401, 402, 403, 404) else 502
             raise HTTPException(code, "Vera yanıtı tamamlayamadı. Yeniden deneyin veya yöneticiyle iletişime geçin.")
         try:
-            return response.json()
+            payload = response.json()
+            return await self.wait_run(key, payload) if response.status_code == 202 else payload
         except ValueError:
             raise HTTPException(502, "Vera geçersiz yanıt verdi.") from None
+
+
+    async def wait_run(self, key, receipt):
+        """A queue receipt already owns the turn: read state, never repeat a POST."""
+        deadline = now() + timedelta(seconds=125)
+        if receipt.get("deadline"):
+            deadline = min(deadline, datetime.fromisoformat(receipt["deadline"].replace("Z", "+00:00")))
+        run_id = int(receipt["workflow_run_id"])
+        while now() < deadline:
+            await asyncio.sleep(1)
+            state = await self.request(key, "GET", f"/runs/{run_id}")
+            if state.get("status") != "pending_assistant_turn":
+                return state
+        raise HTTPException(504, "Vera yanıtı sırada. Sohbet durumunu yeniden kontrol edin.")
 
 
     async def stream(self, key, path, body):
         base = os.environ.get("VERASIST_API_URL", "https://app.verasist.ai").rstrip("/")
         try:
             async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
-                async with client.stream("POST", base + "/api/v1/apps" + path,
+                async with client.stream("POST", base + "/api/v1/public/agent" + path,
                                          headers={"X-API-Key": key, "Accept": "text/event-stream"}, json=body) as response:
                     if response.status_code >= 400:
                         raise HTTPException(409 if response.status_code == 409 else 502, "Vera yanıtı henüz tamamlanamadı. Sohbet durumu kontrol ediliyor.")
+                    if response.status_code == 202:
+                        await response.aread()
+                        yield "session.completed", await self.wait_run(key, response.json())
+                        return
                     event, data = "", []
                     async for line in response.aiter_lines():
                         if line.startswith("event:"):
@@ -77,6 +97,9 @@ class TextSessions:
                         elif not line and data:
                             payload = json.loads("\n".join(data))
                             data = []
+                            if event == "session.queued":
+                                yield "session.completed", await self.wait_run(key, payload)
+                                return
                             if event == "session.error":
                                 raise HTTPException(502, "Vera yanıtı tamamlayamadı.")
                             if event in {"session.started", "assistant.delta", "tool.started", "tool.completed", "session.completed"}:
@@ -122,7 +145,7 @@ class VeraChat:
         if body.enabled:
             if not value["workflow_uuid"] or not encrypted:
                 raise HTTPException(422, "Workflow UUID’si ve API anahtarı gerekli.")
-            await self.remote.request(self.api_key(value), "GET", f"/workflows/{value['workflow_uuid']}/check")
+            await self.remote.request(self.api_key(value), "GET", f"/workflow/{value['workflow_uuid']}/check")
         await self.db.vera_settings.replace_one({"_id": "assistant"}, {"_id": "assistant", **value}, upsert=True)
         return self.public_settings(value)
 
@@ -201,13 +224,13 @@ class VeraChat:
                 raise HTTPException(409, "Önce bekleyen mesajı yeniden deneyin.")
             api_key = self.api_key(settings)
             if session["run_id"] is None:
-                state = await self.remote.request(api_key, "POST", f"/workflows/{session['workflow_uuid']}/sessions", {
-                    "request_id": session["request_id"],
+                state = await self.remote.request(api_key, "POST", f"/workflow/{session['workflow_uuid']}", {
+                    "run_type": "text", "request_id": session["request_id"],
                     "initial_context": {"source": "verasist-docs", "locale": session["lang"]},
                 })
                 session["run_id"] = state["run_id"]
                 await self.db.vera_sessions.update_one(key, {"$set": {"run_id": state["run_id"]}})
-            run = f"/sessions/{session['run_id']}"
+            run = f"/runs/{session['run_id']}"
             state = await self.remote.request(api_key, "GET", run)
             if pending is None:
                 pending = {"request_id": request_id, "text": body.text, "revision": state["revision"], "turn_count": len(state.get("turns", []))}
@@ -267,7 +290,7 @@ class VeraChat:
             pending = session.get("pending")
             if not pending:
                 return self.snapshot(session)
-            state = await self.remote.request(self.api_key(settings), "GET", f"/sessions/{session['run_id']}")
+            state = await self.remote.request(self.api_key(settings), "GET", f"/runs/{session['run_id']}")
             if state.get("status") == "pending_assistant_turn":
                 return {**self.snapshot(session), "busy": True}
             first_turn = pending.get("turn_count", max(0, len(state.get("turns", [])) - 1))
@@ -284,7 +307,7 @@ class VeraChat:
         try:
             if session["run_id"] is not None:
                 try:
-                    await self.remote.request(self.api_key(settings), "POST", f"/sessions/{session['run_id']}/close", {})
+                    await self.remote.request(self.api_key(settings), "POST", f"/runs/{session['run_id']}/close", {})
                 except HTTPException:
                     pass  # Local revocation still prevents further use of this session.
             await self.db.vera_sessions.update_one(key, {"$set": {"closed": True}})

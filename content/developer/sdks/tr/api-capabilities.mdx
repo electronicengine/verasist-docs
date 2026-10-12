@@ -25,7 +25,7 @@ Aşağıda Python adları kullanılmıştır; TypeScript karşılıkları camelC
 | Kampanya tarihleri | `list_campaign_date_ranges` | Kampanya çalıştırma yardımcısı değildir |
 | Telefon | `test_phone_call` | Test araması başlatır |
 | Kanal | `initiate_channel_outbound` | Kanal türü, yapılandırma ID, mod, hedef, workflow ID |
-| Düşük seviyeli ses | `start_live_session`, `start_live_session_by_workflow`, `get_live_session_turn_credentials` | Oturum/TURN metadata’sı; medya istemcisi ayrıca gerekir |
+| Sesli/görüntülü oturum | `start_run`, `start_run_by_workflow`, `get_live_session_turn_credentials` | Oturum/TURN metadata’sı; medya istemcisi ayrıca gerekir |
 
 İstek alanları için Python’da `verasist_sdk._generated_models`, TypeScript’te metot imzalarını inceleyin. Workflow yayımlamak için editörü; run geçmişi için REST API’yi kullanın.
 
@@ -104,3 +104,7 @@ try {
 | İstemcide metot yok | SDK sürümünüzü kontrol edin; gerekirse destekle iletişime geçin |
 
 Loglarda durum ve run/korelasyon ID’sini kullanın; API anahtarı, callback token’ı veya özel verili body’leri yazmayın. Timeout, işlemin yapılmadığını kanıtlamaz. [Metin oturumları](/developer/sdks/text-session) ve [sesli oturumlar](/developer/sdks/live-voice-session) sayfalarındaki kurtarma adımlarını izleyin.
+
+## Sesli, görüntülü ve text çalıştırma
+
+`start_run` / `start_run_by_workflow` (`startRun` / `startRunByWorkflow`) gövdesinde `run_type: "voice"` veya `run_type: "video"` seçin. `run_type` atlanırsa mevcut telefon/kanal davranışı korunur. Tarayıcıda `createDeviceVideoSession` kısa ömürlü token ile bağlanır; Python’da `LiveSession` kullanılır. Text için `client.text_sessions` / `client.textSessions` ayrı oluşturma, çalıştırma, mesaj ve kapatma akışıdır. Scheduling türleri `webrtc`, `video`, `chat` olarak döner. [Oturum rehberi](/developer/sdks/live-voice-session).

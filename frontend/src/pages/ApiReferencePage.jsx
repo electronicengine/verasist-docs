@@ -102,8 +102,10 @@ export default function ApiReferencePage() {
 
   const exampleBody = useMemo(() => {
     if (!spec || !requestBodySchema) return null;
-    return buildExampleFromSchema(spec, requestBodySchema);
-  }, [spec, requestBodySchema]);
+    const example = { ...buildExampleFromSchema(spec, requestBodySchema), ...(entry?.requestExamples?.[0]?.body || {}) };
+    if (example.run_type === "text") example.request_id = crypto.randomUUID();
+    return example;
+  }, [spec, requestBodySchema, entry, groupSlug]);
 
   // Reset form state whenever the resolved operation changes.
   useEffect(() => {
@@ -137,7 +139,8 @@ export default function ApiReferencePage() {
 
   const headers = {
     "Content-Type": "application/json",
-    "X-API-Key": apiKey || undefined,
+    Accept: "application/json",
+    "X-API-Key": entry.tokenAuth ? undefined : apiKey || undefined,
   };
 
   const hasBody = !!requestBodySchema;
@@ -156,6 +159,7 @@ export default function ApiReferencePage() {
   };
 
   const handleSend = async () => {
+    if (operation?.["x-requires-api-update"]) return;
     if (!requestForm.current?.reportValidity()) return;
     setSending(true);
     setResponse(null);
@@ -174,7 +178,7 @@ export default function ApiReferencePage() {
       const res = await axios.request({
         method: entry.method,
         url: fullUrl,
-        headers: { "Content-Type": "application/json", ...(apiKey ? { "X-API-Key": apiKey } : {}) },
+        headers,
         data: parsedBody,
         validateStatus: () => true,
       });
@@ -226,15 +230,16 @@ export default function ApiReferencePage() {
 
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Left: request builder */}
-        <form ref={requestForm} onSubmit={(event) => { event.preventDefault(); handleSend(); }} className="space-y-6 min-w-0">
+        {operation?.["x-requires-api-update"] && <p className="my-4 text-amber-700" role="status">{lang === "tr" ? "Seçili API sunucusu ortak run başlatma sözleşmesini henüz desteklemiyor. Try it için güncel API sürümünü çalıştırın veya API adresini güncelleyin." : "The selected API server does not yet support unified run startup. Deploy the updated API or select an updated server to use Try it."}</p>}
+          <form ref={requestForm} onSubmit={(event) => { event.preventDefault(); handleSend(); }} className="space-y-6 min-w-0">
           <div>
             <FieldLabel name={t("apiRef.baseUrl", lang)} inputId="api-base-url" lang={lang} hint={lang === "tr" ? "Verasist API adresi. /api/v1 yolu otomatik eklenir." : "Verasist API origin. The /api/v1 prefix is added automatically."} />
             <Input id="api-base-url" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} data-testid="apiref-base-url" />
           </div>
           <div>
-            <FieldLabel name={t("apiRef.apiKeyLabel", lang)} inputId="api-secret" lang={lang} hint={lang === "tr" ? "Organizasyonunuzun API anahtarı. İstekte X-API-Key başlığı olarak gönderilir." : "Your organization API key, sent in the X-API-Key header."} />
+            <FieldLabel name={t("apiRef.apiKeyLabel", lang)} inputId="api-secret" lang={lang} hint={entry.tokenAuth ? (lang === "tr" ? "Bu endpoint yalnızca kısa ömürlü session_token kullanır; API anahtarı gönderilmez." : "This endpoint uses only the short-lived session_token; no API key is sent.") : (lang === "tr" ? "Organizasyonunuzun API anahtarı. İstekte X-API-Key başlığı olarak gönderilir." : "Your organization API key, sent in the X-API-Key header.")} />
             <Input
-              id="api-secret" type="password"
+              id="api-secret" type="password" disabled={entry.tokenAuth}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder={t("apiRef.apiKeyPlaceholder", lang)}
@@ -264,6 +269,20 @@ export default function ApiReferencePage() {
                   {t("apiRef.resetExample", lang)}
                 </button>
               </div>
+              {entry.requestExamples && (
+                <div className="flex gap-2 my-3" data-testid="apiref-session-examples">
+                  {entry.requestExamples.map((example) => (
+                    <Button key={example.label_en} type="button" variant="outline" onClick={() => {
+                      let current;
+                      try { current = JSON.parse(bodyText || "{}"); } catch (_) { current = {}; }
+                      const next = { ...current, ...example.body };
+                      for (const field of ["phone_number", "target", "channel", "telephony_configuration_id", "channel_configuration_id"]) delete next[field];
+                      if (next.run_type === "text") next.request_id ||= crypto.randomUUID();
+                      setBodyText(JSON.stringify(next, null, 2));
+                    }}>{lang === "tr" ? example.label_tr : example.label_en}</Button>
+                  ))}
+                </div>
+              )}
               {(() => {
                 try {
                   const value = JSON.parse(bodyText || "{}");
@@ -277,7 +296,7 @@ export default function ApiReferencePage() {
             </div>
           )}
 
-          <Button type="submit" disabled={sending || !operation} data-testid="apiref-send-btn">
+          <Button type="submit" disabled={sending || !operation || !!operation?.["x-requires-api-update"]} data-testid="apiref-send-btn">
             {sending ? t("apiRef.sending", lang) : t("apiRef.tryIt", lang)}
           </Button>
         </form>

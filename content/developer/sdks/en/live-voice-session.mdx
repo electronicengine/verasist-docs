@@ -1,6 +1,6 @@
 ---
-title: "Voice sessions, audio and camera"
-description: "Create Python WebRTC sessions, register device tools, handle transcripts and voice events, and attach camera images"
+title: "Voice and video sessions"
+description: "Run voice, video and text conversations with REST, Python and TypeScript SDKs"
 ---
 
 ## Prerequisites
@@ -10,7 +10,7 @@ description: "Create Python WebRTC sessions, register device tools, handle trans
 - Provide an `aiortc` audio track for your microphone or input file, and an audio consumer for the assistant's returned track.
 - Ensure signaling and TURN are reachable from the device.
 
-`LiveSession` is currently a **Python helper**. TypeScript has live-session REST methods but no equivalent packaged WebRTC client. Creating the HTTP session alone does not capture a microphone or play audio.
+Python uses `LiveSession`; browser TypeScript uses `createDeviceVideoSession` from `@verasist/sdk/video`. Creating the HTTP session alone does not capture a microphone or play audio.
 
 ## Create and connect a session
 
@@ -149,3 +149,91 @@ async def attach_camera_turn(session: LiveSession, turn_id: str, jpeg: bytes | N
 ```
 
 Complete the turn even when an image is unavailable. Keep the original turn ID; late images must not be reassigned to another turn. Unsupported servers/workflows reject camera-turn configuration explicitly. Inspect `rtf-camera-attachment` for the outcome.
+
+## Choose voice, video or text
+
+| Conversation | Python | TypeScript | REST |
+| --- | --- | --- | --- |
+| Voice | `LiveSession(client)` | Run REST + `createDeviceVideoSession` with `autoStartCamera: false` | `run_type: "voice"` |
+| Video with voice | `LiveSession(client, mode="video_session")` | Run REST + `createDeviceVideoSession` | `run_type: "video"` |
+| Text chat | `client.text_sessions` | `client.textSessions` | `/api/v1/public/agent/workflow/{workflow_uuid}` and `/api/v1/public/agent/runs/{run_id}` |
+
+Voice and video use the published workflow. Enable **Video session** in workflow settings and select an image-capable visual model before creating a video session. Allow camera, screen, or both. Existing voice and text sessions keep their own mode; create a new session to use video.
+
+## Create a live session with REST
+
+Keep your organization API key on your application server. Use a workflow UUID:
+
+```bash
+curl -X POST 'https://app.verasist.ai/api/v1/public/agent/workflow/YOUR_WORKFLOW_UUID' \
+  -H "X-API-Key: $VERASIST_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"run_type":"video","initial_context":{"locale":"en"}}'
+```
+
+Alternatively, use `POST /api/v1/public/agent/{uuid}` with the API Trigger node UUID. The response includes `session_token`, `workflow_run_id`, `expires_at` and optional `scheduling`. A queued start can return HTTP 202; keep the same session and wait for readiness instead of creating another one. The scheduling kind is `video` for video, `webrtc` for voice, and `chat` for text.
+
+REST creates the session. Audio travels over WebRTC and visual frames travel over signaling; the HTTP response alone does not activate a camera. Use [Runs API reference](/api-referansi/runs/trigger-workflow) for request fields and Try it.
+
+## Browser voice and video
+
+Use an SDK build that exports `createDeviceVideoSession`. If your installed package predates this helper, use the existing `VideoSession({signalingUrl, iceServers, autoStartCamera})` constructor with `wss://YOUR_API_HOST/api/v1/ws/device/signaling/SESSION_TOKEN` and TURN credentials from `GET /api/v1/public/agent/runs/{session_token}/turn-credentials`. Never put the organization API key in the signaling URL.
+
+Create the token on your server using the SDK, then return only that token to your authenticated browser:
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
+const result = await client.startRunByWorkflow(workflowUuid, {
+  body: { run_type: "video" },
+});
+// Return result.session_token to the authorized browser. Keep the API key server-side.
+```
+
+In your browser, provide an audio element and a muted, inline video element:
+
+```typescript
+import { createDeviceVideoSession } from "@verasist/sdk/video";
+
+const session = await createDeviceVideoSession({
+  apiBaseUrl: "https://app.verasist.ai",
+  sessionToken, // Token received from your application server.
+});
+session.addEventListener("audio", (event) => {
+  audioElement.srcObject = new MediaStream([(event as CustomEvent<MediaStreamTrack>).detail]);
+});
+session.addEventListener("stream", (event) => {
+  previewElement.srcObject = (event as CustomEvent<{stream: MediaStream | null}>).detail.stream;
+});
+session.addEventListener("status", (event) => console.log((event as CustomEvent).detail));
+await session.connect();
+// Bind these calls to your application buttons:
+// await session.startVideo("screen");
+// await session.stopVideo(); // Voice continues.
+// session.close();
+```
+
+For voice, create with `run_type: "voice"` and pass `autoStartCamera: false` to the browser factory. Do not call `startVideo` for a voice session. For an embed-authorized deployment, continue using `createVideoSession({apiBaseUrl, embedToken})` from the same SDK entry point.
+
+Use HTTPS or localhost. Camera starts once after video capabilities are ready. Camera permission rejection reports an unavailable status without ending voice. Screen sharing must start from a user action and depends on browser support. The factory fetches TURN credentials with the short-lived token; HTTP 503 falls back to STUN, while invalid/expired tokens fail. `close()` releases microphone, camera/screen, peer connection and signaling resources. Browser autoplay may require a user action to play assistant audio.
+
+## Python continuous visual observations
+
+Your application owns camera capture or screen snapshots; the SDK does not open a camera automatically. Create `LiveSession(client, mode="video_session")` before calling `connect`. After connecting, use the application's JPEG bytes:
+
+```python
+capabilities = await session.video_capabilities()
+if capabilities["enabled"] and capabilities["allow_camera"]:
+    await session.configure_video("camera")
+    await session.send_video_frame(jpeg_bytes, "image/jpeg")
+    # Send further frames no faster than capabilities["interval_seconds"].
+    await session.configure_video(None)  # Stop images; voice continues.
+```
+
+Use `configure_video("screen")` for application-owned screen snapshots when allowed. The SDK associates frames with the current source and generation. `send_video_frame` rejects sending after video is stopped. `on_voice_event` receives `video-status` events, including analysis and error details. If `capabilities["record_video"]` allows recording, your encoder can send consecutive `send_video_recording_chunk(data, sequence, mime_type="video/webm")` chunks. Voice and video recording follow the workflow settings.
+
+For text creation, execution, message revisions, streaming and closing, see [Text sessions](/developer/sdks/text-session). Text does not use a live-session token or WebRTC.
+
+
+Start voice, video and text through the existing run endpoint with `run_type: "voice" | "video" | "text"`. Omitting the field preserves telephone/channel execution. Text creation requires a UUID `request_id`; message and close operations use `/api/v1/public/agent/runs/{run_id}`. Legacy session addresses remain compatibility aliases.

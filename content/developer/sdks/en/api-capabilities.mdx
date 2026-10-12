@@ -25,7 +25,7 @@ Python names are shown below. TypeScript uses camelCase, for example `list_docum
 | Campaign ranges | `list_campaign_date_ranges` | Lists available campaign date ranges; not a campaign runner |
 | Phone calls | `test_phone_call` | See [Outbound calls](/developer/sdks/outbound-calls) |
 | Channel initiation | `initiate_channel_outbound` | Channel type, configuration ID, mode, target and workflow ID |
-| Low-level voice | `start_live_session`, `start_live_session_by_workflow`, `get_live_session_turn_credentials` | Returns session/TURN metadata; media transport remains your responsibility |
+| Voice/video session creation | `start_run`, `start_run_by_workflow`, `get_live_session_turn_credentials` | Choose `run_type: "voice" | "video" | "text"`; returns device token or text run state |
 
 For request fields, inspect `verasist_sdk._generated_models` in Python or the TypeScript method signatures. Publish workflows from the editor and use the REST API for run history.
 
@@ -105,4 +105,4 @@ try {
 
 Log status and your own correlation/run IDs. Avoid logging API keys, session callback tokens or private request/response bodies. A transport timeout does not prove that a write, tool action or phone call did not occur.
 
-See [Text sessions](/developer/sdks/text-session) for revision-safe recovery and [Voice sessions](/developer/sdks/live-voice-session) for ICE/media troubleshooting.
+See [Text sessions](/developer/sdks/text-session) for revision-safe recovery and [Voice and video sessions](/developer/sdks/live-voice-session) for ICE/media troubleshooting.

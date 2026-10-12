@@ -921,12 +921,7 @@ GROQ_API_KEY="..."</code></pre>""",
         "order": 7,
         "content": """<h2>İzleme Nedir?</h2>
 <p>İzleme, ajanınızın her adımını kaydeden bir hata ayıklama aracıdır. LLM çağrıları, araç kullanımları ve iş akışı geçişlerini görsel olarak takip edebilirsiniz.</p>
-<h2>Langfuse Entegrasyonu</h2>
-<p>Verasist, Langfuse ile entegre çalışır. <code>.env</code> dosyasına aşağıdaki değişkenleri ekleyin:</p>
-<pre><code>LANGFUSE_PUBLIC_KEY="pk-..."
-LANGFUSE_SECRET_KEY="sk-..."
-LANGFUSE_HOST="https://cloud.langfuse.com"</code></pre>
-<p>Veya yönetim panelinden <strong>Ayarlar → İzleme</strong> bölümünde yapılandırın.</p>""",
+<p>Yönetici panelindeki <strong>Telemetri</strong> sayfasından seçili organizasyonun yerel izlerini inceleyebilirsiniz.</p>""",
     },
     # ===== sesli-asistan (Voice Agent Builder) =====
     {

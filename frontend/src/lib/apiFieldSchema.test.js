@@ -35,3 +35,15 @@ test("hints explain identity and expose actual schema constraints", () => {
   const hint = fieldHint("workflow_id", { type: "integer", minimum: 1 }, true, "tr");
   expect(hint).toContain("UUID"); expect(hint).toContain("Min: 1"); expect(hint).toContain("Zorunlu");
 });
+
+test("session reference exposes live, text lifecycle and scheduling endpoints", () => {
+  const entries = flattenEntries(API_REFERENCE_GROUPS.find(group => group.slug === "runs").entries);
+  expect(entries).toHaveLength(13);
+  for (const slug of ["trigger", "trigger-workflow"]) {
+    expect(findEntry("runs", slug).requestExamples.map(example => example.body.run_type)).toEqual(["voice", "video", "text"]);
+  }
+  expect(findEntry("runs", "turn-credentials").tokenAuth).toBe(true);
+  expect(findEntry("sessions", "text-create")).toBeFalsy();
+  expect(findEntry("runs", "text-message").path).toBe("/public/agent/runs/{run_id}/messages");
+  expect(findEntry("runs", "scheduling-status").path).toBe("/scheduling/runs/{run_id}");
+});

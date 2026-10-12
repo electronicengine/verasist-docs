@@ -45,3 +45,14 @@ test("invalid JSON cannot silently submit the previous valid object", () => {
   expect(input.checkValidity()).toBe(true);
   expect(latest.context).toEqual({ x: 2 });
 });
+
+test("live-session mode choices select voice or video and preserve initial context", () => {
+  render({ type: "object", properties: {
+    mode: { anyOf: [{ type: "string", enum: ["voice_session", "video_session"] }, { type: "null" }], default: null },
+    initial_context: { type: "object", additionalProperties: true },
+  } }, { mode: "voice_session", initial_context: { locale: "en" } });
+  change(container.querySelector('[data-field-name="mode"] select'), '"video_session"');
+  expect(latest).toEqual({ mode: "video_session", initial_context: { locale: "en" } });
+  change(container.querySelector('[data-field-name="mode"] select'), '"voice_session"');
+  expect(latest.mode).toBe("voice_session");
+});

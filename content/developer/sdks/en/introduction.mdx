@@ -1,6 +1,6 @@
 ---
 title: "SDK overview and setup"
-description: "Choose Python or TypeScript, authenticate, identify workflows, and start building voice and text integrations"
+description: "Choose Python or TypeScript, authenticate, identify workflows, and start building voice, video and text integrations"
 ---
 
 Use the SDK to build workflows, run conversations, and expose application tools to an assistant. The REST clients share generated endpoints, but their session helpers differ.
@@ -11,8 +11,9 @@ Use the SDK to build workflows, run conversations, and expose application tools 
 | --- | --- | --- |
 | Workflow builder and typed nodes | `Workflow`, `verasist_sdk.typed` | `Workflow`, `@verasist/sdk/typed` |
 | REST workflow, tool, calendar and call methods | `snake_case` methods | `camelCase` methods |
-| Device voice connection | `LiveSession` with the `voice` extra | Low-level live-session REST methods; no packaged WebRTC session helper |
-| Application text conversation | REST through `httpx`; no `text_sessions` helper | `client.textSessions` |
+| Device voice connection | `LiveSession` with the `voice` extra | Run REST + browser `createDeviceVideoSession` |
+| Video with voice | `LiveSession(client, mode="video_session")` | `createDeviceVideoSession` from `@verasist/sdk/video` |
+| Application text conversation | `client.text_sessions` (JSON and streaming) | `client.textSessions` |
 | Publish tool schemas | `client.publish_toolset()` or `await session.publish_toolset()` | `client.publishToolset()` |
 | Execute SDK tools | Python functions on the voice device | Authenticated HTTP callback for text sessions |
 
@@ -89,7 +90,7 @@ Publishing a catalog does not deploy code, create a conversation, or publish a w
 ## Continue
 
 - [Build and edit workflows](/developer/sdks/build-an-agent)
-- [Voice sessions, audio and camera](/developer/sdks/live-voice-session)
+- [Voice and video sessions](/developer/sdks/live-voice-session)
 - [Text sessions and callbacks](/developer/sdks/text-session)
 - [Publish and connect SDK tools](/developer/sdks/tools)
 - [Outbound calls](/developer/sdks/outbound-calls)

@@ -26,7 +26,7 @@ class Remote:
         assert key == "private-api-key"
         if path.endswith('/check'):
             return {'published': True, 'text_tools': True}
-        if '/workflows/' in path:
+        if '/workflow/' in path:
             rid = self.creations.setdefault(body['request_id'], len(self.creations) + 1)
             self.runs.setdefault(rid, {'run_id': rid, 'revision': 0, 'closed': False, 'status': 'idle', 'turns': []})
             return copy.deepcopy(self.runs[rid])
@@ -102,8 +102,9 @@ def test_independent_sessions_send_only_user_message_and_no_document_context(run
         assert other['messages'] == [] and other['run_id'] is None
         remote_body = next(body for _, path, body in service.remote.calls if path.endswith('/messages'))
         assert remote_body == {'text': body.text, 'expected_revision': 0}
-        creation = next(body for _, path, body in service.remote.calls if path.endswith('/sessions'))
+        creation = next(body for method, path, body in service.remote.calls if '/workflow/' in path and method == 'POST')
         assert 'instructions' not in creation and 'tool_transport' not in creation
+        assert creation['run_type'] == 'text'
         assert creation['initial_context'] == {'source': 'verasist-docs', 'locale': 'tr'}
         again = await service.send(first['session_token'], body)
         assert again == answer

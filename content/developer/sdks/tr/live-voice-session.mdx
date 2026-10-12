@@ -1,5 +1,5 @@
 ---
-title: "Sesli oturum, ses ve kamera"
+title: "Sesli ve görüntülü oturumlar"
 description: "Python WebRTC oturumu oluşturun; cihaz araçlarını, transkriptleri, ses olaylarını ve kamera görüntülerini kullanın"
 ---
 
@@ -7,7 +7,7 @@ description: "Python WebRTC oturumu oluşturun; cihaz araçlarını, transkriptl
 
 `verasist-sdk[voice]` kurulu olmalı; `VERASIST_API_URL`, `VERASIST_API_KEY` ve `WORKFLOW_UUID` ayarlanmalı. Workflow’u ses modelleriyle yapılandırıp SDK araçlarını node’lara bağlayarak yayımlayın. Cihazdan signaling ve TURN erişilebilir olmalı.
 
-`LiveSession` **Python** yardımcısıdır. TypeScript’te oturum oluşturma REST metotları vardır ama paketlenmiş WebRTC istemcisi yoktur. HTTP oturumu oluşturmak mikrofonu açmaz veya hoparlörden ses oynatmaz. Mikrofon için `aiortc` track’i ve gelen sesi tüketen bir uygulama bileşeni gerekir.
+`LiveSession` **Python** yardımcısıdır. Tarayıcı TypeScript tarafında REST ile oluşturulan tokenı `@verasist/sdk/video` içindeki `createDeviceVideoSession` ile kullanabilirsiniz. HTTP oturumu oluşturmak mikrofonu açmaz veya hoparlörden ses oynatmaz. Mikrofon için `aiortc` track’i ve gelen sesi tüketen bir uygulama bileşeni gerekir.
 
 ## Oturum oluşturup bağlanma
 
@@ -146,3 +146,91 @@ async def attach_camera_turn(session: LiveSession, turn_id: str, jpeg: bytes | N
 ```
 
 Görüntü alınamasa da turu tamamlayın. İlk turn ID’sini koruyun; geciken görüntüyü başka tura atamayın. Desteklemeyen sunucu/workflow yapılandırmayı hata ile reddeder. Sonucu `rtf-camera-attachment` olayından izleyin.
+
+## Sesli, görüntülü veya text seçin
+
+| Görüşme | Python | TypeScript | REST |
+| --- | --- | --- | --- |
+| Sesli | `LiveSession(client)` | Run REST + `autoStartCamera: false` ile `createDeviceVideoSession` | `run_type: "voice"` |
+| Sesli ve görüntülü | `LiveSession(client, mode="video_session")` | Run REST + `createDeviceVideoSession` | `run_type: "video"` |
+| Text chat | `client.text_sessions` | `client.textSessions` | `/api/v1/public/agent/workflow/{workflow_uuid}` ve `/api/v1/public/agent/runs/{run_id}` |
+
+Sesli ve görüntülü oturumlar yayımlanmış workflow’u kullanır. Görüntülü oturumdan önce workflow ayarlarında **Video session** seçeneğini açıp görüntü girdisi destekleyen bir görsel model seçin. Kamera, ekran veya ikisine birden izin verin. Mevcut sesli/text oturumun modu değişmez; video için yeni oturum oluşturun.
+
+## REST ile canlı oturum oluşturun
+
+Organizasyon API anahtarını uygulama sunucunuzda tutun. Workflow UUID ile çağırın:
+
+```bash
+curl -X POST 'https://app.verasist.ai/api/v1/public/agent/workflow/YOUR_WORKFLOW_UUID' \
+  -H "X-API-Key: $VERASIST_API_KEY" \
+  -H 'Content-Type: application/json' \
+  -d '{"run_type":"video","initial_context":{"locale":"tr"}}'
+```
+
+Alternatif olarak API Trigger node UUID’siyle `POST /api/v1/public/agent/{uuid}` kullanın. Yanıtta `session_token`, `workflow_run_id`, `expires_at` ve varsa `scheduling` bulunur. Kuyruğa alınan başlangıç HTTP 202 dönebilir; yeni oturum açmak yerine aynı oturumun hazır olmasını bekleyin. Scheduling türü video için `video`, ses için `webrtc`, text için `chat` olur.
+
+REST oturumu oluşturur. Ses WebRTC, görsel kareler signaling üzerinden taşınır; HTTP yanıtı kamerayı açmaz. Alanları ve Try it formunu [Oturum API referansında](/api-referansi/runs/trigger-workflow) inceleyin.
+
+## Tarayıcıda sesli ve görüntülü oturum
+
+`createDeviceVideoSession` export eden bir SDK paketi kullanın. Kurulu paketiniz bu yardımcıyı içermiyorsa mevcut `VideoSession({signalingUrl, iceServers, autoStartCamera})` constructor’ına `wss://YOUR_API_HOST/api/v1/ws/device/signaling/SESSION_TOKEN` ve `GET /api/v1/public/agent/runs/{session_token}/turn-credentials` yanıtındaki TURN bilgilerini verin. Organizasyon API anahtarını signaling URL’sine koymayın.
+
+Tokenı SDK ile sunucuda oluşturun, yalnızca tokenı kimliği doğrulanmış tarayıcıya iletin:
+
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+const client = new VerasistClient({ baseUrl: "https://app.verasist.ai" });
+const result = await client.startRunByWorkflow(workflowUuid, {
+  body: { run_type: "video" },
+});
+// result.session_token değerini yetkili tarayıcıya iletin. API anahtarı sunucuda kalır.
+```
+
+Tarayıcıda bir audio elementi ve sessiz, playsinline video elementi kullanın:
+
+```typescript
+import { createDeviceVideoSession } from "@verasist/sdk/video";
+
+const session = await createDeviceVideoSession({
+  apiBaseUrl: "https://app.verasist.ai",
+  sessionToken, // Uygulama sunucunuzdan alınan token.
+});
+session.addEventListener("audio", (event) => {
+  audioElement.srcObject = new MediaStream([(event as CustomEvent<MediaStreamTrack>).detail]);
+});
+session.addEventListener("stream", (event) => {
+  previewElement.srcObject = (event as CustomEvent<{stream: MediaStream | null}>).detail.stream;
+});
+session.addEventListener("status", (event) => console.log((event as CustomEvent).detail));
+await session.connect();
+// Uygulama butonlarına bağlayın:
+// await session.startVideo("screen");
+// await session.stopVideo(); // Ses devam eder.
+// session.close();
+```
+
+Sesli kullanımda sunucuda `run_type: "voice"`, tarayıcı factory’sinde `autoStartCamera: false` seçin. Sesli oturumda `startVideo` çağırmayın. Embed yetkilendirmeli dağıtım için aynı SDK girişinden `createVideoSession({apiBaseUrl, embedToken})` kullanılmaya devam eder.
+
+HTTPS veya localhost kullanın. Video capabilities hazır olunca kamera bir kez başlar. Kamera izni reddedilirse unavailable durumu bildirilir, ses kapanmaz. Ekran paylaşımı kullanıcı eylemiyle başlatılmalıdır ve tarayıcı desteğine bağlıdır. Factory kısa ömürlü token ile TURN bilgilerini alır; HTTP 503 durumunda STUN kullanılır, geçersiz/süresi dolmuş token hata verir. `close()` mikrofon, kamera/ekran, peer connection ve signaling kaynaklarını kapatır. Asistan sesini oynatmak tarayıcı autoplay kuralları nedeniyle kullanıcı eylemi gerektirebilir.
+
+## Python ile sürekli görsel gözlem
+
+Kamera yakalama veya ekran görüntüsü üretimi uygulamanıza aittir; SDK kamerayı otomatik açmaz. `connect` öncesinde `LiveSession(client, mode="video_session")` oluşturun. Bağlantıdan sonra uygulamanızın JPEG verisini kullanın:
+
+```python
+capabilities = await session.video_capabilities()
+if capabilities["enabled"] and capabilities["allow_camera"]:
+    await session.configure_video("camera")
+    await session.send_video_frame(jpeg_bytes, "image/jpeg")
+    # Yeni kareleri capabilities["interval_seconds"] aralığından sık göndermeyin.
+    await session.configure_video(None)  # Görüntüyü durdurur; ses devam eder.
+```
+
+İzin veriliyorsa uygulamanızın ekran görüntüleri için `configure_video("screen")` kullanın. SDK kareleri güncel kaynak ve generation ile ilişkilendirir. Video durdurulduktan sonra `send_video_frame` gönderimi reddeder. `on_voice_event`, analiz ve hata ayrıntıları dahil `video-status` olaylarını alır. `capabilities["record_video"]` kayıt izni veriyorsa encoder’ınız sıralı `send_video_recording_chunk(data, sequence, mime_type="video/webm")` parçalarını gönderebilir. Ses ve video kaydı workflow ayarlarına bağlıdır.
+
+Text oluşturma, çalıştırma, mesaj revision’ları, streaming ve kapatma için [Text oturumlarını](/developer/sdks/text-session) kullanın. Text, live-session tokenı veya WebRTC kullanmaz.
+
+
+Başlatma artık ortak run endpointinde `run_type: "voice" | "video" | "text"` ile yapılır. Alan verilmezse mevcut telefon/kanal davranışı korunur. Text için UUID `request_id` gerekir; mesajlar ve kapatma `/api/v1/public/agent/runs/{run_id}` altında çalışır. Eski oturum adresleri yalnızca uyumluluk alias’ıdır.

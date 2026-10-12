@@ -1,13 +1,13 @@
 ---
 title: "Metin oturumları ve uygulama callback’leri"
-description: "Kalıcı metin konuşması oluşturun, revision ile mesaj gönderin, bekleyen turları sürdürün ve HTTP üzerinden SDK aracı çalıştırın"
+description: "Python, TypeScript ve SSE ile metin yanıtlarını ve araç durumlarını canlı alın; oturum durumunu uzlaştırın ve bağlantı kopmasından sonra devam edin"
 ---
 
 ## Ön koşullar
 
 Sunucuda organizasyon API anahtarı ve yayımlanmış workflow UUID’si kullanın. Workflow’a kullanılabilir model paketi atayın; `textSessions.check()` bunu kontrol eder. Uygulama oturumları editör taslağını değil yayımlanmış tanımı kullanır. WebRTC veya mikrofon/hoparlör bağlantısı açılmaz.
 
-TypeScript SDK’da `client.textSessions` vardır. Python’da aynı endpoint’leri `httpx` ile çağırın; `client.text_sessions` yardımcısı yoktur.
+TypeScript SDK’da `client.textSessions`, Python SDK’da `client.text_sessions` kullanılır. İkisi de ses bağımlılığı gerektirmeden JSON yanıtlarını ve parça parça metin akışını destekler.
 
 ## Oluşturma, yürütme, mesaj ve kapatma
 
@@ -45,34 +45,30 @@ try {
 ```python
 import os
 from uuid import uuid4
-import httpx
+from verasist_sdk import VerasistClient
 
-base = "https://app.verasist.ai/api/v1"
-workflow_uuid = os.environ["WORKFLOW_UUID"]
-with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout=120) as http:
-    def request(method, path, body=None):
-        response = http.request(method, base + path, json=body)
-        response.raise_for_status()
-        return response.json()
-
-    request("GET", f"/apps/workflows/{workflow_uuid}/check")
-    session = request("POST", f"/apps/workflows/{workflow_uuid}/sessions", {
-        "request_id": str(uuid4()), "initial_context": {"locale": "en"},
-    })
+with VerasistClient(
+    base_url="https://app.verasist.ai",
+    api_key=os.environ["VERASIST_API_KEY"],
+    timeout=120,
+) as client:
+    client.text_sessions.check(os.environ["WORKFLOW_UUID"])
+    session = client.text_sessions.create(
+        os.environ["WORKFLOW_UUID"], request_id=str(uuid4()),
+        initial_context={"locale": "en"},
+    )
     run_id = session["run_id"]
     try:
-        session = request("POST", f"/apps/sessions/{run_id}/execute", {})
+        session = client.text_sessions.execute(run_id)
         if not session["closed"]:
-            session = request("POST", f"/apps/sessions/{run_id}/messages", {
-                "text": "Hello", "expected_revision": session["revision"],
-            })
+            session = client.text_sessions.send(run_id, "Hello", session["revision"])
         print(session["turns"])
     finally:
-        request("POST", f"/apps/sessions/{run_id}/close", {})
+        client.text_sessions.close(run_id)
 ```
 </CodeGroup>
 
-`create()` oturum durumunu oluşturur. `execute()` ilk asistan turunu üretir veya bekleyen turu sürdürür. `send()` kullanıcı mesajını ekleyip cevabı yürütür. `get()` çalıştırmadan güncel durumu okur. `close()` oturumu bitirir. Yanıtlar durum görüntüsüdür; SSE/token akışı değildir.
+`create()` oturum durumunu oluşturur. `execute()` ilk asistan turunu üretir veya bekleyen turu sürdürür. `send()` kullanıcı mesajını ekleyip cevabı yürütür. `get()` çalıştırmadan güncel durumu okur. `close()` oturumu bitirir. Bu metotlar tamamlanmış JSON durumunu döndürür. Yanıtı üretim bitmeden görmek için aşağıdaki streaming metotlarını kullanın.
 
 | Yanıt alanı | Anlamı |
 | --- | --- |
@@ -81,6 +77,54 @@ with httpx.Client(headers={"X-API-Key": os.environ["VERASIST_API_KEY"]}, timeout
 | `status` | `pending_assistant_turn` dahil yürütme durumu |
 | `closed` | Run’ın bitip bitmediği |
 | `turns` | Tur ID/durumu ve kullanıcı/asistan metni |
+
+## Yanıtı üretilirken stream olarak alın
+
+Oturumu `create()` ile oluşturduktan sonra ilk karşılamayı TypeScript’te `executeStream`, Python’da `execute_stream` ile alın. Sonraki mesajlarda `sendStream` / `send_stream` kullanın. Mevcut `execute` ve `send` metotları tamamlanmış JSON durumunu döndürmeye devam eder.
+
+<CodeGroup>
+```typescript
+import { VerasistClient } from "@verasist/sdk";
+
+async function streamGreeting(client: VerasistClient, runId: number) {
+  for await (const event of client.textSessions.executeStream(runId)) {
+    if (event.event === "assistant.delta") process.stdout.write(event.data.delta);
+    if (event.event === "session.completed") return event.data;
+  }
+}
+
+async function streamReply(client: VerasistClient, runId: number, revision: number) {
+  for await (const event of client.textSessions.sendStream(runId, "Hello", revision)) {
+    if (event.event === "assistant.delta") process.stdout.write(event.data.delta);
+    if (event.event === "session.completed") return event.data;
+  }
+}
+```
+
+```python
+from verasist_sdk import VerasistClient
+
+
+def stream_greeting(client: VerasistClient, run_id: int):
+    for event in client.text_sessions.execute_stream(run_id):
+        if event["event"] == "assistant.delta":
+            print(event["data"]["delta"], end="", flush=True)
+        elif event["event"] == "session.completed":
+            return event["data"]
+
+
+def stream_reply(client: VerasistClient, run_id: int, revision: int):
+    for event in client.text_sessions.send_stream(run_id, "Hello", revision):
+        if event["event"] == "assistant.delta":
+            print(event["data"]["delta"], end="", flush=True)
+        elif event["event"] == "session.completed":
+            return event["data"]
+```
+</CodeGroup>
+
+`assistant.delta` olayında `run_id`, `turn_id`, `segment_id`, `sequence` ve `delta` bulunur. Parçaları aynı segment içinde birleştirin; nihai transcript ile eşleşmek için her segmentin kenar boşluklarını temizleyip segmentleri iki satır sonuyla birleştirin. Sıra numarası tur içinde artar. Transfer sonrası karşılama ayrı `turn_id` kullanır. `session.completed` geldiğinde geçici mesajları kaydedilmiş nihai durumla uzlaştırın ve sonraki mesajda yeni `revision` değerini kullanın.
+
+Iterator’ın kapanması veya bağlantının kopması sunucudaki üretimi iptal etmez. `get(run_id)` ile durumu okuyun; aktif üretim sırasında `status`, `pending_assistant_turn` olabilir. Aynı mesajı otomatik yeniden göndermeyin. Eşzamanlı yazma aktif tur kilidi nedeniyle 409 döndürebilir. Kaçırılan parçalar tekrar oynatılmaz; kaydedilmiş nihai sonuç okunabilir.
 
 ## Tekrar deneme ve eşzamanlılık
 
@@ -158,3 +202,67 @@ async function handleAuthorizedCall(call: {
 ```
 
 Yazan işlemlerde kullanıcı kapsamındaki `call_id` ile kalıcı idempotency kaydı tutun ve yinelenen çağrıya önceki sonucu döndürün. Model argümanındaki kullanıcı/tenant bilgisini, doğrulanmış token bağlamının yerine kullanmayın.
+
+
+## Canlı araç durumları
+
+`tool.started` ve `tool.completed` olayları tur sürerken gelir. İki SDK da `run_id`, `turn_id`, `tool_call_id`, `function_name` ve `status` alanlarını iletir. Durum `running`, `completed` veya `failed` olabilir; tamamlanan olayda `duration_ms` de bulunabilir. Çağrıları run, turn ve call kimliklerinin birleşimiyle takip edin; böylece eşzamanlı araçlar ayrı satırlarda görünür. Bu olaylarda araç argümanları ve sonuçları yayımlanmaz. Bağlantının kopması, çalışan bir aracın başarılı tamamlandığı anlamına gelmez.
+
+```typescript
+const tools = new Map<string, unknown>();
+for await (const event of client.textSessions.sendStream(runId, "Hello", revision)) {
+  if (event.event === "tool.started" || event.event === "tool.completed") {
+    const call = event.data;
+    const key = `${call.run_id}:${call.turn_id}:${call.tool_call_id}`;
+    tools.set(key, call); // Update this call's existing UI row.
+  }
+  if (event.event === "assistant.delta") process.stdout.write(event.data.delta);
+  if (event.event === "session.completed") session = event.data;
+}
+```
+
+## HTTP üzerinden SSE
+
+SDK iterator’ları aşağıdaki kimlik doğrulamalı POST isteklerini kullanır:
+
+| Endpoint | Amaç |
+| --- | --- |
+| `/api/v1/public/agent/runs/{run_id}/execute` | İlk karşılamayı stream et veya bekleyen turu sürdür; gövde `{}` |
+| `/api/v1/public/agent/runs/{run_id}/messages` | Yanıtı stream et; gövde `{"text":"Merhaba","expected_revision":1}` |
+
+```bash
+curl --no-buffer --request POST \
+  "https://app.verasist.ai/api/v1/public/agent/runs/$RUN_ID/execute" \
+  --header "X-API-Key: $VERASIST_API_KEY" \
+  --header "Accept: text/event-stream" \
+  --header "Content-Type: application/json" \
+  --data '{}'
+```
+
+| Olay | İstemcinin işlemi |
+| --- | --- |
+| `session.started` | Oturum kimliğini ve başlangıç durumunu sakla |
+| `assistant.delta` | `delta` metnini ilgili tur ve segmente ekle |
+| `tool.started` | İlgili aracı çalışıyor olarak göster |
+| `tool.completed` | Aracı tamamlandı veya başarısız olarak güncelle |
+| `session.completed` | Kaydedilmiş nihai durum ve yeni revision ile uzlaştır |
+| `session.error` | Kısmi metni tamamlanmamış say; tekrar denemeden önce durumu oku |
+
+`Accept: text/event-stream` başlığı SSE’yi seçer; normal JSON çağrıları aynı şekilde çalışır. Yetki ve doğrulama hataları stream başlamadan HTTP hatası döner. Sonraki hatalar `session.error` ile bildirilir; SDK iterator’ları bunu `ApiError` olarak yükseltir. Bağlantı sorunları ayrıca ağ istisnası oluşturabilir. Heartbeat mesajları SSE yorumlarıdır, asistan metni değildir. Kendi ayrıştırıcınız ağ paketleri arasında bölünen olayları ve UTF-8 karakterlerini desteklemelidir. Organizasyon API anahtarını sunucuda tutun.
+
+## Uygulama ve embed arayüzü
+
+Text-chat test paneli, iframe/widget ve uygulama sohbetleri metin parçalarını aynı asistan balonuna ekler; eşzamanlı araç çağrılarını canlı gösterir. Sabit karşılama hazır olduğunda tek parça gelir. Modelin ürettiği ilk karşılama, yanıtlar ve transfer karşılamaları üretim parçalarıyla iletilir. Bu sözleşme yalnızca `TEXTCHAT` içindir; sesli ve speech-to-speech akışları ayrıdır.
+
+Kendi arayüzünüzde geçici metni run ve turn kimliğine göre gruplayın; parçaları segment içinde birleştirin. Transfer karşılaması yeni bir tura aittir. Üretim sürerken ikinci mesajı engelleyin. Nihai metni yeniden eklemek yerine geçici balonları `session.completed` içindeki turlar ve attachments ile uzlaştırın. Metin veya güvenli Markdown render edin; model çıktısını ham HTML olarak eklemeyin.
+
+Bağlantı koptuğunda sunucu mevcut turu tamamlayıp kaydeder. Mesajı otomatik tekrar göndermeden güncel durumu okuyun; kaçırılan parçalar tekrar oynatılmaz. Kısmi metni veya durumu bilinmeyen aracı tamamlandı olarak işaretlemeyin. Embed durum okuma istekleri tarayıcıda organizasyon API anahtarı yerine oturum tokenı ve izin verilen origin ile doğrulanır.
+
+Modelin düşünmesi veya araç çağrıları ilk görünür metinden önce gerçekleşebilir. Sunucu kullanıcıya gösterilebilir metni üretildikçe iletir; cevabın tamamını bekleyip sonradan parçalara ayırmaz.
+
+## REST ve Try it
+
+API referansında [Text oluşturma](/api-referansi/runs/trigger-workflow), [Çalıştırma](/api-referansi/runs/text-execute), [Mesaj gönderme](/api-referansi/runs/text-message), [Durum okuma](/api-referansi/runs/text-get) ve [Kapatma](/api-referansi/runs/text-close) formlarını kullanın. Try it JSON yanıtını, SDK streaming `Accept: text/event-stream` başlığını kullanır. Oluşturmada workflow UUID ve UUID biçiminde `request_id`; mesajda güncel `expected_revision` gereklidir. Sesli ve görüntülü kullanım için [run akışını](/developer/sdks/live-voice-session) kullanın.
+
+
+Başlatma artık ortak run endpointinde `run_type: "voice" | "video" | "text"` ile yapılır. Alan verilmezse mevcut telefon/kanal davranışı korunur. Text için UUID `request_id` gerekir; mesajlar ve kapatma `/api/v1/public/agent/runs/{run_id}` altında çalışır. Eski oturum adresleri yalnızca uyumluluk alias’ıdır.
