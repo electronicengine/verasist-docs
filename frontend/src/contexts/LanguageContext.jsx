@@ -1,31 +1,37 @@
-import { createContext, useContext, useCallback, useEffect, useState } from "react";
+import { getPreferredLanguage } from "../lib/browserLanguage";
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 const LanguageContext = createContext(null);
 
 export function LanguageProvider({ children }) {
-  const [lang, setLangState] = useState(() => {
-    try {
-      return localStorage.getItem("dokuman_lang") || "tr";
-    } catch {
-      return "tr";
-    }
-  });
+  const [lang, setLangState] = useState(getPreferredLanguage);
 
   useEffect(() => {
-    try {
-      localStorage.setItem("dokuman_lang", lang);
-    } catch {}
     document.documentElement.lang = lang;
   }, [lang]);
 
   const setLang = useCallback((newLang) => {
+    if (newLang !== "tr" && newLang !== "en") return;
+    try {
+      localStorage.setItem("dokuman_lang", newLang);
+    } catch {}
     setLangState(newLang);
   }, []);
 
   const toggleLang = useCallback(() => {
     const next = lang === "tr" ? "en" : "tr";
-    localStorage.setItem("dokuman_lang", next);
-    window.location.reload();
+    try {
+      localStorage.setItem("dokuman_lang", next);
+      window.location.reload();
+    } catch {
+      setLangState(next);
+    }
   }, [lang]);
 
   return (

@@ -1,3 +1,4 @@
+import { getPreferredLanguage } from "./browserLanguage";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -9,7 +10,10 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("dokuman_token");
+  let token;
+  try {
+    token = localStorage.getItem("dokuman_token");
+  } catch {}
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -18,11 +22,8 @@ api.interceptors.request.use((config) => {
 
 // Language interceptor: adds ?lang= to every request
 api.interceptors.request.use((config) => {
-  try {
-    const lang = localStorage.getItem("dokuman_lang") || "tr";
-    if (!config.params) config.params = {};
-    if (!config.params.lang) config.params.lang = lang;
-  } catch {}
+  if (!config.params) config.params = {};
+  if (!config.params.lang) config.params.lang = getPreferredLanguage();
   return config;
 });
 

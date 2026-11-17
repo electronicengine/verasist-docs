@@ -92,3 +92,14 @@ Frontend şu adreste açılır:
 - Backend startup sırasında MongoDB bağlantı hatası alıyorsanız MongoDB’nin çalıştığından emin olun.
 - Frontend portu değişmek istiyorsanız `.env` dosyasındaki `PORT` değerini güncelleyin.
 - Backend URL’sini değiştirmek istiyorsanız frontend `.env` dosyasındaki `REACT_APP_BACKEND_URL` değerini güncelleyin.
+
+## Dil ve tema varsayılanları
+
+İlk açılışta tarayıcının tercih sırasındaki ilk desteklenen dil (Türkçe/İngilizce)
+kullanılır. Desteklenen dil bulunamazsa İngilizce seçilir. İlk içerik isteği de
+aynı dilde gönderilir. Varsayılan tema koyudur; kullanıcının dil ve tema
+seçimleri sonraki ziyaretler için saklanır.
+
+Frontend yayın imajı: `local/verasist-docs-frontend:browser-defaults-20261116`.
+Önceki frontend imajı: `local/verasist-docs-frontend:dev`. Yayın ve geri alma
+işlemleri yalnızca `frontend` servisini `--no-deps --no-build` ile değiştirmelidir.

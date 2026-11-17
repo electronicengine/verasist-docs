@@ -36,7 +36,7 @@ services:
         aliases: [verasist-docs-backend]
 
   frontend:
-    image: local/verasist-docs-frontend:dev
+    image: "${DOCS_FRONTEND_IMAGE:-local/verasist-docs-frontend:browser-defaults-20261116}"
     pull_policy: never
     build:
       context: .
