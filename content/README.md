@@ -15,3 +15,12 @@ python backend/migration/customer_publication.py --apply --backup /tmp/customer-
 The first command previews the scope. The second requires a new backup filename, updates only listed pages, and removes excluded paths in every language. Existing document IDs and slugs are preserved for retained pages. Removal is intentional: `published=False` alone does not prevent access through the public path and slug endpoints.
 
 Keep backups outside Git. Before publishing, check navigation, direct path/slug responses, links to retired pages, and SDK examples. SDK development and deployment instructions can remain in the private engineering repository; do not add them to this site's source list.
+
+The Turkish agent terminology migration previews its changes by default:
+
+```bash
+python backend/migration/rename_agent_terminology.py
+python backend/migration/rename_agent_terminology.py --apply --backup /tmp/agent-terminology-before.json
+```
+
+It updates display text in Turkish documents and video descriptions, preserving page identifiers, links and English content.

@@ -21,7 +21,7 @@ const SECTION_NAMES = {
     "getting-started": "Başlangıç",
     "core-concepts": "Temel Kavramlar",
     configurations: "Yapılandırma",
-    "voice-agent": "Sesli Asistan",
+    "voice-agent": "Sesli Ajan",
     "voice-agent-tools": "Araçlar",
     "voice-agent-nodes": "Düğümler",
     telephony: "Telefon",

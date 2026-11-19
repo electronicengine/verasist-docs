@@ -68,7 +68,7 @@ with VerasistClient(
 ```
 </CodeGroup>
 
-`create()` oturum durumunu oluşturur. `execute()` ilk asistan turunu üretir veya bekleyen turu sürdürür. `send()` kullanıcı mesajını ekleyip cevabı yürütür. `get()` çalıştırmadan güncel durumu okur. `close()` oturumu bitirir. Bu metotlar tamamlanmış JSON durumunu döndürür. Yanıtı üretim bitmeden görmek için aşağıdaki streaming metotlarını kullanın.
+`create()` oturum durumunu oluşturur. `execute()` ilk ajan turunu üretir veya bekleyen turu sürdürür. `send()` kullanıcı mesajını ekleyip cevabı yürütür. `get()` çalıştırmadan güncel durumu okur. `close()` oturumu bitirir. Bu metotlar tamamlanmış JSON durumunu döndürür. Yanıtı üretim bitmeden görmek için aşağıdaki streaming metotlarını kullanın.
 
 | Yanıt alanı | Anlamı |
 | --- | --- |
@@ -76,7 +76,7 @@ with VerasistClient(
 | `revision` | Sonraki mesajın `expected_revision` değeri |
 | `status` | `pending_assistant_turn` dahil yürütme durumu |
 | `closed` | Run’ın bitip bitmediği |
-| `turns` | Tur ID/durumu ve kullanıcı/asistan metni |
+| `turns` | Tur ID/durumu ve kullanıcı/ajan metni |
 
 ## Yanıtı üretilirken stream olarak alın
 
@@ -248,11 +248,11 @@ curl --no-buffer --request POST \
 | `session.completed` | Kaydedilmiş nihai durum ve yeni revision ile uzlaştır |
 | `session.error` | Kısmi metni tamamlanmamış say; tekrar denemeden önce durumu oku |
 
-`Accept: text/event-stream` başlığı SSE’yi seçer; normal JSON çağrıları aynı şekilde çalışır. Yetki ve doğrulama hataları stream başlamadan HTTP hatası döner. Sonraki hatalar `session.error` ile bildirilir; SDK iterator’ları bunu `ApiError` olarak yükseltir. Bağlantı sorunları ayrıca ağ istisnası oluşturabilir. Heartbeat mesajları SSE yorumlarıdır, asistan metni değildir. Kendi ayrıştırıcınız ağ paketleri arasında bölünen olayları ve UTF-8 karakterlerini desteklemelidir. Organizasyon API anahtarını sunucuda tutun.
+`Accept: text/event-stream` başlığı SSE’yi seçer; normal JSON çağrıları aynı şekilde çalışır. Yetki ve doğrulama hataları stream başlamadan HTTP hatası döner. Sonraki hatalar `session.error` ile bildirilir; SDK iterator’ları bunu `ApiError` olarak yükseltir. Bağlantı sorunları ayrıca ağ istisnası oluşturabilir. Heartbeat mesajları SSE yorumlarıdır, ajan metni değildir. Kendi ayrıştırıcınız ağ paketleri arasında bölünen olayları ve UTF-8 karakterlerini desteklemelidir. Organizasyon API anahtarını sunucuda tutun.
 
 ## Uygulama ve embed arayüzü
 
-Text-chat test paneli, iframe/widget ve uygulama sohbetleri metin parçalarını aynı asistan balonuna ekler; eşzamanlı araç çağrılarını canlı gösterir. Sabit karşılama hazır olduğunda tek parça gelir. Modelin ürettiği ilk karşılama, yanıtlar ve transfer karşılamaları üretim parçalarıyla iletilir. Bu sözleşme yalnızca `TEXTCHAT` içindir; sesli ve speech-to-speech akışları ayrıdır.
+Text-chat test paneli, iframe/widget ve uygulama sohbetleri metin parçalarını aynı ajan balonuna ekler; eşzamanlı araç çağrılarını canlı gösterir. Sabit karşılama hazır olduğunda tek parça gelir. Modelin ürettiği ilk karşılama, yanıtlar ve transfer karşılamaları üretim parçalarıyla iletilir. Bu sözleşme yalnızca `TEXTCHAT` içindir; sesli ve speech-to-speech akışları ayrıdır.
 
 Kendi arayüzünüzde geçici metni run ve turn kimliğine göre gruplayın; parçaları segment içinde birleştirin. Transfer karşılaması yeni bir tura aittir. Üretim sürerken ikinci mesajı engelleyin. Nihai metni yeniden eklemek yerine geçici balonları `session.completed` içindeki turlar ve attachments ile uzlaştırın. Metin veya güvenli Markdown render edin; model çıktısını ham HTML olarak eklemeyin.
 

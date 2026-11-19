@@ -499,10 +499,10 @@ logger = logging.getLogger(__name__)
 # Seed video tutorials – filenames map to /public/videos/
 SEED_VIDEOS = [
     {
-        "title": "Vera Asistanı ve MCP Araçları",
+        "title": "Vera Ajanı ve MCP Araçları",
         "title_en": "Vera Assistant and MCP Tools",
         "filename": "Vera_Asistanı_ve_MCP_Araçları.mp4",
-        "description": "Sesli asistan oluşturma ve MCP araçlarının kullanımı.",
+        "description": "Sesli ajan oluşturma ve MCP araçlarının kullanımı.",
         "description_en": "Creating voice assistants and using MCP tools.",
         "order": 1,
     },
@@ -515,10 +515,10 @@ SEED_VIDEOS = [
         "order": 2,
     },
     {
-        "title": "Asistanlar ve Entegrasyon",
+        "title": "Ajanlar ve Entegrasyon",
         "title_en": "Assistants and Integration",
         "filename": "asistanlar_ve_entegrasyon.mp4",
-        "description": "Asistan yapılandırması ve harici entegrasyonlar.",
+        "description": "Ajan yapılandırması ve harici entegrasyonlar.",
         "description_en": "Assistant configuration and external integrations.",
         "order": 3,
     },
@@ -554,7 +554,7 @@ SEED_SECTIONS = [
     {"slug": "baslangic", "title": "Başlangıç", "order": 1},
     {"slug": "temel-kavramlar", "title": "Temel Kavramlar", "order": 2},
     {"slug": "yapilandirma", "title": "Yapılandırma", "order": 3},
-    {"slug": "sesli-asistan", "title": "Sesli Asistan Oluşturucu", "order": 4},
+    {"slug": "sesli-asistan", "title": "Sesli Ajan Oluşturucu", "order": 4},
     {"slug": "telefon", "title": "Telefon", "order": 5},
     {"slug": "kanallar", "title": "Kanallar", "order": 6},
     {"slug": "entegrasyonlar", "title": "Diğer Entegrasyonlar", "order": 7},
@@ -584,7 +584,7 @@ SEED_DOCS = [
 <ol>
 <li><strong>Temel Kavramlar</strong> — Verasist'in nasıl çalıştığını anlayın</li>
 <li><strong>Yapılandırma</strong> — LLM, ses, transkripsiyon ayarlarını yapın</li>
-<li><strong>Sesli Asistan Oluşturucu</strong> — İş akışları ve araçlarla ajanlar oluşturun</li>
+<li><strong>Sesli Ajan Oluşturucu</strong> — İş akışları ve araçlarla ajanlar oluşturun</li>
 <li><strong>Telefon / Kanallar</strong> — Ajanlarınızı dünyaya bağlayın</li>
 </ol>""",
     },
@@ -928,7 +928,7 @@ GROQ_API_KEY="..."</code></pre>""",
         "section_slug": "sesli-asistan",
         "slug": "introduction",
         "path": "voice-agent/introduction",
-        "title": "Sesli Asistan Oluşturucuya Giriş",
+        "title": "Sesli Ajan Oluşturucuya Giriş",
         "excerpt": "İş akışı düzenleyicisinin kullanımına giriş.",
         "order": 1,
         "content": """<h2>İş Akışı Düzenleyicisi</h2>
@@ -1096,7 +1096,7 @@ GROQ_API_KEY="..."</code></pre>""",
         "slug": "add-to-website",
         "path": "voice-agent/add-to-website",
         "title": "Web Sitesine Ekleme",
-        "excerpt": "Sesli asistanı web sitenize widget olarak ekleme.",
+        "excerpt": "Sesli ajanı web sitenize widget olarak ekleme.",
         "order": 11,
         "content": """<h2>Widget Entegrasyonu</h2>
 <p>Verasist ajanınızı web sitenize bir widget olarak ekleyebilirsiniz. Üç farklı mod desteklenir:</p>

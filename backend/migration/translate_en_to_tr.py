@@ -59,18 +59,18 @@ TERMINOLOGY_MAP = [
     ("campaign", "çalıştırma planı"),
     ("Campaigns", "Çalıştırma Planları"),
     ("Campaign", "Çalıştırma Planı"),
-    # Agent → Asistan
-    ("voice agent builder", "sesli asistan oluşturucu"),
-    ("voice agent", "sesli asistan"),
-    ("Voice Agent Builder", "Sesli Asistan Oluşturucu"),
-    ("Voice Agent", "Sesli Asistan"),
-    ("agent builder", "asistan oluşturucu"),
-    ("Agent Builder", "Asistan Oluşturucu"),
+    # Agent → Ajan
+    ("voice agent builder", "sesli ajan oluşturucu"),
+    ("voice agent", "sesli ajan"),
+    ("Voice Agent Builder", "Sesli Ajan Oluşturucu"),
+    ("Voice Agent", "Sesli Ajan"),
+    ("agent builder", "ajan oluşturucu"),
+    ("Agent Builder", "Ajan Oluşturucu"),
     # "agent" is tricky - only replace when it means Verasist agent, not a general agent
     # We skip standalone "agent" to avoid breaking phrases like "user agent", "travel agent", etc.
     # "agents" is safer
-    ("agents", "asistanlar"),
-    ("Agents", "Asistanlar"),
+    ("agents", "ajanlar"),
+    ("Agents", "Ajanlar"),
     # Node → Düğüm
     ("nodes", "düğümler"),
     ("node", "düğüm"),

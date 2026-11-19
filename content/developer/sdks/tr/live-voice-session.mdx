@@ -11,7 +11,7 @@ description: "Python WebRTC oturumu oluşturun; cihaz araçlarını, transkriptl
 
 ## Oturum oluşturup bağlanma
 
-Aşağıdaki örnek ses dosyasını asistana gönderir ve yanıtı `assistant.wav` dosyasına kaydeder. `AUDIO_INPUT` var olan bir ses dosyası olmalıdır. Sistem mikrofonu için yerel FFmpeg/aiortc kurulumunuza uygun `AUDIO_INPUT` ve `AUDIO_FORMAT` değerlerini kullanın; örneğin Linux’ta PulseAudio cihazı. Sürücü ve ses oynatma uygulamanızın sorumluluğundadır.
+Aşağıdaki örnek ses dosyasını ajana gönderir ve yanıtı `assistant.wav` dosyasına kaydeder. `AUDIO_INPUT` var olan bir ses dosyası olmalıdır. Sistem mikrofonu için yerel FFmpeg/aiortc kurulumunuza uygun `AUDIO_INPUT` ve `AUDIO_FORMAT` değerlerini kullanın; örneğin Linux’ta PulseAudio cihazı. Sürücü ve ses oynatma uygulamanızın sorumluluğundadır.
 
 Çalıştırmadan önce `sdk_status` şemasını [yayımlayıp ilgili node’a bağlayın](/developer/sdks/tools). Katalog yayımlamayı her aramada tekrarlamanız gerekmez.
 
@@ -99,7 +99,7 @@ LLM yalnızca **aktif node’a bağlı** ve oturumda kayıtlı araçları kullan
 
 Callback’ler senkron bildirimlerdir. Asenkron iş için `asyncio.create_task()` kullanın ve görev hatalarını yönetin.
 
-- `on_transcript`: `{role, text, final}`. Kullanıcı metni ara sonuç olabilir; asistan metni finaldir.
+- `on_transcript`: `{role, text, final}`. Kullanıcı metni ara sonuç olabilir; ajan metni finaldir.
 - `on_connection_state`: peer connection durum metni.
 - `on_voice_event`: `{type, payload}`. Desteklenen olaylar: `rtf-bot-started-speaking`, `rtf-bot-stopped-speaking`, `rtf-bot-interrupted`, `rtf-user-mute-started`, `rtf-user-mute-stopped`, `rtf-user-turn-started`, `rtf-user-turn-final`, `rtf-camera-attachment`.
 
@@ -121,7 +121,7 @@ async def send_snapshot(session: LiveSession, image_path: str):
     )
 ```
 
-Dönen sonuç görüntünün kabul edildiğini bildirir, asistanın cevabı değildir. Cevap normal transkript/ses olaylarından gelir. Sunucu boyut, çözünürlük, biçim ve hız sınırlarını uygular. Uyumlu çok modlu model gerekir; bu API sürekli video taşımaz.
+Dönen sonuç görüntünün kabul edildiğini bildirir, ajanın cevabı değildir. Cevap normal transkript/ses olaylarından gelir. Sunucu boyut, çözünürlük, biçim ve hız sınırlarını uygular. Uyumlu çok modlu model gerekir; bu API sürekli video taşımaz.
 
 Devam eden bir yanıta bağlam eklerken ikinci yanıtı tetiklememek için `trigger_response=False` kullanın.
 
@@ -213,7 +213,7 @@ await session.connect();
 
 Sesli kullanımda sunucuda `run_type: "voice"`, tarayıcı factory’sinde `autoStartCamera: false` seçin. Sesli oturumda `startVideo` çağırmayın. Embed yetkilendirmeli dağıtım için aynı SDK girişinden `createVideoSession({apiBaseUrl, embedToken})` kullanılmaya devam eder.
 
-HTTPS veya localhost kullanın. Video capabilities hazır olunca kamera bir kez başlar. Kamera izni reddedilirse unavailable durumu bildirilir, ses kapanmaz. Ekran paylaşımı kullanıcı eylemiyle başlatılmalıdır ve tarayıcı desteğine bağlıdır. Factory kısa ömürlü token ile TURN bilgilerini alır; HTTP 503 durumunda STUN kullanılır, geçersiz/süresi dolmuş token hata verir. `close()` mikrofon, kamera/ekran, peer connection ve signaling kaynaklarını kapatır. Asistan sesini oynatmak tarayıcı autoplay kuralları nedeniyle kullanıcı eylemi gerektirebilir.
+HTTPS veya localhost kullanın. Video capabilities hazır olunca kamera bir kez başlar. Kamera izni reddedilirse unavailable durumu bildirilir, ses kapanmaz. Ekran paylaşımı kullanıcı eylemiyle başlatılmalıdır ve tarayıcı desteğine bağlıdır. Factory kısa ömürlü token ile TURN bilgilerini alır; HTTP 503 durumunda STUN kullanılır, geçersiz/süresi dolmuş token hata verir. `close()` mikrofon, kamera/ekran, peer connection ve signaling kaynaklarını kapatır. Ajan sesini oynatmak tarayıcı autoplay kuralları nedeniyle kullanıcı eylemi gerektirebilir.
 
 ## Python ile sürekli görsel gözlem
 
