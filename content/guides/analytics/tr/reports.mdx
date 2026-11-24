@@ -1,0 +1,45 @@
+---
+title: "Raporlar ve Analizler"
+description: "İş akışı ölçütlerini ve çıkarılan sonuçları inceleyin; Vera ile grafik oluşturup doğrulayın."
+---
+
+İş akışı hareketlerini, sonuçları, süreleri, maliyetleri ve çıkarılan verileri incelemek için doğru kuruluşta **Raporlar** (`/reports`) sayfasını açın. Hazır rapor ile kaydedilen Vera grafikleri farklı kapsam taşır: rapor üst filtrelerinizi izler; her kayıtlı grafik kendi sorgusunu ve kapsamını korur.
+
+## Başlamadan önce
+
+Raporlar'a erişiminiz, ilgili dönemde kayıtlarınız ve tutarlı iş akışı/alan tanımlarınız olmalı. Konu, memnuniyet veya çözüm analizi için [Veri Çıkarma](/guides/workflows/data-extraction) ayarlarını hazırlayıp son işlemenin veya geçmişi yeniden değerlendirmenin bitmesini bekleyin.
+
+## Hazır rapor
+
+**Tarih aralığı**, **iş akışı** ve **saat dilimini** seçip şunları inceleyin:
+
+- Çalıştırma, aktarım, başarısız ve yanıtsız çağrı özetleri.
+- Sonuç kodu, süre, kanal ve iş akışı dağılımları.
+- Verisi bulunan maliyet ve iş akışı süre/maliyet ölçütleri.
+- Örneklem sayıları ve yapılandırılan sayısal ölçekleriyle boolean/sayısal çıkarım sonuçları.
+
+Sayımı yorumlamadan önce kayıt grubunu kontrol edin: iş akışı çalıştırması/oturumu otomatik olarak gelen telefon araması değildir. Çağrı sonuç kodu ile çıkarılan konu alanı farklı gruplamalardır. Eksik çıkarım otomatik olarak false veya sıfır sayılmaz.
+
+## Grafik oluşturma
+
+Sayfanın altındaki **Vera ile grafik oluştur** seçeneğini kullanın. Kayıt grubunu, gruplamayı, ölçütü ve görseli tarif edin. Seçili dönem, iş akışı ve saat dilimi yeni isteğe bağlam olur. Kaydedilen sonuçlar **Vera ile oluşturulan grafikler** bölümünde görünür.
+
+[Vera ile Grafik Oluşturma](/guides/analytics/report-charts) rehberi kayıt kaynaklı/paylaşılan veriyi, grafik seçimini, saklanan sorguları ve açılışta yenilemeyi açıklar. Açıldığında yenileme açıkça seçilen bir davranıştır; 30 saniyelik sorgulama zamanlayıcısı değildir.
+
+## Grafik analizi ve doğrulama
+
+Yorum istemeden önce **Verileri göster** tablosunu açın, kaynağı ve filtreleri doğrulayın; bilinmeyen kategorileri ve yüzdelerin paydasını kontrol edin. Örnekleri gerçek çağrı kayıtlarıyla karşılaştırın. Dönemleri karşılaştırırken alan tanımları ve filtreler aynı olmalı.
+
+[Grafikleri Analiz Etme ve Doğrulama](/guides/analytics/chart-analysis) rehberinde eksik konulu yüzde örnekleri ve Vera'dan gözlemi varsayımdan ayırmasını isteyen promptlar bulunur.
+
+## Dışa aktarma ve takip
+
+Kayıt bazlı kontrol için mevcut **Çağrı geçmişi**, iş akışı çalıştırmaları veya kampanya çalıştırmalarındaki CSV seçeneklerini kullanın. Grafikteki **Verileri göster** tablosu çizilen değerleri gösterir; yalnız grafik yorumu bütün kaynak kayıtların tek tek doğrulandığı anlamına gelmez.
+
+Çıkarım alanını yeni eklediyseniz veya kuralını değiştirdiyseniz önce ilgili geçmişi yeniden değerlendirin, ardından grafiği yenileyin/yeniden oluşturun. Kayıtlı grafikler üst filtrelerdeki değişiklikleri otomatik devralmaz. Yenileme hatasında eski değerler görünmeye devam edebilir; güncel demeden önce hatayı çözün.
+
+## İlgili rehberler
+
+- [Veri çıkarma ve yeniden değerlendirme](/guides/workflows/data-extraction)
+- [Faturalandırma ve Maliyet Analizi](/guides/analytics/billing)
+- [Çağrı Kayıtları](/guides/analytics/recordings)

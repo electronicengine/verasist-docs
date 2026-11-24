@@ -1,0 +1,75 @@
+---
+title: "Veri Çıkarma"
+description: "Alanları yapılandırın; düğüm ile Global Node farkını ve geçmiş görüşmelerin yeniden değerlendirilmesini öğrenin."
+---
+
+Veri çıkarma, konuşmadan veya araçların çalışma kayıtlarından isimlendirilmiş değerler üretir. Sonuçları görüşme kayıtlarında inceleyebilir ve raporlarda kullanabilirsiniz. Akışın bir aşamasında gereken bilgi için o düğümün çıkarımını; görüşmenin tamamına ait nihai sonuç için **Global Node** çıkarımını kullanın.
+
+## Başlamadan önce
+
+Düzenleyebildiğiniz bir iş akışı, her alan için açık bir tanım ve doğru cevaplarını bildiğiniz test görüşmeleri hazır olsun. Görüşme sonu analizi veya geçmişi yeniden değerlendirmek için konuşma geçmişi kaydını açık tutun. Yeni ayarları kaydetmek eski görüşmeleri otomatik olarak doldurmaz.
+
+## Bir alanı yapılandırın
+
+1. İlgili düğümü açıp **Veri çıkarmayı** etkinleştirin. Global Node'da bu ayar **Görüşme Sonu Veri Çıkarma** olarak çalışır.
+2. `topic`, `issue_resolved` veya `customer_score` gibi benzersiz ve anlamı sabit bir alan adı ekleyin.
+3. `string`, `boolean` veya `number` seçin. Puan sayısal, konu metinsel olmalıdır.
+4. Kaynağı **YZ ile çıkarma** veya **Araç kayıtları** olarak seçin.
+5. YZ alanında açık bir alan ipucu ve gerekiyorsa ortak çıkarım talimatı yazın. Hangi ifadenin kanıt sayılacağını ve bilgi yoksa ne yapılacağını belirtin. Eksik bilgiyi uydurma `0` veya `false` değerine çevirmeyin.
+6. Sayısal alanlarda uygun alt/üst sınırı ve gösterim biçimini seçin. Bunlar sonucun görsel ölçeğini belirler; puanlama ölçütlerini alan ipucunda açıklamanın yerini tutmaz.
+7. Kayıt tablosunda sütun olarak görmek istediğiniz alanlarda **Çalıştırma tablosunda göster** seçeneğini açın. Kaydedip test edin; yeni ayarların canlı görüşmelerde kullanılması için iş akışını yayımlayın.
+
+Örnek alanlar:
+
+| Alan | Tür/kaynak | İpucu veya hesaplama |
+| --- | --- | --- |
+| `topic` | string / YZ | Konuşmayı Faturalandırma, Teknik destek, Satış veya Diğer olarak sınıflandır. Her kayıtta aynı etiketleri kullan. |
+| `issue_resolved` | boolean / YZ | Çözüm teyit edildiyse true; açıkça çözülemediyse false; yeterli kanıt yoksa bilinmiyor. |
+| `customer_score` | number / YZ | Belirlenen ölçütlerle memnuniyeti 1–5 arasında puanla; kanıt yoksa bilinmiyor. |
+| `crm_update_count` | number / araç kayıtları | Seçilen CRM araç işleminin çalıştırılma sayısını hesapla. |
+
+## Normal düğüm ile Global Node farkı
+
+| Soru | Ajan / Aramayı Bitir düğümü | Global Node |
+| --- | --- | --- |
+| Ne zaman? | YZ çıkarımı düğümden geçiş veya kapanış noktalarında çalışır. Her mesajdan sonra çalışacağı varsayılmamalıdır. | Desteklenen sesli/metin görüşmesi tamamen bittikten sonra çalışır; işlem telefon kapandıktan sonra tamamlanabilir. |
+| Hangi bilgiyle? | O ana kadar kullanılabilir konuşma bağlamıyla; sonraki düzeltmeler veya aktarımlar henüz gerçekleşmemiştir. | Saklanan nihai konuşmayla; desteklenen ajan aktarımları ve izlenen insan aktarımı bölümleri dahil. |
+| Ne için? | Akışın belirli aşamasında gereken bilgiler. | Nihai konu, sonuç, özet, memnuniyet ve rapor alanları. |
+| Hemen kullanılabilir mi? | Bazı çıkarımlar arka planda tamamlanabilir; az önce başlatılan değerin sonraki adımda hazır olduğunu varsaymayın. | Canlı yönlendirme değeri değildir; raporu yorumlamadan önce son işlemenin bitmesini bekleyin. |
+
+**Global Prompt**, ajanın ortak kişiliğini ve kurallarını belirler. **Global veri çıkarma** ayrı bir ayardır. Bir düğümün **Global Prompt Ekle** seçeneği, görüşme sonu veri çıkarmayı tek başına açıp kapatmaz.
+
+Global çıkarım, görüşmeyi **başlatan ajanın o görüşme için kaydedilmiş ayarlarını** kullanır. İnsan temsilciye aktarım yapılması, izlenmeyen insan konuşmasının da otomatik olarak değerlendirildiği anlamına gelmez. Geçmiş tutulmadıysa veya son işlem başarısızsa sonuç bulunamayabilir; boş alan olumsuz cevap demek değildir.
+
+## YZ kaynağı ile araç kaydı kaynağı
+
+- **YZ ile çıkarma**, konuşmadaki kanıtı yorumlar ve yapılandırılmış modelin kullanımını tüketir.
+- **Araç kayıtları**, kaydedilmiş araç çalıştırmalarından ek YZ çıkarımı olmadan hesaplanır. Araç, işlem ve çağrı sayısı, başarılı/başarısız sayısı veya kayıtlı sonuç/argüman gibi ölçütü seçin. Araç yeniden çalıştırılmaz.
+- Yerel düğüm kendi bağlı araçlarını seçer. Global çıkarım, iş akışına bağlı araçları seçebilir.
+- Yerel düğümde tanımlananlar dahil araç kaydı alanları, geç tamamlanan paralel sonuçları kapsayabilmek için görüşme sonrasında kesinleşir. O anki konuşmayı yönlendirecek canlı araç sonucu sorgusu değildir.
+
+Etkin sonuçlar görüşme kayıtlarında görünür. Şablonlarda çıkarılan değerler `gathered_context.extracted_variables` altında bulunur; örnek: `{{gathered_context.extracted_variables.topic}}`. Farklı anlamlara farklı alan adları verin; grafiklerde okunabilirlik için kategori etiketlerini tutarlı kullanın.
+
+## Geçmiş görüşmeleri yeniden değerlendirin
+
+Yeni alan eklediğinizde veya çıkarım talimatını değiştirdiğinizde **Global Node** çıkarım ayarlarındaki **Yeniden değerlendir** seçeneğini kullanın.
+
+1. Güncel alanları hazırlayıp veri çıkarmayı açık tutun. Değişiklikleri kaydedin; başlatma sırasında güncel ayarlar kaydedilir/doğrulanır.
+2. **Yeniden değerlendir** düğmesine basıp görüşme türünü seçin: tümü, metin, telefon, tarayıcı ses/video veya kanal ses görüşmeleri.
+3. İsterseniz başlangıç/bitiş tarihi ve gelen/giden yönü seçin. Görüşmenin başlangıç zamanı, tarayıcınızın gösterilen saat diliminde esas alınır; bitiş gününün tamamı dahildir.
+4. Eşleşen tamamlanmış kayıt sayısını kontrol edip **Seçilen kayıtları değerlendir** seçeneğine basın.
+5. Sırada/çalışıyor durumunu, işlenen toplamı, atlanan kayıtları ve hataları izleyin. Bir iş akışında aynı anda tek yeniden değerlendirme işi çalışabilir.
+6. Birkaç güncellenmiş kaydı inceleyip ilgili raporu veya yenilemesi açık grafiği tekrar açın.
+
+İş, oluşturulduğunda kapsamına alınan tamamlanmış görüşmeleri işler. Seçim dışındaki kayıtlar yeniden işlenmez; saklanan sonuçları korunur. Ancak değişmiş bir alanın güncel tanımına uygun sonuç henüz yoksa görünümde eski sonuç yerine kullanılamıyor/boş gösterilebilir.
+
+Yalnız yeni veya değişmiş alan tanımları işlenir; her değişmemiş alan tekrar hesaplanmaz. Model veya ortak çıkarım talimatının değişmesi birden fazla alanı etkileyebilir. Sadece gösterimi değiştirmek, çıkarım kuralını değiştirmekle aynı değildir.
+
+Yeniden değerlendirme **arama başlatmaz, webhook/araçları yeniden çalıştırmaz ve görüşmeyi tekrar oynatmaz**. Ek YZ çıkarım kullanımı ücretlendirilir; araç kaydı ölçütleri ek YZ çıkarım maliyeti oluşturmaz. Geçmiş kaydı kapalıysa, konuşma metni yoksa veya çıkarım yapılamıyorsa kayıtlar atlanabilir/hata alabilir. Silinmiş konuşma geçmişini geri oluşturmaz.
+
+## Raporlamadan önce kontrol edin
+
+- Önce küçük bir kapsamda sonuçları saklanan konuşma/araç kayıtlarıyla karşılaştırın.
+- Bekleyen çıkarım veya yeniden değerlendirmenin bitmesini bekleyin. Eski/kullanılamayan değerleri sıfır veya false saymayın.
+- Konu alanının tanımını değiştirmek eski aramaları kendiliğinden sınıflandırmaz: ilgili geçmişi yeniden değerlendirin, ardından grafiği yenileyin veya yeniden oluşturun.
+- Gruplama, eksik veri ve yenileme için [Grafik Oluşturma](/guides/analytics/report-charts) ve [Grafik Analizi](/guides/analytics/chart-analysis) rehberlerini kullanın.

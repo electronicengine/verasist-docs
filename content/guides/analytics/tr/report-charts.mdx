@@ -1,0 +1,73 @@
+---
+title: "Vera ile Grafik Oluşturma"
+description: "Kuruluşunuzun kayıtlarından veya verdiğiniz değerlerden grafik oluşturun; kaydetme ve açılışta yenileme davranışını seçin."
+---
+
+**Raporlar** (`/reports`) sayfasında Vera ile grafik oluşturup kuruluşunuz için kaydedebilirsiniz. Önce grafiğin hangi kayıtları veya paylaştığınız değerleri temsil edeceğini belirleyin; yalnız grafik türünü söylemek raporun kapsamını tanımlamaz.
+
+## Başlamadan önce
+
+Doğru kuruluşu açın, Raporlar ve Vera'ya erişiminizi kontrol edin ve seçtiğiniz tarihlerde kayıt bulunduğundan emin olun. Konu/memnuniyet grafiği için gereken [çıkarım alanlarını](/guides/workflows/data-extraction) hazırlayın; gerekiyorsa geçmiş görüşmelerin yeniden değerlendirilmesini tamamlayın.
+
+## Kayıtlardan grafik oluşturun
+
+1. Raporlar'da tarih aralığını, iş akışını ve saat dilimini seçin.
+2. **Vera ile grafik oluştur** düğmesine basın. Rapor kapsamı sohbete aktarılır; Raporlar sayfasında sohbet Vera yan panelinde açılır.
+3. Kayıt grubunu, gruplamayı, ölçütü ve grafik türünü tarif edin. Bütün oturumları değil yalnız telefon aramalarını istiyorsanız açıkça belirtin.
+4. İstenen veri yoksa Vera'nın alan/tarih açıklamasını kontrol edin. Eksik veritabanı sonuçlarının yerine uydurma sayılar koymayın.
+5. Önizlemeyi ve **Verileri göster** tablosunu inceleyin. Oluşan grafik Raporlar'da **Vera ile oluşturulan grafikler** bölümüne de kaydedilir.
+
+Örnek istek:
+
+```text
+Seçili iş akışı ve dönemde yalnız gelen telefon görüşmelerini al.
+Çıkarılan konu alanına göre görüşme sayılarını halka grafik olarak göster.
+Konusu bulunmayanları ayrı kategori yap. Europe/Istanbul kullan.
+```
+
+Zaman içindeki değişim için:
+
+```text
+Seçili iş akışının bu ayki günlük gelen telefon görüşmesi sayılarını çizgi
+grafik olarak göster. Metin oturumlarını ve tarayıcı aramalarını dahil etme.
+```
+
+Vera mevcut alanları ve tarihleri keşfedebilir. Tarih, iş akışı, çağrı yönü, görüşme türü, süre, kayıtlı maliyet ve çıkarılan değişkenler kullanılabilir. İlgili alanın gerçekten bulunması gerekir: promptta “konu” demek, bütün eski konuşmaların konusunun otomatik çıkarıldığı anlamına gelmez.
+
+## Görseli ve hesabı seçin
+
+| Grafik | Uygun kullanım |
+| --- | --- |
+| Çizgi / alan | Sayı, süre veya maliyetin zaman içindeki değişimi. |
+| Çubuk | Konu kategorileri, iş akışları veya diğer grupların karşılaştırılması. |
+| Pasta / halka | Negatif olmayan tek bir ölçütün toplam içindeki payı. |
+| Dağılım | İki sayısal ölçüt; x ve y eksenlerini belirtin. |
+| Radar | Anlam ve ölçekleri karşılaştırılabilir sayısal ölçütler. |
+
+**Adet**, **toplam**, **ortalama**, **en küçük** veya **en büyük** hesabını belirtin. “Konuya göre ortalama süre” ile “konuya göre görüşme sayısı” farklı sorulara cevap verir. Gruplama için metin/sayı/boolean kategorileri gerekir; serbest bir JSON nesnesi veya uzun konuşma metni uygun değildir.
+
+Büyük dönemlerde haftalık/aylık gruplama veya daha dar tarih/iş akışı isteyin. Mevcut grafik servisi 200'den fazla grubu veya 10.000'den fazla aday kaydı sessizce eksiltip tam sonuçmuş gibi sunmak yerine reddeder.
+
+## Verdiğiniz değerlerden grafik oluşturun
+
+Vera'ya küçük bir tablo verip çizmesini isteyebilirsiniz. Bu grafik **Paylaşılan verilerden** olarak etiketlenir; veritabanından hesaplandığı anlamına gelmez. Örnek/test değerlerini gerçek çağrı sonucu gibi yorumlamayın.
+
+Paylaşılan veri grafiği yeni aramalardan otomatik yenilenemez. Yeni kayıtları izlemek için açık alan eşleştirmesi ve filtrelerle kayıt kaynaklı bir grafik oluşturun.
+
+## Sabit görüntü mü, açıldığında yenileme mi?
+
+Kaydedilen grafik varsayılan olarak oluşturulduğu anın görüntüsüdür. Yeni kayıtlarla hesaplanmasını istiyorsanız açıkça söyleyin:
+
+```text
+“Gelen arama konuları” grafiğini güncelle; kopyasını oluşturma.
+Sayfayı açtığımda yeni aramalar dahil edilerek yeniden hesaplansın.
+İş akışını, gelen telefon filtresini ve eksik konu kategorisini koru.
+```
+
+Yenilemesi açık kayıt kaynaklı grafiklerde **Açıldığında güncellenir** ifadesi görünür. Kaydedilen veriler sayfa açılışında/yeniden açılışında yüklendiğinde veya açık bir grafik güncellemesinde yeniden hesaplanır; **30 saniyelik bir zamanlayıcı değildir**. Sayfayı açık bırakmak, gelen her yeni aramayı sürekli grafiğe eklemez.
+
+Özel tarih aralığında yenileme açıksa başlangıç tarihi korunur, bitiş grafiğin saat diliminde bugüne ilerleyebilir. **Tüm zamanlar** sorgusu sınırlarını mevcut kayıtlardan alır. Sabit geçmiş dönem için yenilemeyi kapatmasını isteyin veya ayrı bir sabit grafik tutun.
+
+Raporlar filtreleri **yeni** isteklerin bağlamını belirler. Mevcut kayıtlı grafik kendi sorgusunu, tarihini, saat dilimini ve iş akışını korur; üst filtreyi değiştirmek bütün grafikleri sessizce yeniden tanımlamaz. Güncellemede grafiğin adını ve istenen değişikliği belirtin. Kaydedilmiş grafiği silmek onu kuruluş için kaldırır.
+
+Yenileme başarısızsa son kaydedilmiş veriler hata bilgisiyle görünür. Başarılı yenileme olmadan güncel olduğunu söylemeyin. Doğruluk kontrolleri için [Grafik Analizi](/guides/analytics/chart-analysis) rehberine bakın.

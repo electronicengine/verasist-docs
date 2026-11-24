@@ -1,0 +1,28 @@
+---
+title: "Global Düğüm"
+description: "Ortak ajan talimatlarını, görüşme sonu veri çıkarmayı ve geçmiş görüşmelerin yeniden değerlendirilmesini yapılandırın."
+---
+
+Bir sesli ajan iş akışında tek Global düğüm bulunur; bu düğümün gelen veya giden bağlantısı yoktur. **Global Prompt**, **Global Prompt Ekle** seçeneği açık olan düğümlerin konuşma talimatlarına eklenir. Ortak kişilik, üslup, şirket bilgisi ve kuralları burada tutun.
+
+## Temel ayarlar
+
+- **Ad:** Akışta düğümü tanımlayan kısa isim.
+- **Global Prompt:** Konuşma boyunca paylaşılacak talimatlar. Şablon değişkenleri kullanılabilir.
+- Diğer düğümlerde **Global Prompt Ekle** açıksa ortak talimatlar kullanılır; kapalıysa düğüm kendi konuşma talimatıyla çalışır.
+
+Ortak promptu kısa tutun. Aşamaya özel soruları o aşamanın Ajan düğümünde tanımlayın; tüm görüşmede geçerli davranışları Global düğüme yazın.
+
+## Görüşme sonu veri çıkarma
+
+Global düğümde **Görüşme Sonu Veri Çıkarma**, konuşma promptundan ayrı bir ayardır. Etkinleştirip nihai konu, sonuç veya memnuniyet gibi alanları tanımlayın. Desteklenen görüşme tamamen bittikten sonra, görüşmeyi başlatan ajanın kaydedilmiş ayarları ve saklanan nihai geçmişle çalışır. Desteklenen ajan aktarımları ve izlenen insan aktarımı bölümleri kapsanabilir; telefon kapandığında işlem henüz sürüyor olabilir.
+
+Diğer düğümlerdeki **Global Prompt Ekle** seçeneği ortak konuşma talimatlarını kontrol eder; bu son çıkarımı açıp kapatmaz. Normal düğüm çıkarımı, o düğümden geçiş/kapanış noktasında mevcut bağlamı görür; Global çıkarım saklanan nihai konuşmayı değerlendirir. İzlenmeyen insan konuşması otomatik olarak kapsama girmez.
+
+Alan kaynağı olarak YZ yorumu veya kayıtlı araç ölçütleri seçebilirsiniz. Araç kayıtlarından hesaplama aracı yeniden çalıştırmaz ve ek YZ çıkarım bedeli oluşturmaz. Geçmiş kayıtların işlenmesinde konuşma/kayıt bulunabilirliği yine önemlidir.
+
+## Geçmiş görüşmeleri yeniden değerlendirme
+
+Global çıkarım tanımını değiştirdikten sonra **Yeniden değerlendir** ile tamamlanmış kayıtları tür, tarih ve yöne göre seçin. Başlatmadan önce eşleşen sayıyı kontrol edin. Yeni/değişmiş alanlar saklanan kanıttan işlenir; aramalar veya araçlar tekrar çalıştırılmaz. Ek YZ kullanımı ücretlendirilir; geçmiş bulunmaması atlamaya neden olabilir.
+
+Alan ayarları, düğüm/Global farkları, kapsam seçimi, ilerleme ve rapor öncesi kontrol için [Veri Çıkarma](/guides/workflows/data-extraction) rehberini kullanın.

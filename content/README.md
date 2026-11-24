@@ -42,3 +42,20 @@ backup file is mandatory for applying; concurrent CMS content edits stop the syn
 The customer-publication import guard also removes retired video links so a later
 import cannot restore them. Keep reviewed HTML overrides in
 `customer-publication.json` aligned with these MDX sources.
+
+Extraction and report guides have a separate scoped publisher:
+
+```bash
+python backend/migration/sync_extraction_report_docs.py --docs-dir /path/to/verasist/docs --output /tmp/extraction-report-pages.json
+python backend/migration/sync_extraction_report_docs.py --input /tmp/extraction-report-pages.json
+python backend/migration/sync_extraction_report_docs.py --input /tmp/extraction-report-pages.json --apply --backup /private/new-extraction-report-backup.json
+```
+
+English sources are under `docs/guides/workflows/` and `docs/guides/analytics/` in
+the main repository. Turkish sources are under the corresponding `content/guides/`
+folders. Existing Turkish Agent/End Call content is retained in the reviewed HTML
+policy with the extraction section corrected. This publisher accepts only the 14
+reviewed pages, keeps existing IDs/slugs, adds Data Extraction under Nodes, and
+parents Create Charts/Analyze Charts beneath the existing Reports document. It
+previews by default and requires a new backup filename to apply. Preserve these
+parent relationships when publishing selectively; no service restart is needed.

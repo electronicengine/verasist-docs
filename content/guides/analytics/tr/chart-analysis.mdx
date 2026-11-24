@@ -1,0 +1,74 @@
+---
+title: "Grafikleri Analiz Etme ve Doğrulama"
+description: "Vera'dan yorum istemeden önce grafik kapsamını, kaynak değerlerini, eksik kategorileri ve yüzdelerin paydasını kontrol edin."
+---
+
+Grafik doğru çizilmiş olsa bile yanlış soruya cevap veriyor olabilir. Yüzdeleri kullanmadan veya Vera'dan öneri istemeden önce neyin sayıldığını doğrulayın.
+
+## Başlamadan önce
+
+Kaydedilmiş grafiği, **Verileri göster** tablosunu ve örnek çağrı kayıtlarını açın. Hedef iş akışını, tarih aralığını, saat dilimini, görüşme türünü/yönünü ve çıkarılan alanı bilin. Çıkarım veya yeniden değerlendirme sürüyorsa nihai rapor olarak yorumlamadan önce bitmesini bekleyin.
+
+## Önce bunları kontrol edin
+
+| Konu | Kontrol |
+| --- | --- |
+| Kaynak | Gerçek kayıt hesabı mı, paylaşılan/örnek sayılar mı? |
+| Kayıt grubu | Gelen telefon, giden çağrı, tarayıcı görüşmesi veya metin oturumu mu? “Tüm oturumlar” otomatik olarak “gelen aramalar” değildir. |
+| Zaman | Başlangıç/bitiş ve saat dilimi doğru mu? Sabit görüntü, tüm zamanlar veya açılışta yenilenen grafik mi? |
+| Ölçüt | Görüşme adedi, toplam, ortalama, en küçük veya en büyük değer mi? |
+| Grup | Gerçek konu çıkarım alanı mı, iş akışı mı, başka tanımlı kategori mi? |
+| Tamlık | Eksik çıkarım, bekleyen yeniden değerlendirme, dışlanan kayıt veya yenileme hatası var mı? |
+
+**Verileri göster** ile kategori değerlerini kaydedilmiş toplamlarla karşılaştırın. Birkaç gerçek kaydı da inceleyin; makul görünen bir konu etiketi çıkarımın doğru olduğunu kanıtlamaz.
+
+## Eksik konular ve yüzdeler
+
+Eksik kategori politikası yüzde hesabının paydasını değiştirir. Filtreye uyan on görüşmenin beşi Satış, üçü Destek, ikisi konusuz olsun:
+
+| Politika | Sonuç |
+| --- | --- |
+| Eksikleri dahil et | Satış %50, Destek %30, Bilinmeyen/boş kategori %20. |
+| Eksikleri dışla | Sınıflandırılmış sekiz görüşme üzerinden Satış %62,5, Destek %37,5. Dışlanan iki kayıt yine belirtilmelidir. |
+
+Gösterilen eşleşen toplam, dilimlerin dışında bırakılan kayıtları da içerebilir. Eksik veri notunu ve kategori toplamlarını birlikte inceleyin; her yüzdenin genel toplam üzerinden hesaplandığını varsaymayın. Etiketler yuvarlanabilir; tablodaki değerleri esas alın. Eksik/bilinmeyen veri otomatik olarak “Diğer”, başarısızlık, sıfır veya false değildir.
+
+Konu alanını yeni eklediyseniz eski aramalar henüz sınıflandırılmamış olabilir. Tutarlı bir konu listesi tanımlayın, [ilgili geçmişi yeniden değerlendirin](/guides/workflows/data-extraction) ve işlem tamamlanınca grafiği yenileyin/yeniden oluşturun.
+
+## Vera'dan kanıtla analiz isteyin
+
+```text
+“Gelen arama konuları” grafiğini analiz et. Önce tarih aralığını, iş akışını,
+gelen telefon filtresini, gruplama alanını, kategori değerlerini ve eksik
+kayıt sayısını doğrula. Yüzdelerin paydasını açıkla. Ardından ana eğilimi
+özetle ve iki takip kontrolü öner. Gözlemi varsayımdan ayır; sınıflanmamış
+aramalara konu uydurma.
+```
+
+Karşılaştırma için:
+
+```text
+Aynı iş akışının gelen telefon görüşmelerinde son iki tam haftayı karşılaştır.
+Adetleri ve yüzdeleri birlikte göster; saat dilimi ve eksik konu politikası
+aynı olsun. Her hafta için örneklem büyüklüğünü belirt.
+```
+
+Benzer adlı grafikler varsa grafiğin başlığını ve dönemini söyleyin. Ekran görüntüsü veya elle hazırlanmış tablo veriyorsanız bunu belirtin; yalnız görsel/metin yorumlamak kaydedilmiş veritabanı sorgusunu doğrulamaz.
+
+## Eğilimleri dikkatli yorumlayın
+
+- Bir konunun payı diğer kategoriler azaldığı için artabilir; mutlak adetlere de bakın.
+- Ortalama sürenin uzaması daha karmaşık taleplerden kaynaklanabilir. Düşük performans demeden önce dağılımı ve örnekleri inceleyin.
+- Süre ile memnuniyetin ilişkili görünmesi nedensellik kanıtı değildir.
+- Küçük örneklemler, tamamlanmamış günler ve farklı tarih/saat filtreleri karşılaştırmayı bozabilir.
+- Çıkarım talimatının veya kategori listesinin değişmesi, aynı görsel türüne rağmen dönemleri karşılaştırılamaz yapabilir.
+
+## Şüpheli grafiği düzeltin
+
+1. Görsel türünü değiştirmeden önce kaynak ve kayıt grubunu doğrulayın.
+2. Bilinmeyen kategorileri ve çıkarım durumunu inceleyin; düzgün yüzdeler elde etmek için eksikleri gizlemeyin.
+3. Gerekiyorsa çıkarım tanımını veya ölçüt/filtreyi düzeltin. Yeniden değerlendirmeyi ilgili geçmiş kapsamla sınırlayın.
+4. Vera'dan mevcut adlı grafiği kimliğini koruyarak güncellemesini isteyin veya açıkça ayrı bir karşılaştırma grafiği oluşturun.
+5. Yenilemesi açık grafiği tekrar açın; hatanın kalktığını doğrulayıp **Verileri göster** tablosunu yeniden inceleyin.
+
+Kurulum ve kayıtlı grafik davranışı için [Vera ile Grafik Oluşturma](/guides/analytics/report-charts) rehberine bakın.
