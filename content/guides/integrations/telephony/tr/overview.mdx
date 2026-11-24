@@ -1,0 +1,43 @@
+---
+title: "Telefon Entegrasyonu"
+description: "Telefon sağlayıcınızı, SIP hattınızı veya IP santralinizi bağlayın; numaralarınızı ajanlara yönlendirin."
+---
+
+Telefon yapılandırması, kuruluşunuzu bir telefon sağlayıcısına veya şirket santraline bağlar. Aynı bağlantıyı giden aramalar, gelen aramaların ajana yönlendirilmesi ve desteklenen insan temsilci aktarımları için kullanabilirsiniz. Birden fazla yapılandırma ekleyip her arama veya kampanyada kullanılacak bağlantıyı seçebilirsiniz.
+
+## Başlamadan önce
+
+Yayımlanmış bir sesli ajanınız, kuruluşunuzda **Telefon Yapılandırmaları** sayfasına erişiminiz ve sağlayıcınızın veya santral yöneticinizin verdiği bağlantı bilgileri ile numaralarınız hazır olmalı.
+
+## Bağlantınızı seçin
+
+| Mevcut sisteminiz | İzlenecek rehber |
+| --- | --- |
+| Programlanabilir bulut telefon hesabı | [Twilio](/guides/integrations/telephony/twilio), [Vonage](/guides/integrations/telephony/vonage), [Plivo](/guides/integrations/telephony/plivo), [Telnyx](/guides/integrations/telephony/telnyx), [Cloudonix](/guides/integrations/telephony/cloudonix) veya [Vobiz](/guides/integrations/telephony/vobiz). |
+| SIP sunucusu ve hat bilgileri veren bir operatör | [SIP Hattı Bağlantısı](/guides/integrations/telephony/sip-trunk). |
+| Şirket santraline kayıtlı IP masa telefonları | [IP Santral Bağlantısı](/guides/integrations/telephony/ip-pbx). Telefonları santralde tutun, santrali Verasist'e bağlayın. |
+
+## Yapılandırın ve deneyin
+
+1. **Telefon Yapılandırmaları** (`/telephony-configurations`) sayfasında **Yapılandırma ekle** seçeneğine basın.
+2. Sağlayıcınızı seçin. Doğrudan SIP operatörü ve IP santral bağlantıları için **SIP Trunk** kullanın.
+3. Bağlantı bilgilerini girip kaydedin. SIP için operatörünüzün/santralinizin istediği kayıt yöntemini seçin.
+4. Yapılandırmayı açıp **Telefon numaraları** bölümüne aktif numaralarınızı ekleyin. Genel telefon şebekesi numaralarını ülke kodu ve `+` ile girin; santral dahilileri ile dış hat numaraları farklı amaçlarla kullanılır.
+5. Gelen arama alacak numarada **Gelen arama iş akışı** alanından ajanınızı seçin.
+6. Bağlantı türüne göre sağlayıcıdaki HTTP webhook'u veya SIP/santral yönlendirmesini yapılandırın.
+7. Kampanya başlatmadan veya şirketin ana hattını değiştirmeden önce gelen/giden aramayı, iki yönlü sesi ve çağrının sonlanmasını deneyin.
+
+İsterseniz bir yapılandırmayı **varsayılan giden bağlantı**, bir numarayı da **varsayılan arayan numarası** yapabilirsiniz. Farklı operatörleri veya santralleri denerken yapılandırmayı açıkça seçin. Arayan numarası seçtiğiniz sağlayıcıda yetkili olmalıdır.
+
+## Gelen arama yolu bağlantıya göre değişir
+
+HTTP webhook kullanan bulut sağlayıcıları, arama olayını kendi rehberlerinde belirtilen gelen arama URL'sine gönderir. Doğrudan SIP ve santral bağlantıları ise **Verasist SIP ağ geçidine SIP INVITE gönderir**; HTTPS webhook adresi bir SIP trunk hedefi değildir.
+
+Her iki durumda da aranan numara kuruluşunuzun yapılandırmasında bulunmalı ve bir gelen arama ajanına atanmalıdır. Ayrıntılar için [Gelen Arama](/guides/integrations/telephony/inbound) rehberini kullanın.
+
+## Sorun giderme
+
+- **Kaydettim ama arayamıyorum:** Kaydetmek bağlantı testi değildir. Kimlik doğrulamayı/kayıt durumunu, seçilen yapılandırmayı ve izinli arayan numarasını kontrol edin.
+- **Gelen aramayı ajan açmıyor:** Sağlayıcı/santral yönlendirmesini, gönderilen hedef numarayı, aktif numara kaydını ve iş akışı atamasını kontrol edin.
+- **Arama bağlandı ama ses yok:** Codec ve medya ayarlarını kontrol edin; SIP için ağ yöneticinizle RTP ve NAT kurallarını doğrulayın.
+- **Aktarım yanlış yere gidiyor:** Seçilen bağlantının hedef dahiliyi/numarayı yönlendirebildiğini ve yedek yönlendirmenin döngü oluşturmadığını doğrulayın.

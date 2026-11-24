@@ -1,0 +1,38 @@
+---
+title: "Telefon Yapılandırmaları API'si"
+description: "Kuruluşunuza ait telefon sağlayıcılarını, SIP bağlantılarını ve numaraların ajan atamalarını API ile yönetin."
+---
+
+Telefon yapılandırması, kuruluşunuzu bir sağlayıcıya ve ona ait kimlik bilgilerine bağlar. Her yapılandırmanın kendi telefon numaraları bulunur. Bir bağlantıyı varsayılan giden yapılandırma, bir numarayı da varsayılan arayan kimliği yapabilirsiniz.
+
+## Yapılandırma işlemleri
+
+Aşağıdaki yollar API'nin `/api/v1` ön eki altındadır.
+
+| İşlem | Yol | Ayrıntı |
+| --- | --- | --- |
+| GET | `/organizations/telephony-providers/metadata` | [Sağlayıcıları listele](/api-reference/telephony-configs/providers) |
+| GET | `/organizations/telephony-configs` | [Yapılandırmaları listele](/api-reference/telephony-configs/list) |
+| POST | `/organizations/telephony-configs` | [Yapılandırma oluştur](/api-reference/telephony-configs/create) |
+| GET | `/organizations/telephony-configs/{config_id}` | [Yapılandırmayı al](/api-reference/telephony-configs/get) |
+| PUT | `/organizations/telephony-configs/{config_id}` | [Yapılandırmayı güncelle](/api-reference/telephony-configs/update) |
+| DELETE | `/organizations/telephony-configs/{config_id}` | [Yapılandırmayı sil](/api-reference/telephony-configs/delete) |
+| POST | `/organizations/telephony-configs/{config_id}/set-default-outbound` | [Varsayılan giden bağlantı](/api-reference/telephony-configs/set-default-outbound) |
+
+## Telefon numaraları
+
+Numaraları `/organizations/telephony-configs/{config_id}/phone-numbers` altında listeleyebilir ve ekleyebilirsiniz. Tek bir numara için aynı yolun sonuna `/{phone_number_id}` ekleyerek GET, PUT veya DELETE kullanın. Varsayılan arayan kimliği için `/{phone_number_id}/set-default-caller` yoluna POST gönderin.
+
+Ayrıntılar: [Numara ekleme](/api-reference/telephony-configs/phone-numbers/create), [numara güncelleme](/api-reference/telephony-configs/phone-numbers/update), [varsayılan arayan kimliği](/api-reference/telephony-configs/phone-numbers/set-default-caller).
+
+## SIP hattı ve IP santral
+
+Doğrudan SIP hattı veya uyumlu IP santral için `provider: "sip"` seçin. `gateway_ip`, `username` ve `password` zorunludur; `gateway_port` varsayılanı `5060` değeridir. `register` değerini açıkça belirleyin: Verasist uzak hesaba kayıt olacaksa `true`, IP doğrulamalı trunk için `false`. Kullanıcı adı/parola iki modelde de zorunludur.
+
+Mevcut bağlantı UDP ve G.711 (`alaw,ulaw`) kullanır. Yönetilen ARI değerleri ağ geçidi kontrol ayarlarıdır; operatörünüzün/santralinizin kimlik bilgileri değildir. `from_numbers` listesi, gelen arama yönlendirmesinde kullanılan gerçek telefon numarası kayıtlarının yerini tutmaz. Aranan DID'yi numara olarak ekleyip `inbound_workflow_id` atayın.
+
+SIP çağrısı HTTP webhook yerine SIP ağ geçidine gelir. [SIP Hattı](/guides/integrations/telephony/sip-trunk) ve [IP Santral](/guides/integrations/telephony/ip-pbx) rehberleri alanları, masa telefonlarını ve aktarım yönlerini açıklar.
+
+## Hassas bilgiler
+
+GET yanıtlarında parolalar ve diğer gizli bilgiler maskelenir. Güncellemede maskeli değeri aynen gönderebilirsiniz; Verasist mevcut gizli değeri korur. Başka kuruluşların yapılandırma veya numara kimliklerini kullanmayın; tüm işlemler kimliği doğrulanan kuruluş kapsamında yapılır.

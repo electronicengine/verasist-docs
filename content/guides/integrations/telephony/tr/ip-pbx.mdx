@@ -1,0 +1,88 @@
+---
+title: "IP Santral Bağlantısı"
+description: "IP masa telefonlarınızın bağlı olduğu şirket santralini SIP trunk üzerinden Verasist ajanına bağlayın."
+---
+
+IP masa telefonlarınızı mevcut santralinize kayıtlı tutun. **Santral ile Verasist arasında bir SIP trunk kurun**; her telefonu ayrı ayrı Verasist'e kaydetmeniz gerekmez.
+
+Arama yolu: **IP telefon → şirket santrali → SIP trunk → Verasist ajanı**. Santral, bir dış hat numarasını, IVR seçeneğini veya yapay zekâ için ayırdığınız dahiliyi bu bağlantıya yönlendirebilir.
+
+## Başlamadan önce
+
+- SIP trunk destekleyen bir santralde yönetici erişimi; örneğin uyumlu bir Asterisk/FreePBX kurulumu veya başka bir IP santral.
+- Yayımlanmış bir Verasist sesli ajanı ve kuruluşunuzun telefon yapılandırmalarına erişim.
+- Santralin erişilebilir SIP adresi, UDP portu, doğrulama yöntemi ve izinli arayan kimlikleri.
+- Verasist SIP ağ geçidi adresi, sinyalleşme/medya IP'leri ve RTP port aralığı. Bunları Verasist desteğinden alın; HTTPS panel adresi yerine kullanılamaz.
+- Ajana özel bir DID/numara ve test için bir telefon/dahili. Önce dar kapsamlı bir test yönlendirmesi hazırlayın; şirketin ana hattını hemen değiştirmeyin.
+
+Santral yöneticiniz bağlantının UDP SIP ve G.711 A-law/μ-law ile çalışabildiğini doğrulamalı. Mevcut Verasist bağlantısında TLS/SRTP seçimi bulunmaz.
+
+## 1. Bağlantı modelini seçin
+
+| Model | Santralde | Verasist'te |
+| --- | --- | --- |
+| Kayıtlı hesap | Verasist'in REGISTER isteğini kabul eden, gerekli arama izinlerine sahip özel bir hesap oluşturun. | Hesap bilgilerini girin; **Enable Registration** değerini `true` yapın. |
+| IP doğrulamalı trunk | Verilen Verasist sinyalleşme IP'lerine güven tanımlayın; çağrıları Verasist SIP ağ geçidine gönderin. | Santralin adresini girin; **Enable Registration** değerini `false` yapın. Kullanıcı adı/parola alanları bu modelde de zorunludur; yöneticinizle kararlaştırdığınız değerleri kullanın. |
+
+Kayıt açıksa REGISTER'ı **Verasist başlatır**. Bu form, santralin Verasist'e bir dahili gibi kayıt olduğu ters modeli kurmaz. Hesabın gereken eş zamanlı çağrıları ve yönlendirmeyi desteklemesi gerekir; tek cihaz kısıtlı bir masa telefonu hesabı uygun olmayabilir.
+
+## 2. Santrali hazırlayın
+
+1. Örneğin **Verasist AI** adlı özel bir trunk/hesap oluşturun.
+2. Seçtiğiniz modele göre güven ve kimlik doğrulamayı ayarlayın. Erişimi kararlaştırılan sinyalleşme ve medya IP'leriyle sınırlayın.
+3. Bu trunk'ta G.711 A-law ve/veya μ-law etkinleştirin. Test aramasında anlaşan codec'i doğrulayın.
+4. Örneğin **700** adlı yerel bir hedefi, trunk üzerinden **ajan DID'sine** gidecek şekilde yönlendirin.
+5. Verasist'ten santrale gelebilecek hedefleri ayrıca belirleyin: yalnız dahililer, bir çağrı grubu veya izinli dış numaralar. Santralde arama yetkilerini açıkça sınırlandırın.
+
+Menü adları santral marka ve sürümüne göre değişir. **Trunk**, **Giden arama kuralları** ve **Gelen arama kuralları** bulunan sistemlerde önce trunk'ı, sonra santralden ajan DID'sine giden kuralı, ardından Verasist'ten gelen çağrıları izinli santral hedeflerine teslim eden kuralı oluşturun.
+
+## 3. Santrali Verasist'e ekleyin
+
+**Telefon Yapılandırmaları** sayfasında **SIP Trunk** ekleyin:
+
+| Alan | Örnek |
+| --- | --- |
+| SIP Gateway IP | `pbx.example.com`. Kendi erişilebilir santral adresinizle değiştirin; masa telefonunun IP'sini yazmayın. |
+| SIP Gateway Port | Santralin UDP portu; çoğunlukla `5060`. |
+| SIP Username / SIP Password | Özel santral hesabının/trunk'ın bilgileri. |
+| From User / DID | Santralin bu trunk için kabul ettiği SIP kimliği. |
+| Enable Registration | Kayıtlı hesap için `true`, IP doğrulamalı trunk için `false`. |
+
+Yönetilen ARI ayarlarını değiştirmeden kaydedin. **Telefon numaraları** bölümüne **ajan DID'sini** ekleyin, aktif tutun ve yayımlanmış **Gelen arama iş akışını** atayın. Giden aramalar için santralinizde yetkili arayan numarasını/dahiliyi de yapılandırıp bu bağlantıyı seçin.
+
+## 4. Masa telefonu ve dış hat aramalarını ajana yönlendirin
+
+Masa telefonundan **700** arayarak deneyin. Santral, Verasist'e SIP INVITE gönderirken bu yerel hedefi kayıtlı ajan DID'sine çevirmeli.
+
+Örneğin dokümandaki numara kaydı **+12025550100**, santralin gönderdiği aranan rakamlar ise **12025550100** olabilir. Örneği size atanmış ajan DID'siyle değiştirin. Arayan kişinin dahilisini arayan kimliğinde, ajan DID'sini ise aranan hedefte tutun; ikisi farklı bilgiler taşır.
+
+Dışarıdan arayanları ulaştırmak için bir dış hat kuralı, IVR seçeneği veya mesai saatine bağlı yönlendirmeyle seçili aramaları aynı trunk ve ajan DID'sine gönderin. Trunk kullanılamadığında devreye girecek yedek hedefi santralde tanımlayın. Başarılı REGISTER bu kuralları otomatik oluşturmaz.
+
+<Note>
+Paylaşımlı Verasist ağ geçidinde gelen çağrı için benzersiz, kayıtlı bir hedef numara gerekir. `700` gibi ortak bir dahili başka yapılandırma veya kuruluşla çakışabilir. Santralinizden çıkmadan önce bunu atanmış ajan DID'sine çevirin. Tanımsız veya belirsiz hedefler reddedilir. Standart ağ geçidinin arama planı sayısal hedefleri kabul eder; `vera-ai` gibi bir etiket yerine DID rakamlarını gönderin.
+</Note>
+
+## 5. Santraldeki bir dahiliyi arayın veya çağrı aktarın
+
+1. Santralinizin bu trunk'tan hedef dahiliye ya da çağrı grubuna arama kabul ettiğini doğrulayın.
+2. Giden testte **santral telefon yapılandırmasını**, izinli arayan kimliğini ve örneğin **201** gibi yetkili bir hedefi seçin.
+3. Ajan insan temsilciye aktaracaksa iş akışındaki aktarım ayarına hedefi girin. SIP bağlantısı aktarım aramasını aynı yapılandırılmış santral ağ geçidine gönderir; hedefin santralde yönlendirilmesi gerekir.
+4. Açılma, meşgul, yanıt vermeme ve kapatma durumlarını deneyin. Yanıtlanmayan dahiliyi sonsuz şekilde ajana geri göndermeyin; sonlu bir yedek yönlendirme tanımlayın.
+
+Seçtiğiniz bağlantı üzerinden farklı bir santraldeki dahiliye veya bağımsız başka bir trunk'a otomatik erişim olduğunu varsaymayın.
+
+## Kabul kontrolü
+
+- Yapay zekâ dahilisi aranınca doğru ajan açıyor.
+- Arayan ve ajan birbirini iki yönde duyuyor.
+- İzinli giden/aktarım çağrısı doğru masa telefonuna ulaşıyor.
+- Arayan kimliği doğru; aranan DID yönlendirmede korunuyor.
+- Meşgul, yanıtsız ve trunk erişilemez durumlarında döngüsüz yedek akış çalışıyor.
+- İki taraf da çağrıyı sonlandırabiliyor; çağrı kaydı doğru kuruluşta oluşuyor.
+
+Tek yönlü seste ağ yöneticinizle NAT/SDP adreslerini, SIP ALG davranışını ve çift yönlü RTP kurallarını kontrol edin. Standart Verasist ağ geçidi UDP `5060` ve RTP `10000–10099` kullanır; santralinizin medya aralığı farklı olabilir. Hizmetiniz için verilen bağlantı değerlerini esas alın. Santral tarafındaki kavramlar için [Asterisk NAT rehberine](https://docs.asterisk.org/Configuration/Channel-Drivers/SIP/Configuring-res_pjsip/Configuring-res_pjsip-to-work-through-NAT/) bakabilirsiniz.
+
+## İlgili rehberler
+
+- [SIP hattı alanları ve bağlantı kontrolleri](/guides/integrations/telephony/sip-trunk)
+- [Gelen arama yönlendirmesi](/guides/integrations/telephony/inbound)

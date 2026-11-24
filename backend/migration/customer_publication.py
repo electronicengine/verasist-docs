@@ -7,6 +7,8 @@ import argparse
 import asyncio
 import json
 import os
+
+from legacy_video_links import strip_legacy_video_links
 from pathlib import Path
 
 POLICY_PATH = Path(__file__).resolve().parents[2] / 'content/customer-publication.json'
@@ -23,8 +25,9 @@ def customer_document(document):
         return None
     for override in policy['overrides']:
         if (override['path'], override['lang']) == (document.get('path'), document.get('lang')):
-            return {**document, 'content': override['content']}
-    return document
+            document = {**document, 'content': override['content']}
+            break
+    return {**document, 'content': strip_legacy_video_links(document.get('content', ''))}
 
 
 async def apply(backup):

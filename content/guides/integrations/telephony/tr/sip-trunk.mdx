@@ -1,0 +1,86 @@
+---
+title: "SIP Hattı Bağlantısı"
+description: "SIP operatörünüzü Verasist'e bağlayın; kayıt, numara, gelen/giden arama ve ses kontrollerini tamamlayın."
+---
+
+Operatörünüzün SIP hattını Verasist'in yönetilen Asterisk ağ geçidine bağlayabilirsiniz. IP telefonlarınız zaten bir şirket santraline kayıtlıysa [IP Santral Bağlantısı](/guides/integrations/telephony/ip-pbx) rehberini kullanın.
+
+## Başlamadan önce
+
+- Bir Verasist kuruluşu ve yayımlanmış sesli ajan iş akışı.
+- Operatörün SIP sunucu adresi, portu, kullanıcı adı, parolası ve izinli arayan numaraları/DID'leri.
+- Operatörün **REGISTER ile kayıt** mı, **IP doğrulamalı trunk** mı istediğinin teyidi.
+- Hizmetiniz için verilen **Verasist SIP ağ geçidi adresi**, sinyalleşme/medya IP'leri ve RTP port aralığı. Panelinizin HTTPS adresi otomatik olarak SIP adresi değildir. Bu bilgiler verilmediyse Verasist desteğinden isteyin.
+
+Mevcut SIP bağlantısı **UDP** sinyalleşme ve **G.711 A-law/μ-law (alaw/ulaw)** kullanır. Portu 5061 yapmak TLS'i etkinleştirmez. Operatörünüz TCP, TLS veya SRTP zorunlu tutuyorsa kuruluma başlamadan önce uyumluluğu teyit edin.
+
+## 1. Operatör tarafını hazırlayın
+
+1. Verilen Verasist sinyalleşme ve medya IP'lerini operatörünüzün izin listesine ekleyin.
+2. Kullanılacak kimlik doğrulama yöntemini belirleyin. IP doğrulamalı bağlantıda da gerçek bağlantı bilgilerini alın: mevcut Verasist formunda kullanıcı adı ve parola zorunludur; operatör giden aramalarda ayrıca kimlik doğrulama isteyebilir.
+3. DID'nizi operatörün talimatına göre Verasist SIP ağ geçidine veya kayıtlı bağlantıya yönlendirin.
+4. SIP INVITE içinde hangi **aranan numaranın** gönderileceğini teyit edin. REGISTER'ın başarılı olması DID'nin atanmış veya gelen arama yönünün hazırlanmış olduğu anlamına gelmez.
+
+## 2. Verasist'te bağlantıyı ekleyin
+
+**Telefon Yapılandırmaları** (`/telephony-configurations`) sayfasında **Yapılandırma ekle** seçeneğine basıp **SIP Trunk** sağlayıcısını seçin.
+
+| Alan | Girilecek bilgi |
+| --- | --- |
+| SIP Gateway IP | **Operatörünüzün** SIP sunucu adı veya IP'si. Başına `sip:`, kullanıcı adı veya URL yolu eklemeyin. |
+| SIP Gateway Port | Operatörün UDP sinyalleşme portu; varsayılan `5060`. |
+| SIP Username / SIP Password | Hatta özel kullanıcı adı ve parola. İkisi de zorunludur. |
+| From User / DID | Operatörün beklediği SIP kimliği. Boşsa kullanıcı adı kullanılır. Aramada seçilen arayan numarasıyla aynı ayar değildir. |
+| Enable Registration | Verasist operatöre REGISTER gönderecekse `true`, IP doğrulamalı trunk için `false`. Değeri açıkça belirtin. |
+| From Numbers | Operatörün izin verdiği arayan kimlikleri veya dahililer. Ayrıca yapılandırmanın **Telefon numaraları** bölümünde gerçek numara kayıtlarını oluşturun. |
+
+Yönetilen **ARI Endpoint**, **Stasis App Name**, **ARI Password** ve **websocket_client.conf Name** değerlerini değiştirmeyin. Bunlar Verasist ağ geçidinin kontrol ayarlarıdır; bu alanlara operatör parolanızı veya santral adresinizi yazmayın. Yönetilen değerler eksikse destekle görüşün.
+
+Kaydedin. Başarılı kayıt, yapılandırmanın saklandığını ve uygulandığını gösterir; SIP kaydının, numara yönlendirmesinin veya iki yönlü sesin çalıştığını kanıtlamaz.
+
+## 3. Numarayı ekleyin ve ajanı seçin
+
+1. Yapılandırmanın **Telefon numaraları** bölümüne size atanmış numarayı ekleyin. Genel telefon şebekesi numaralarını ülke kodu ve `+` ile girin.
+2. Numarayı aktif tutun; gelen arama alacaksa **Gelen arama iş akışı** alanında ajanı seçin.
+3. İsterseniz numarayı varsayılan arayan, yapılandırmayı da varsayılan giden bağlantı olarak işaretleyin.
+4. Giden test aramasında veya kampanyada bu yapılandırmayı ve yetkili arayan numarasını seçin.
+
+<Note>
+SIP aramaları HTTP `/api/v1/telephony/inbound/run` adresine değil SIP ağ geçidine gelir. Bu bağlantı için operatöre HTTP webhook girmezsiniz. Verasist aranan DID üzerinden kuruluşu, numarayı ve ajanı belirler. Tanınmayan veya birden fazla kayda uyan hedefler reddedilir.
+</Note>
+
+## 4. Bağlantıyı ayrı ayrı doğrulayın
+
+| Kontrol | Beklenen sonuç |
+| --- | --- |
+| Kayıt etkinse REGISTER | Operatör trunk'ı kayıtlı gösterir. Kayıt kapalıysa REGISTER görülmemesi normaldir. |
+| Giden arama | Kontrolünüzdeki test numarası çalar, izinli arayan numarası görünür ve çağrı kaydı oluşur. |
+| Gelen arama | DID arandığında numaraya atanmış ajan açar. |
+| Medya | İki taraf da konuşma boyunca birbirini duyar. |
+| Sonlanma | Telefon kapatılınca çağrı biter; beklenen kayıt ve durum oluşur. |
+
+Operatörün arama/kayıt günlükleriyle Verasist **Çağrı kayıtları** sayfasını birlikte kontrol edin. Kaydetmek veya sessiz bir aramanın bağlanması, tamamlanmış bir bağlantı testi değildir.
+
+## Ağ ve sorun giderme
+
+Standart Verasist ağ geçidinde SIP için **UDP 5060**, RTP için **UDP 10000–10099** kullanılır. Hizmetinizde farklı değerler verildiyse onları esas alın. Operatörün RTP aralığı farklı olabilir; gereken medya trafiğine iki yönde de izin verin. Arama kuruluyor fakat ses gelmiyorsa ağ yöneticinizle NAT/SDP adreslerini ve SIP ALG davranışını kontrol edin. TCP `telnet` denemesi bu UDP bağlantısını test etmez.
+
+| Belirti | Kontrol |
+| --- | --- |
+| REGISTER zaman aşımı | UDP erişimi, sunucu/port, IP izinleri ve kayıt gerekip gerekmediği. |
+| Sürekli 401/403/407 hatası | Kimlik bilgileri, kaynak IP ve operatörün doğrulama politikası. İlk 401/407 sorgusu normal kimlik doğrulamanın bir parçası olabilir. |
+| Giden arama başarısız | Seçilen bağlantı, izinli arayan numarası, hedef biçimi, hesap yetkisi ve bakiye. |
+| Gelen arama yok | Operatörün DID yönlendirmesi, gönderilen hedef rakamlar, aktif numara ve ajan ataması. |
+| Arama geliyor ama kuruluş bulunamıyor | Tanımsız veya çakışan DID. Tüm hatları aynı kullanıcı adına/dahiliye yönlendirmeyin. |
+| Tek yönlü ses veya sessizlik | RTP kuralları, NAT/SDP adresleri ve G.711 codec uyumu. |
+
+## Operatöre özel bilgiler
+
+NetGSM, Verimor ve diğer operatörlerde sunucu adresini, kayıt yöntemini, arayan numarası biçimini ve DID yönlendirmesini kendi hesabınızın bağlantı bilgilerinden alın. Bu ayarlar tüm hesaplar için aynı değildir.
+
+**Twilio Elastic SIP Trunking** kullanıyorsanız giden aramalar trunk'ın **Termination URI** adresine gider; örnek: `example.pstn.twilio.com`. Gelen PSTN aramalarında **Origination** hedefi Verasist SIP ağ geçididir. Kayıt değerini `false` yapın ve ilgili IP erişim/kimlik bilgisi listesini yapılandırın. Twilio'nun Termination URI alanına Verasist sunucusunu yazmayın. Ayrıntılar: [Twilio trunk yapılandırması](https://www.twilio.com/docs/sip-trunking).
+
+## İlgili rehberler
+
+- [IP santrali ve masa telefonlarını bağlama](/guides/integrations/telephony/ip-pbx)
+- [Gelen arama yönlendirmesi](/guides/integrations/telephony/inbound)

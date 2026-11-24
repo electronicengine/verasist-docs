@@ -24,3 +24,21 @@ python backend/migration/rename_agent_terminology.py --apply --backup /tmp/agent
 ```
 
 It updates display text in Turkish documents and video descriptions, preserving page identifiers, links and English content.
+
+Telephone guides use the English MDX pages in the main repository's `docs/` tree
+and the Turkish MDX sources under `content/guides/integrations/telephony/tr/`.
+Build and preview the selective publication before applying it:
+
+```bash
+python backend/migration/sync_telephony_docs.py --docs-dir /path/to/verasist/docs --output /tmp/telephony-pages.json
+python backend/migration/sync_telephony_docs.py --input /tmp/telephony-pages.json
+python backend/migration/sync_telephony_docs.py --input /tmp/telephony-pages.json --apply --backup /private/new-telephony-backup.json
+```
+
+The sync updates the 24 reviewed English/Turkish telephone pages, creates only
+missing IP PBX pages, preserves existing IDs/slugs, and removes retired YouTube
+and Dograh/Dobra tutorial links without rewriting unrelated page text. A new
+backup file is mandatory for applying; concurrent CMS content edits stop the sync.
+The customer-publication import guard also removes retired video links so a later
+import cannot restore them. Keep reviewed HTML overrides in
+`customer-publication.json` aligned with these MDX sources.

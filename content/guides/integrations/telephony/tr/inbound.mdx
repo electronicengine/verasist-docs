@@ -1,0 +1,73 @@
+---
+title: "Gelen Arama"
+description: "Bulut sağlayıcıları, SIP hatları ve IP santrallerinden gelen aramaları doğru Verasist ajanına yönlendirin."
+---
+
+Gelen aramada önce bağlantıyı, ardından aranan numarayı ve bu numarayı karşılayacak ajanı yapılandırırsınız. Gelen ve giden aramalar aynı telefon yapılandırmasını kullanabilir; gelen aramanın teslim şekli sağlayıcı türüne göre değişir.
+
+## Başlamadan önce
+
+- Kuruluşunuza ait bir telefon yapılandırması ve bu bağlantıya atanmış aktif numara.
+- Aramayı karşılayacak yayımlanmış sesli ajan.
+- Sağlayıcı paneline veya santral yönlendirmelerine erişim.
+
+## Doğru arama yolunu seçin
+
+| Bağlantı | Gelen arama nasıl teslim edilir? |
+| --- | --- |
+| Twilio, Vonage, Plivo, Telnyx, Cloudonix, Vobiz gibi HTTP webhook entegrasyonları | Sağlayıcı çağrı olayını Verasist'in `/api/v1/telephony/inbound/run` HTTPS uç noktasına iletir. Sağlayıcıya özgü URL/metot ayarını ilgili rehberden alın. |
+| Doğrudan SIP Trunk veya IP santral | Operatör/santral Verasist **SIP ağ geçidine SIP INVITE** gönderir. Ağ geçidi çağrı olayını Verasist'e iletir; aranan DID üzerinden ajan seçilir. |
+
+<Note>
+HTTP webhook adresi SIP trunk hedefi değildir. SIP operatörünüzde veya santralinizde hedef olarak Verasist'in size verilen SIP adresini ve UDP portunu kullanın. REGISTER'ın başarılı olması DID yönlendirmesini veya ajan atamasını tamamlamaz.
+</Note>
+
+## 1. Telefon bağlantısını hazırlayın
+
+**Telefon Yapılandırmaları** (`/telephony-configurations`) sayfasında uygun sağlayıcıyı ekleyin veya mevcut bağlantıyı açın:
+
+- [Twilio](/guides/integrations/telephony/twilio), [Vonage](/guides/integrations/telephony/vonage), [Plivo](/guides/integrations/telephony/plivo)
+- [Telnyx](/guides/integrations/telephony/telnyx), [Cloudonix](/guides/integrations/telephony/cloudonix), [Vobiz](/guides/integrations/telephony/vobiz)
+- [SIP Hattı](/guides/integrations/telephony/sip-trunk) veya [IP Santral](/guides/integrations/telephony/ip-pbx)
+
+## 2. Numaraya ajan atayın
+
+1. Yapılandırmada **Telefon numaraları** bölümünü açın.
+2. Gelen arama alacak numarayı ekleyin veya düzenleyin. Genel telefon numaralarında ülke kodu ve `+` kullanın.
+3. Numarayı aktif tutun ve **Gelen arama iş akışı** alanından ajanı seçin.
+4. Kaydedin. Sağlayıcıya ayar iletilirken uyarı oluşursa ilgili sağlayıcının panelindeki ayarı ayrıca kontrol edin.
+
+Arayan kişinin numarası ajan seçimi için kullanılan hedef değildir; **aranan numara** kayıtla eşleşmelidir.
+
+## 3. Sağlayıcıdaki teslim yolunu ayarlayın
+
+### HTTP webhook sağlayıcıları
+
+Sağlayıcının gelen arama URL'sini rehberinde belirtilen HTTP metoduyla `https://app.verasist.ai/api/v1/telephony/inbound/run` adresine ayarlayın. Her ajan için ayrı URL oluşturmazsınız; Verasist sağlayıcı kimliğini doğrular ve aranan numaranın iş akışını seçer.
+
+Sağlayıcınıza özgü kurulum ayrıntıları için yukarıdaki bağlantıları izleyin. Webhook adresini değiştirmek tek başına DID'nin sağlayıcı hesabınızda doğru uygulamaya bağlı olduğunu kanıtlamaz.
+
+### SIP hattı veya IP santral
+
+DID'yi verilen Verasist SIP adresine yönlendirin. SIP'te gönderilen aranan rakamlar aktif numara kaydıyla eşleşmeli ve paylaşımlı ağ geçidinde tek bir yapılandırmayı belirtmelidir. Santral dahilisi kullanıyorsanız onu çıkışta atanmış ajan DID'sine çevirin.
+
+Ayrıntılı adımlar: [SIP Hattı](/guides/integrations/telephony/sip-trunk), [IP Santral](/guides/integrations/telephony/ip-pbx).
+
+## 4. Gerçek aramayla doğrulayın
+
+1. Kontrolünüzdeki başka bir telefondan ilgili numarayı arayın.
+2. Doğru ajanın açtığını ve iki tarafın da birbirini duyduğunu kontrol edin.
+3. Telefonu kapatın; çağrının sonlandığını ve doğru kuruluşun **Çağrı kayıtları** sayfasında göründüğünü doğrulayın.
+4. Santral yönlendirmesi varsa meşgul, yanıt vermeme ve bağlantı kesintisi için yedek hedefleri de deneyin.
+
+## Sorun giderme
+
+| Belirti | Kontrol |
+| --- | --- |
+| Arama Verasist'e gelmiyor | Bulut sağlayıcısında webhook/DID ataması; SIP'te trunk hedefi, UDP erişimi, kayıt yöntemi ve IP izinleri. |
+| Arama geliyor ama ajan seçilemiyor | Aktif aranan numara, doğru bağlantı, iş akışı ataması; SIP'te bilinmeyen/çakışan DID olmaması. |
+| Webhook kimlik doğrulama hatası | Sağlayıcı hesabı ve ilgili Verasist yapılandırmasındaki kimlik bilgilerinin eşleşmesi. |
+| Ajan açıyor ama ses yok | Medya bağlantısı; SIP'te codec, RTP portları ve NAT/SDP adresleri. |
+| Santrale aktarım döngüsü | İnsan temsilci hedefinin ve yanıtsız çağrı yedek yönünün sonsuz şekilde ajana geri gitmemesi. |
+
+İlk test tamamlanmadan ana numaranızı veya yüksek hacimli çağrı akışını bu yönlendirmeye geçirmeyin.
