@@ -501,7 +501,7 @@ SEED_VIDEOS = [
     {
         "title": "Vera Ajanı ve MCP Araçları",
         "title_en": "Vera Assistant and MCP Tools",
-        "filename": "Vera_Asistanı_ve_MCP_Araçları.mp4",
+        "filename": "vera-agent-mcp.mp4",
         "description": "Sesli ajan oluşturma ve MCP araçlarının kullanımı.",
         "description_en": "Creating voice assistants and using MCP tools.",
         "order": 1,
@@ -509,7 +509,7 @@ SEED_VIDEOS = [
     {
         "title": "Araçlar, Dosyalar ve iframe",
         "title_en": "Tools, Files and iframe",
-        "filename": "araçlar-dosyalar-iframe_1080p.mp4",
+        "filename": "tools-files-iframe.mp4",
         "description": "İş akışında araçlar, dosya yükleme ve iframe kullanımı.",
         "description_en": "Using tools, file uploads and iframes in workflows.",
         "order": 2,
@@ -517,7 +517,7 @@ SEED_VIDEOS = [
     {
         "title": "Ajanlar ve Entegrasyon",
         "title_en": "Assistants and Integration",
-        "filename": "asistanlar_ve_entegrasyon.mp4",
+        "filename": "agents-integrations.mp4",
         "description": "Ajan yapılandırması ve harici entegrasyonlar.",
         "description_en": "Assistant configuration and external integrations.",
         "order": 3,
@@ -525,7 +525,7 @@ SEED_VIDEOS = [
     {
         "title": "İş Akışı ve Test Araması",
         "title_en": "Workflow and Test Call",
-        "filename": "iş_akışı_ve_test_araması.mp4",
+        "filename": "workflow-test-call.mp4",
         "description": "İş akışı düzenleyicisi ve test araması yapma.",
         "description_en": "Workflow editor and making test calls.",
         "order": 4,
@@ -533,7 +533,7 @@ SEED_VIDEOS = [
     {
         "title": "Raporlar ve Çalıştırma Kayıtları",
         "title_en": "Reports and Call Records",
-        "filename": "raporlar-çağrı kayıtları_1080p.mp4",
+        "filename": "reports-run-records.mp4",
         "description": "Raporlama paneli ve çalıştırma kayıtlarının incelenmesi.",
         "description_en": "Reports dashboard and reviewing Run recordings.",
         "order": 5,
@@ -541,7 +541,7 @@ SEED_VIDEOS = [
     {
         "title": "Çalıştırma Planları ve Takvim",
         "title_en": "Call Plans and Calendar",
-        "filename": "calistirma-planlari-takvim.mp4",
+        "filename": "call-plans-calendar.mp4",
         "description": "Çalıştırma planlarının takvim ile yönetimi.",
         "description_en": "Managing campaigns and call plans with calendar.",
         "order": 6,

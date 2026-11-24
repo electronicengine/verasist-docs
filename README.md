@@ -4,6 +4,21 @@ Bu proje, bir dokümantasyon sitesi ve yönetim paneli için frontend + backend 
 
 Sunucuda önce ana Verasist Compose başlatılır. Ardından bu klasörde `.env.example` dosyasını `.env` olarak kopyalayıp değerleri doldurun ve `docker compose up -d --build` çalıştırın. Uygulama, varsayılan `verasist_app-network` ortak ağı üzerinden ana Nginx tarafından yayınlanır.
 
+## Video dosyaları
+
+Eğitim videoları imajdan bağımsız olarak `DOCS_VIDEOS_DIR` dizininden salt okunur
+bağlanır. Varsayılan konum ana deponun `media/docs-videos` dizinidir. İlk kurulumda
+özgün MP4 dosyalarını hazırlayın; kayıtlı dosya adları ve eski takvim bağlantısı
+`content/video-assets.json` dosyasında tanımlıdır. Yeni referanslar ASCII dosya
+adları kullanır; eski bağlantılar aynı dosyalara karşılık gelen takma adlarla korunur:
+
+```bash
+python3 backend/migration/restore_video_assets.py --source ../../media/landing-originals --target ../../media/docs-videos
+docker compose up -d --no-deps --no-build frontend
+```
+
+Bu dizini yedeklemeye dahil edin. İmaj güncellemelerinde video dosyalarını koruyun.
+
 ## Gereksinimler
 
 - Node.js ve npm

@@ -44,6 +44,8 @@ services:
       args:
         REACT_APP_BACKEND_URL: "${REACT_APP_BACKEND_URL:-https://docs.verasist.ai}"
     restart: unless-stopped
+    volumes:
+      - "${DOCS_VIDEOS_DIR:-../../media/docs-videos}:/app/build/videos:ro"
     depends_on:
       backend:
         condition: service_started

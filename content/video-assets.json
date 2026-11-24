@@ -1,0 +1,45 @@
+[
+  {
+    "filename": "vera-agent-mcp.mp4",
+    "source": "Vera_Asistanı_ve_MCP_Araçları.mp4",
+    "aliases": [
+      "Vera_Asistanı_ve_MCP_Araçları.mp4"
+    ]
+  },
+  {
+    "filename": "tools-files-iframe.mp4",
+    "source": "araçlar-dosyalar-iframe_1080p.mp4",
+    "aliases": [
+      "araçlar-dosyalar-iframe_1080p.mp4"
+    ]
+  },
+  {
+    "filename": "agents-integrations.mp4",
+    "source": "asistanlar_ve_entegrasyon.mp4",
+    "aliases": [
+      "asistanlar_ve_entegrasyon.mp4"
+    ]
+  },
+  {
+    "filename": "workflow-test-call.mp4",
+    "source": "iş_akışı_ve_test_araması.mp4",
+    "aliases": [
+      "iş_akışı_ve_test_araması.mp4"
+    ]
+  },
+  {
+    "filename": "reports-run-records.mp4",
+    "source": "raporlar-çağrı kayıtları_1080p.mp4",
+    "aliases": [
+      "raporlar-çağrı kayıtları_1080p.mp4"
+    ]
+  },
+  {
+    "filename": "call-plans-calendar.mp4",
+    "source": "calistirma-planlari-takvim.mp4",
+    "aliases": [
+      "calistirma-planlari-takvim.mp4",
+      "çağrı_planları-takvim.mp4"
+    ]
+  }
+]
