@@ -25,3 +25,34 @@ test("keeps generated HTML and unsafe URLs inert, renders code literally", () =>
   expect(container.querySelector('a[href="https://docs.verasist.ai"]').rel).toBe("noopener noreferrer");
   expect(container.querySelector("pre code").textContent).toContain("<script>alert(1)</script>");
 });
+
+test("labels and highlights fenced code and copies the original text", async () => {
+  const writeText = jest.fn().mockResolvedValue();
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+  render('```python\nprint("Vera")\n```');
+  expect(container.querySelector(".vera-code-language").textContent).toBe("python");
+  expect(container.querySelector("pre code .hljs-string").textContent).toBe('"Vera"');
+  expect(container.querySelector("pre").tabIndex).toBe(0);
+  await act(async () => container.querySelector("button").click());
+  expect(writeText).toHaveBeenCalledWith('print("Vera")\n');
+  expect(container.querySelector('[role="status"]').textContent).toBe("Kod kopyalandı");
+});
+
+test("unknown languages stay literal and copy failures give a useful English status", async () => {
+  Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: jest.fn().mockRejectedValue(new Error("Denied")) } });
+  act(() => root.render(<VeraMarkdown lang="en">{'```unknown\n<script>alert(1)</script>\n```'}</VeraMarkdown>));
+  expect(container.querySelector("pre code").textContent).toBe('<script>alert(1)</script>\n');
+  expect(container.querySelector("script")).toBeNull();
+  await act(async () => container.querySelector("button").click());
+  expect(container.querySelector('[role="status"]').textContent).toBe("Copy failed; select the code to copy it");
+});
+
+test("renders table alignment, nested lists, blockquotes, task lists and strikethrough", () => {
+  render('| Name | Count |\n| :--- | ---: |\n| Vera | 2 |\n\n- Parent\n  - Child\n\n> **Note**\n\n- [x] Complete\n- [ ] Pending\n\n~~Old~~');
+  expect(container.querySelectorAll("th")[1].style.textAlign).toBe("right");
+  expect(container.querySelector("ul ul li").textContent).toBe("Child");
+  expect(container.querySelector("blockquote strong").textContent).toBe("Note");
+  expect(container.querySelectorAll('input[type="checkbox"]')).toHaveLength(2);
+  expect(container.querySelector('input[type="checkbox"]').checked).toBe(true);
+  expect(container.querySelector("del").textContent).toBe("Old");
+});

@@ -12,6 +12,12 @@ Object.entries({ python, typescript, javascript, bash, json, xml, yaml }).forEac
 );
 const aliases = { py: "python", ts: "typescript", js: "javascript", sh: "bash", shell: "bash", yml: "yaml", html: "xml" };
 const names = { python: "Python", typescript: "TypeScript", javascript: "JavaScript", bash: "Terminal", json: "JSON", xml: "XML", yaml: "YAML" };
+
+export function highlightCode(text, language) {
+  const resolved = aliases[language] || language;
+  return hljs.getLanguage(resolved) ? hljs.highlight(text, { language: resolved }).value : null;
+}
+
 const languageOf = (pre) => {
   const name = pre.querySelector("code")?.className.match(/language-([\w-]+)/)?.[1] || "text";
   return aliases[name] || name;

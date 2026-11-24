@@ -122,7 +122,7 @@ export default function VeraChatPanel({ open, onOpenChange }) {
   }
 
   return <Sheet open={open} onOpenChange={onOpenChange}>
-    <SheetContent side="right" className="w-full sm:max-w-[440px] flex flex-col p-0 gap-0" data-testid="vera-chat-panel">
+    <SheetContent side="right" className="w-full min-w-0 sm:max-w-[440px] flex flex-col overflow-hidden p-0 gap-0" data-testid="vera-chat-panel">
       <div className="p-5 pr-12 border-b border-border">
         <SheetTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />{en ? "Ask Vera" : "Vera’ya sor"}</SheetTitle>
         <SheetDescription className="mt-1">{en ? "Ask your questions about Verasist." : "Verasist hakkındaki sorularını sor."}</SheetDescription>
@@ -130,15 +130,15 @@ export default function VeraChatPanel({ open, onOpenChange }) {
       <div className="flex justify-end px-4 py-2 border-b border-border">
         <Button variant="ghost" size="sm" onClick={reset} disabled={busy || loading}><RotateCcw className="w-3.5 h-3.5 mr-2" />{en ? "New chat" : "Yeni sohbet"}</Button>
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" role="log" aria-live="polite" aria-label={en ? "Conversation" : "Sohbet"}>
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden p-4 space-y-4" role="log" aria-live="polite" aria-label={en ? "Conversation" : "Sohbet"}>
         {loading && <p className="text-sm text-muted-foreground">{en ? "Loading…" : "Yükleniyor…"}</p>}
         {!loading && !enabled && <p className="text-sm text-muted-foreground">{en ? "Vera is not available yet. An administrator can enable it in the docs admin panel." : "Vera henüz etkin değil. Yönetici, docs admin panelinden bağlantıyı ayarlayabilir."}</p>}
         {!loading && enabled && messages.length === 0 && !pending && <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">{en ? "Hi, I’m Vera. How can I help?" : "Merhaba, ben Vera. Nasıl yardımcı olabilirim?"}</div>}
-        {messages.map(message => <div key={message.id} className={`rounded-xl p-3 text-sm whitespace-pre-wrap break-words ${message.role === "user" ? "ml-8 bg-primary text-primary-foreground" : "mr-4 border border-border bg-secondary/30"}`}>
-          <span className="block mb-1 text-xs font-semibold opacity-75">{message.role === "user" ? (en ? "You" : "Sen") : "Vera"}</span>{message.role === "assistant" ? <VeraMarkdown>{message.text || (en ? "This turn completed without a text response." : "Bu tur metin yanıtı olmadan tamamlandı.")}</VeraMarkdown> : message.text}
+        {messages.map(message => <div key={message.id} className={`min-w-0 rounded-xl p-3 text-sm break-words ${message.role === "user" ? "ml-8 whitespace-pre-wrap bg-primary text-primary-foreground" : "mr-4 border border-border bg-secondary/30"}`}>
+          <span className="block mb-1 text-xs font-semibold opacity-75">{message.role === "user" ? (en ? "You" : "Sen") : "Vera"}</span>{message.role === "assistant" ? <VeraMarkdown lang={lang}>{message.text || (en ? "This turn completed without a text response." : "Bu tur metin yanıtı olmadan tamamlandı.")}</VeraMarkdown> : message.text}
         </div>)}
         {pending && <div className="ml-8 rounded-xl p-3 text-sm whitespace-pre-wrap break-words bg-primary/15">{pending.text}</div>}
-        {partial && <div className="mr-4 min-w-0 rounded-xl border border-border bg-secondary/30 p-3 text-sm break-words" data-testid="vera-partial"><span className="block mb-1 text-xs font-semibold opacity-75">Vera</span><VeraMarkdown>{partial}</VeraMarkdown></div>}
+        {partial && <div className="mr-4 min-w-0 rounded-xl border border-border bg-secondary/30 p-3 text-sm break-words" data-testid="vera-partial"><span className="block mb-1 text-xs font-semibold opacity-75">Vera</span><VeraMarkdown lang={lang}>{partial}</VeraMarkdown></div>}
         {tools.length > 0 && <div role="status" aria-label={en ? "Tool calls" : "Araç çağrıları"} className="space-y-1 text-xs text-muted-foreground break-words">{tools.map(tool => <div key={`${tool.turn_id}:${tool.tool_call_id}`}>
           {tool.status === "running" ? "◌" : tool.status === "failed" ? "!" : "✓"} {tool.function_name.replace(/_/g, " ")} · {tool.status === "running" ? (busy ? (en ? "Running…" : "Çalışıyor…") : (en ? "Status unconfirmed" : "Durum doğrulanamadı")) : tool.status === "failed" ? (en ? "Failed" : "Başarısız") : (en ? "Completed" : "Tamamlandı")}
         </div>)}</div>}

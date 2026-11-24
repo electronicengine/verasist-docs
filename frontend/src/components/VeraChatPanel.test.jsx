@@ -63,7 +63,26 @@ test("streaming reply is visible before completion and reconciles once", async (
  expect(document.querySelector("textarea").disabled).toBe(true);
  await act(async () => emit("Türkçe 🌍 **yanıt**"));
  expect(document.querySelector('[data-testid="vera-partial"] strong').textContent).toBe("yanıt");
- await act(async () => finish({ messages: [{ id: "answer", role: "assistant", text: "Türkçe 🌍 **yanıt**" }], pending: null, closed: false }));
+ const markdown = 'Türkçe 🌍 **yanıt**\n\n| Dil | Paket |\n| --- | --- |\n| Python | SDK |\n\n```python\nprint("Vera")\n```';
+ await act(async () => emit(markdown));
+ expect(document.querySelectorAll('[data-testid="vera-partial"] th')).toHaveLength(2);
+ expect(document.querySelector('[data-testid="vera-partial"] .hljs-string').textContent).toBe('"Vera"');
+ await act(async () => finish({ messages: [{ id: "answer", role: "assistant", text: markdown }], pending: null, closed: false }));
  expect(document.querySelector('[data-testid="vera-partial"]')).toBeNull();
  expect(document.querySelectorAll("strong")).toHaveLength(1);
+ expect(document.querySelectorAll("table")).toHaveLength(1);
+ expect(document.querySelectorAll(".vera-code-block")).toHaveLength(1);
+});
+
+test("restored assistant messages use Markdown while user text stays literal", async () => {
+ sessionStorage.setItem("verasist-docs-vera:tr", "opaque-token");
+ api.get.mockImplementation(path => Promise.resolve({ data: path === "/vera/status" ? { enabled: true } : {
+  messages: [{ id: "user", role: "user", text: "**Sorum**" }, { id: "reply", role: "assistant", text: "## Yanıt\n\n> Not\n\n- [x] Hazır\n\n```json\n{\"ok\": true}\n```" }], pending: null, closed: false,
+ } }));
+ await render(<VeraChatPanel open onOpenChange={() => {}} />);
+ expect([...document.querySelectorAll("h2")].some(el => el.textContent === "Yanıt")).toBe(true);
+ expect(document.body.textContent).toContain("**Sorum**");
+ expect(document.querySelector("blockquote").textContent.trim()).toBe("Not");
+ expect(document.querySelector('input[type="checkbox"]').checked).toBe(true);
+ expect(document.querySelector(".vera-code-language").textContent).toBe("json");
 });

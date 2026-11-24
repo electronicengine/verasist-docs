@@ -22,3 +22,39 @@
 .vera-markdown th { font-weight: 600; background: hsl(var(--muted)); }
 .vera-markdown hr { margin: 1rem 0; border-color: hsl(var(--border)); }
 .vera-markdown input[type="checkbox"] { margin-right: .4rem; }
+.vera-markdown .contains-task-list { list-style: none; padding-left: .25rem; }
+.vera-markdown .task-list-item input { accent-color: hsl(var(--primary)); }
+.vera-markdown tbody tr:nth-child(even) { background: hsl(var(--muted) / .5); }
+.vera-markdown .vera-table-scroll:focus-visible,
+.vera-code-block pre:focus-visible,
+.vera-code-header button:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: -2px; }
+
+.vera-code-block {
+  --vera-code-string: #116329;
+  --vera-code-keyword: #8250df;
+  --vera-code-number: #0550ae;
+  --vera-code-comment: #57606a;
+  margin: .75rem 0;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  border-radius: .625rem;
+  background: hsl(var(--muted));
+}
+.dark .vera-code-block {
+  --vera-code-string: #a5d6ff;
+  --vera-code-keyword: #d2a8ff;
+  --vera-code-number: #79c0ff;
+  --vera-code-comment: #a0aab6;
+}
+.vera-code-header { display: flex; align-items: center; justify-content: space-between; gap: .75rem; border-bottom: 1px solid hsl(var(--border)); padding: .4rem .75rem; font-size: .75rem; }
+.vera-code-language { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: hsl(var(--muted-foreground)); }
+.vera-code-header button { flex-shrink: 0; border: 1px solid hsl(var(--border)); border-radius: .375rem; padding: .2rem .5rem; color: hsl(var(--foreground)); }
+.vera-code-header button:hover { background: hsl(var(--accent)); }
+.vera-markdown .vera-code-block pre { margin: 0; border: 0; border-radius: 0; background: transparent; tab-size: 2; }
+.vera-markdown .vera-code-block pre code { display: block; overflow: visible; color: hsl(var(--foreground)); background: transparent; white-space: pre; word-break: normal; }
+.vera-code-block .hljs-keyword, .vera-code-block .hljs-selector-tag, .vera-code-block .hljs-literal { color: var(--vera-code-keyword); }
+.vera-code-block .hljs-string, .vera-code-block .hljs-attr { color: var(--vera-code-string); }
+.vera-code-block .hljs-number, .vera-code-block .hljs-built_in, .vera-code-block .hljs-title { color: var(--vera-code-number); }
+.vera-code-block .hljs-comment, .vera-code-block .hljs-meta { color: var(--vera-code-comment); }
+.vera-code-block .hljs-punctuation, .vera-code-block .hljs-subst, .vera-code-block .hljs-params, .vera-code-block .hljs-variable { color: inherit; }
