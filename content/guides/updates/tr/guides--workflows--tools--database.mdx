@@ -1,0 +1,22 @@
+---
+path: "guides/workflows/tools/database"
+title: "Veritabanı"
+excerpt: "Veritabanı aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 22
+---
+
+<p>Veritabanı: tablo, sütunlar ve izinli kayıt işlemleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><h2>Yapılandırın</h2><ul><li>Araçlar → Yeni araç → Veritabanı</li><li>Tablo, sütunlar ve izinli kayıt işlemleri</li><li>Kaydedin, ajana ekleyin ve yayımlamadan önce test edin.</li></ul><h2>Davranış ve sınırlar</h2><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li><li>Araç çalışma alanında tablo sütunlarını ve izinli kayıt işlemlerini tanımlayın. Bu, organizasyon ajanlarının ortak kayıt deposudur; platform veritabanında serbest SQL erişimi değildir.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;lookup&quot;,
+    &quot;email&quot;: &quot;ada@example.invalid&quot;
+  },
+  &quot;result&quot;: {
+    &quot;records&quot;: [
+      {
+        &quot;name&quot;: &quot;Ada&quot;,
+        &quot;status&quot;: &quot;active&quot;
+      }
+    ]
+  }
+}</code></pre>

@@ -3,13 +3,16 @@ title: "IP Santral Bağlantısı"
 description: "IP masa telefonlarınızın bağlı olduğu şirket santralini SIP trunk üzerinden Verasist ajanına bağlayın."
 ---
 
+[**Santral ve Verasist: tam ekran akış atölyesi**](/verasistLAB/pbx) — Normal santral, YZ ile ilk karşılama ve 700 YZ dahilisine aktarımı veri ve ses akışıyla izleyin.
+
+
 IP masa telefonlarınızı mevcut santralinize kayıtlı tutun. **Santral ile Verasist arasında bir SIP trunk kurun**; her telefonu ayrı ayrı Verasist'e kaydetmeniz gerekmez.
 
 Arama yolu: **IP telefon → şirket santrali → SIP trunk → Verasist ajanı**. Santral, bir dış hat numarasını, IVR seçeneğini veya yapay zekâ için ayırdığınız dahiliyi bu bağlantıya yönlendirebilir.
 
 ## Başlamadan önce
 
-- SIP trunk destekleyen bir santralde yönetici erişimi; örneğin uyumlu bir Asterisk/FreePBX kurulumu veya başka bir IP santral.
+- SIP trunk destekleyen bir santralde yönetici erişimi; örneğin uyumlu bir IP PBX kurulumu veya başka bir IP santral.
 - Yayımlanmış bir Verasist sesli ajanı ve kuruluşunuzun telefon yapılandırmalarına erişim.
 - Santralin erişilebilir SIP adresi, UDP portu, doğrulama yöntemi ve izinli arayan kimlikleri.
 - Verasist SIP ağ geçidi adresi, sinyalleşme/medya IP'leri ve RTP port aralığı. Bunları Verasist desteğinden alın; HTTPS panel adresi yerine kullanılamaz.
@@ -80,7 +83,7 @@ Seçtiğiniz bağlantı üzerinden farklı bir santraldeki dahiliye veya bağım
 - Meşgul, yanıtsız ve trunk erişilemez durumlarında döngüsüz yedek akış çalışıyor.
 - İki taraf da çağrıyı sonlandırabiliyor; çağrı kaydı doğru kuruluşta oluşuyor.
 
-Tek yönlü seste ağ yöneticinizle NAT/SDP adreslerini, SIP ALG davranışını ve çift yönlü RTP kurallarını kontrol edin. Standart Verasist ağ geçidi UDP `5060` ve RTP `10000–10099` kullanır; santralinizin medya aralığı farklı olabilir. Hizmetiniz için verilen bağlantı değerlerini esas alın. Santral tarafındaki kavramlar için [Asterisk NAT rehberine](https://docs.asterisk.org/Configuration/Channel-Drivers/SIP/Configuring-res_pjsip/Configuring-res_pjsip-to-work-through-NAT/) bakabilirsiniz.
+Tek yönlü seste ağ yöneticinizle NAT/SDP adreslerini, SIP ALG davranışını ve çift yönlü RTP kurallarını kontrol edin. Standart Verasist ağ geçidi UDP `5060` ve RTP `10000–10099` kullanır; santralinizin medya aralığı farklı olabilir. Hizmetiniz için verilen bağlantı değerlerini esas alın. Santral tarafındaki kavramlar için [PBX NAT rehberine](https://docs.asterisk.org/Configuration/Channel-Drivers/SIP/Configuring-res_pjsip/Configuring-res_pjsip-to-work-through-NAT/) bakabilirsiniz.
 
 ## İlgili rehberler
 

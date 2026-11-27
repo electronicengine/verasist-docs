@@ -1,0 +1,20 @@
+import {Info} from 'lucide-react';
+const urls={tt:'https://kurumsal.turktelekom.com.tr/is-telefonu/servisler/kullanim-kolayliklari',telnyx:'https://support.telnyx.com/en/articles/3074710-yealink-setup-with-telnyx',netgsm:'https://bilgibankasi.netgsm.com.tr/sabit-telefon/sip-trunk-yonlendirme-hizmeti',vodafone:'https://www.vodafone.com.tr/vodafone-business/bulut-santral',turkcell:'https://www.turkcell.com.tr/kurumsal/dijital-is-servisleri/sabit-erisim-ve-iletisim/turkcell-tek-ofis'};
+export default function OperatorHint({mode,lang,onRead}) {
+  const en=lang==='en';
+  return <details className="story-operator-hint" key={mode} data-testid="operator-hint" onToggle={onRead} onWheel={onRead}>
+    <summary><Info size={14} aria-hidden="true"/>{en?'Which carriers support this route?':'Hangi operatörde kullanılabilir?'}<span>{en?'Sources and conditions':'Kaynaklar ve koşullar'}</span></summary>
+    <div>
+      {mode==='forward'?<>
+        <p>{en?'Carrier A only needs phone-number forwarding; carrier B must deliver its number to Verasist over SIP. This diagram also requires a separate callable staff line.':'A operatöründe telefon numarasına yönlendirme yeterlidir; B operatörü kendi numarasını Verasist’e SIP ile teslim etmelidir. Şema ayrıca doğrudan aranabilir ayrı personel hattı gerektirir.'}</p>
+        <ul><li><a href={urls.tt} target="_blank" rel="noreferrer">Türk Telekom</a>: {en?'business-phone number forwarding is documented. Activation, unconditional forwarding, charges and the specific service must be checked.':'iş telefonunda numaraya yönlendirme belgelenmiş. Aktivasyon, koşulsuz yönlendirme, ücret ve kullanılan hizmet ayrıca kontrol edilmeli.'}</li>
+        <li><a href={urls.vodafone} target="_blank" rel="noreferrer">Vodafone Türkiye</a> / <a href={urls.turkcell} target="_blank" rel="noreferrer">Turkcell Superonline</a>: {en?'cloud-PBX/routing services are documented; unconditional forwarding on the particular line and preservation of a separate staff destination are not verified here. Confirm with the carrier.':'bulut santral/yönlendirme hizmetleri belgelenmiş; ilgili hatta koşulsuz yönlendirme ve ayrı personel hedefinin korunması burada doğrulanmış değil. Operatör teyidi gerekir.'}</li>
+        <li>{en?'For carrier B, ':'B operatörü için '}<a href={urls.netgsm} target="_blank" rel="noreferrer">Netgsm</a>{en?' documents SIP delivery to an external IP/domain. This does not certify the complete A→B→Verasist→staff setup.':' haricî IP/domain’e SIP teslimini belgeliyor. Bu, A→B→Verasist→personel kurulumunun tamamının onaylandığı anlamına gelmez.'}</li></ul>
+      </>:<>
+        <p><a href={urls.telnyx} target="_blank" rel="noreferrer">Telnyx</a>{en?' documents direct IP-phone registration; ':' doğrudan IP telefon kaydını; '}<a href={urls.netgsm} target="_blank" rel="noreferrer">Netgsm</a>{en?' documents delivery to an external SIP server. The phone account, main-number SIP route and separate staff destination must all coexist; these individual documents do not prove the whole deployment.':' haricî SIP sunucusuna teslimi belgeliyor. Telefon hesabı, ana numaranın SIP rotası ve ayrı personel hedefi birlikte sağlanmalı; bu ayrı belgeler tüm kurulumu kanıtlamaz.'}</p>
+        <p><a href={urls.tt} target="_blank" rel="noreferrer">Türk Telekom</a>, <a href={urls.vodafone} target="_blank" rel="noreferrer">Vodafone Türkiye</a>, <a href={urls.turkcell} target="_blank" rel="noreferrer">Turkcell</a>: {en?'permission to route directly to an arbitrary external Verasist IP is not verified. An IP-phone/cloud-PBX product alone does not establish this permission.':'istenen haricî Verasist IP’sine doğrudan yönlendirme izni doğrulanmış değil. IP telefon/bulut santral ürünü bulunması bu izni kanıtlamaz.'}</p>
+      </>}
+      <p className="story-operator-status">{en?'Evidence checked: 26 Nov 2026. Educational example; not a carrier-certified or field-tested installation. A and B may be different providers.':'Kaynak kontrolü: 26 Kasım 2026. Eğitim örneği; operatör onaylı veya sahada test edilmiş kurulum değildir. A ve B farklı sağlayıcılar olabilir.'}</p>
+    </div>
+  </details>;
+}

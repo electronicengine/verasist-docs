@@ -1,0 +1,282 @@
+---
+path: "guides/planning/workflow-runs"
+title: "İş Akışlarını Çalıştırma"
+excerpt: "Bir iş akışını tetiklemenin tüm yolları (API, kontrol paneli, test paneli, kampanyalar) ve çalıştırma tamamlandıktan sonra olanlar."
+reference: "guides/planning/workflow-runs"
+order: 1
+---
+
+<p>İş akışı bir plandır. Bunu hayata geçirmek için <strong>bir çalıştırmayı tetiklemeniz</strong>, yani arayan veya sohbet kullanıcısıyla görüşme başlatmanız gerekir. Verasist, tek tıklamayla test çağrılarından tam otomatik API tetikleyicilerine kadar bunu yapmanın çeşitli yollarını sunar.</p>
+<h2>İş akışını tetiklemenin yolları</h2>
+<div class = "deniz kızı">
+grafik TD'si
+    A[İş Akışı] --> B[API Tetikleyicisi]
+    A --> C[Kontrol Paneli Test Çağrısı]
+    A --> D[Editör İçi Test Cihazı]
+    A --> E[Kampanya]
+    A --> F[Takvim Tetikleyicisi]
+    A --> G[Gelen Çağrı / Mesaj]
+    A --> H[Aktarım Aracı]
+
+    B --> B1[Harici sistemler, n8n, özel uygulamalar]
+    C --> C1[Kenar çubuğundan hızlı test]
+    D --> D1[İş akışı düzenleyicisinde ses veya metin testi]
+    E --> E1[CSV'den toplu çıkış]
+    F --> F1[Zamanlanmış otomatik çalıştırma]
+    G --> G1[Müşteri numaranızı arar]
+    H --> H1[Temsilci görüşmenin ortasında aktarır]
+
+</div>
+<h3>API tetikleyicisi (harici sistemler)</h3>
+<p>En esnek yol: Herhangi bir harici sistem, bir REST uç noktasını çağırarak bir iş akışını tetikleyebilir.</p>
+<strong>Nasıl kurulur:</strong>
+<ol>
+<li>İş akışınıza bir <strong>API Tetikleyici</strong> düğümü ekleyin</li>
+<li>Düğüm benzersiz bir <code>tetikleyici_path</code> (bir UUID) alır</li>
+<li>İş akışınız artık şu adresten çağrılabilir:</li>
+</ol>
+<tablo>
+<thead>
+<tr>
+<th>Uç nokta</th>
+<th>Amaç</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/v1/public/agent/{tetikleyici_path</code></td>
+<td><strong>Yayınlanan</strong> sürümü çalıştırın</td>
+</tr>
+<tr>
+<td><code>POST /api/v1/public/agent/test/{tetikleyici_path</code></td>
+<td><strong>Taslak</strong> sürümünü çalıştırın (test için)</td>
+</tr>
+</tbody>
+</table>
+<strong>Talep:</strong>
+<pre><code class="language-json">{
+  "telefon_numarası": "+905551234567",
+  "başlangıç_bağlamı": {
+    "müşteri_adı": "Ahmet",
+    "sipariş_kimliği": "ORD-12345"
+  }
+}
+</code></pre>
+<p><strong>API anahtarınızı</strong> <code>X-API-Key</code> başlığına ekleyin. <code>initial_context</code> alanları, aracınızın istemlerinde bulunan şablon değişkenleri (<code>{{customer_name}</code>, <code>{{order_id}</code>) haline gelir.</p>
+<strong>Yanıt:</strong>
+<pre><code class="language-json">{
+  "durum": "tamam",
+  "iş akışı_çalıştır_kimliği": 142,
+  "iş akışı_run_name": "Ahmet ile ara",
+  "message": "Çağrı başlatıldı"
+}
+</code></pre>
+<p>Tetikleyici düğüm aynı zamanda sohbet kanallarını da destekler; arama yapmak yerine mesaj göndermek için <code>kanal</code>'ı <code>whatsapp</code>, <code>telegram</code> veya <code>instagram</code> olarak ayarlayın. <code>telefon_numarası</code>'nı atlayın ve bunun yerine sohbet kimliğiyle <code>target</code>'ı kullanın.</p>
+<blockquote class="note">Geliştirirken <code>/test/</code> değişkenini kullanın; taslak iş akışınızı çalıştırır, böylece yayınlamadan yineleyebilirsiniz. Kendinize güvendiğinizde üretim uç noktasına geçin.</blockquote>
+<h3>Kontrol paneli test çağrısı</h3>
+<p>Test etmenin en hızlı yolu; API kurulumuna gerek yok.</p>
+<ol>
+<li>Kenar çubuğundaki <strong>telefon simgesini</strong> tıklayın</li>
+<li>İş akışınızı seçin</li>
+<li><strong>Telefon</strong>'u (numaranızı girin) veya bir <strong>Kanal</strong>'ı (WhatsApp vb.) seçin</li>
+<li><strong>Testi Başlat</strong>'ı tıklayın</li>
+</ol>
+Verasist sizi hemen arar. Çağrı taslak iş akışınızı kullanır, böylece değişiklikleri yayınlamadan önce test edebilirsiniz.
+<h3>Editör içi test kullanıcısı</h3>
+<p>Bir iş akışını düzenlerken doğrudan tuvalde test yapabilirsiniz:</p>
+<ul>
+<li><strong>Ses modu</strong>: Bir WebRTC tarayıcı araması açar; telefona gerek yoktur</li>
+<li><strong>Metin sohbeti modu</strong>: Tuvalin yanındaki panelde bir sohbet konuşmasını simüle eder</li>
+</ul>
+İş akışı düzenleyicisindeki <strong>Test Kullanıcısı</strong> sekmesinden erişin.
+<h3>Kampanya</h3>
+<p>Toplu giden aramalar için bir kampanya oluşturun; bir CSV yükleyin ve Verasist herkesi otomatik olarak arasın. Kılavuzun tamamı için <a href="/guides/planning/çalıştırma planları">Kampanyalar</a>'a bakın.</p>
+<h3>Takvim tetikleyicisi</h3>
+<p>Bir iş akışını belirli bir zamanda çalışacak şekilde planlayın; günlük hatırlatma çağrıları gibi yinelenen görevler için kullanışlıdır. Kurulum için <a href="/guides/planning/calendar">Takvim ve Planlama</a>'ya bakın.</p><h3>Gelen çağrılar ve mesajlar</h3>
+<p>Birisi Verasist telefon numaranızı aradığında veya bağlı WhatsApp/Telegram/Instagram hesabınıza mesaj gönderdiğinde platform otomatik olarak bir çalıştırma oluşturur; tetikleyici yapılandırmasına gerek yoktur. Bir telefon sağlayıcısını veya kanalı bağlayıp bir iş akışı atamanız yeterli.</p>
+<h3>Aktarım araçları</h3>
+<p>Bir çağrı sırasında temsilciniz, <a href="/guides/iş akışları/araçlar/call-transfer">Çağrı Aktarma</a> veya <a href="/guides/iş akışları/araçlar/transfer-to-channel">Kanala Aktarma</a> araçlarını kullanarak başka bir iş akışına aktarım yapabilir.</p>
+<saat />
+<h2>Bir iş akışı çalıştırıldığında ne olur?</h2>
+<div class = "deniz kızı">
+dizi diyagramı
+    Tetikleyici Kaynak Olarak Katılımcı Tetikleyici
+    Verasist olarak katılımcı API'si
+    Veritabanı olarak katılımcı DB'si
+    AI Pipeline olarak katılımcı Pipeline
+    Depolama Alanı Olarak Katılımcı Depolama Alanı
+
+    Tetikleyici->>API: Çalıştırmayı başlat (API çağrısı, test, kampanya...)
+    API->>DB: İş Akışı_run satırını oluştur
+    API->>API: Kotayı kontrol edin (kredi mevcut mu?)
+    API->>Ardışık düzen: AI ardışık düzenini başlatın
+
+    Ardışık düzen hakkında not: STT → LLM → TTS (sesli)<br/>veya yalnızca LLM (sohbet)
+
+    Pipeline->> Pipeline: İşlem konuşması
+    Pipeline->>Depolama: Ses akışı / mesajları saklama
+
+    Pipeline ile ilgili not: Arama sona erer veya sohbet kapanır
+
+    Pipeline->>DB: Metni kaydet, URL'yi kaydet
+    Pipeline->>DB: Toplanan_bağlamı kaydet (çıkarılan veriler)
+    İşlem Hattı->>Veritabanı: Maliyet_bilgilerinden, kullanım_bilgilerinden tasarruf edin
+    Pipeline->>API: Çalıştırma tamamlandı
+    API->>API: Web kancalarını etkinleştirin, kredileri düşürün
+
+</div>
+<p>Her çalıştırma aşağıdakileri içeren kalıcı bir kayıt oluşturur:</p>
+<tablo>
+<thead>
+<tr>
+<th>Veri</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Transkript</strong></td>
+<td>Tam görüşme metni (ses: STT çıkışı; sohbet: mesaj geçmişi)</td>
+</tr>
+<tr>
+<td><strong>Kayıt</strong></td>
+<td>Ses dosyası (yalnızca sesli aramalar)</td>
+</tr>
+<tr>
+<td><strong>Toplanmış bağlam</strong></td>
+<td>Acentenin çıkardığı yapılandırılmış veriler (mevki, tarihler, amaç)</td>
+</tr>
+<tr>
+<td><strong>Maliyet bilgisi</strong></td>
+<td>Hizmete göre kredi dökümü (LLM, TTS, STT, platform)</td>
+</tr>
+<tr>
+<td><strong>Bağlantı günlükleri</strong></td>
+<td>Teknik ayrıntılar — sağlayıcı, gecikme, tüm hatalar</td>
+</tr>
+</tbody>
+</table>
+<saat />
+<h2>Çalışmaları görüntüleme</h2>
+<h3>Geçmişi çalıştır</h3>
+<p>Bir iş akışına ilişkin tüm çalıştırmaları görmek için:</p>
+<ol>
+<li>Düzenleyicide iş akışını açın</li>
+<li>Başlık açılır menüsünde <strong>Çalıştır</strong> düğmesini tıklayın</li>
+<li>Şunları içeren sayfalandırılmış bir tablo göreceksiniz:</li>
+</ol>
+<tablo>
+<thead>
+<tr>
+<th>Sütun</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tarih</strong></td>
+<td>Çalıştırma başladığında</td>
+</tr>
+<tr>
+<td><strong>Ad</strong></td>
+<td>Otomatik olarak oluşturulan veya özel ad</td>
+</tr>
+<tr>
+<td><strong>Durum</strong></td>
+<td>Tamamlandı, başarısız oldu, devam ediyor</td>
+</tr>
+<tr>
+<td><strong>Süre</strong></td>
+<td>Arama veya sohbet oturumu uzunluğu</td>
+</tr>
+<tr>
+<td><strong>Maliyet</strong></td>
+<td>Kredi tahsil edildi</td>
+</tr>
+<tr>
+<td><strong>Jetonlar</strong></td>
+<td>Kullanılan toplam LLM belirteçleri</td>
+</tr>
+</tbody>
+</table>
+<p>Tablo, tarih aralığına, düzene, süreye ve duruma göre filtrelemeyi ve herhangi bir sütuna göre sıralamayı destekler.</p>
+<h3>Çalıştırma ayrıntısı</h3>
+<p>Tam ayrıntı sayfasını görmek için herhangi bir çalıştırmayı tıklayın:</p>
+<ul>
+<li><strong>Transkript sekmesi</strong>: Konuşmanın tamamını sırayla okuyun</li>
+<li><strong>Kayıt sekmesi</strong>: Sesi çalın veya indirin (yalnızca ses)</li>
+<li><strong>Bağlam sekmesi</strong>: Bkz. <code>initial_context</code> (temsilcinin çağrıdan önce bildikleri) ve <code>gathered_context</code> (çıkardığı bilgiler)</li>
+<li><strong>Maliyet sekmesi</strong>: Kredilerin hizmete göre dökümü</li>
+<li><strong>Günlükler sekmesi</strong>: Hata ayıklama için teknik bağlantı günlükleri</li>
+</ul>
+<h3>Genel kullanım geçmişi</h3>
+<p>Tüm iş akışlarındaki çalıştırmaları görmek için kenar çubuğundaki <strong>Kullanım Geçmişi</strong>'ne (<code>/usage</code>) gidin. Aynı filtreleme ve dışa aktarma özellikleri, ancak tek bir iş akışını kapsamamaktadır.</p><saat />
+<h2>En iyi uygulamaları test etme</h2>
+<h3>Yayınlamadan önce</h3>
+<ol>
+<li><strong>Önce düzenleyicide test edin</strong> — hızlı ses/sohbet kontrolleri için düzenleyici içi test aracını kullanın</li>
+<li><strong>Gerçek bir çağrıyla test edin</strong> — gerçek telefon deneyimini duymak için kontrol paneli test çağrısını kullanın</li>
+<li><strong>API tetikleyicisi aracılığıyla test edin</strong> — API tetikleyicileri kullanıyorsanız <code>/test/</code> uç noktası</li> ile test edin
+</ol>
+<h3>Nelerin kontrol edilmesi gerektiği</h3>
+<tablo>
+<thead>
+<tr>
+<th>Görüntü</th>
+<th>Nasıl doğrulanır</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Ses kalitesi</strong></td>
+<td>TTS kulağa doğal geliyor mu? Doğru aksan ve dil?</td>
+</tr>
+<tr>
+<td><strong>Tepki hızı</strong></td>
+<td>Temsilci konuşmadan önce garip bir duraklama oluyor mu?</td>
+</tr>
+<tr>
+<td><strong>Hızlı doğruluk</strong></td>
+<td>Temsilci talimatları takip ediyor ve konuya odaklanıyor mu?</td>
+</tr>
+<tr>
+<td><strong>Kenar geçişleri</strong></td>
+<td>Düğümler arasında konuşma doğru şekilde akıyor mu?</td>
+</tr>
+<tr>
+<td><strong>Veri çıkarma</strong></td>
+<td><code>gathered_context</code>'i kontrol edin — doğru veriler mi yakalanıyor?</td>
+</tr>
+<tr>
+<td><strong>Şablon değişkenleri</strong></td>
+<td><code>{{variables}</code> doğru şekilde değiştiriliyor mu?</td>
+</tr>
+<tr>
+<td><strong>Hata işleme</strong></td>
+<td>Arayan beklenmedik bir şey söylediğinde ne olur?</td>
+</tr>
+</tbody>
+</table>
+<h3>Yineleniyor</h3>
+<p>Her testten sonra:
+<ol>
+<li>Çalıştırma ayrıntılarında transkripti inceleyin</li>
+<li>Çıkarma doğruluğu için <code>gathered_context</code>'i kontrol edin</li>
+<li>İstemleri, kenar koşullarını veya çıkarma ayarlarını düzenleyin</li>
+<li>Tekrar test edin; tatmin olana kadar tekrarlayın</li>
+<li><strong>Yalnızca kendinize güvendiğinizde yayınlayın</strong></li>
+</ol>
+<h2>Sonraki adımlar</h2></p>
+<div class = "card-grid"><Card title = "Kampanyalar" href = "/guides/planning/çalıştırma planları">
+    Toplu kampanyalarla iş akışınızı geniş ölçekte çalıştırın
+  </Kart>
+  <Card title = "Takvim ve Planlama" href = "/guides/planning/calendar">
+    Otomatik iş akışı çalıştırmalarını zamanlayın
+  </Kart>
+  <Card title = "API Tetikleyici Düğüm" href = "/guides/iş akışları/api-tetikleyici">
+    API tetikleyici düğümünü ayrıntılı olarak yapılandırma
+  </Kart>
+  <Card title = "Aramalar ve Çalıştırmalar" href = "/developer/core-concepts/calls-and-runs">
+    Çalıştırma yaşam döngüsünü derinlemesine inceleyin
+  </Kart>
+</div></p><h2>Canlı işlemler</h2><ul><li><a href="/guides/planning/live-monitoring">Canlı takip</a></li><li><a href="/guides/planning/live-guidance">Canlı müdahale / operatör yönlendirmesi</a></li><li><a href="/guides/planning/call-transfers">Çağrı aktarımı ve aktarım sonrası takip</a></li></ul>

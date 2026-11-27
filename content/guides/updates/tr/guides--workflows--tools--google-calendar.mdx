@@ -1,0 +1,61 @@
+---
+path: "guides/workflows/tools/google-calendar"
+title: "Google Takvim"
+excerpt: "Google Takvim aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 3
+---
+
+<p>Google Calendar aracı, AI temsilcinizin canlı bir görüşme sırasında bir etkinlik oluşturmasına, etkinlikleri listelemesine / müsaitlik durumunu kontrol etmesine, bir etkinliği güncellemesine veya bağlı bir Google hesabındaki bir etkinliği iptal etmesine olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Ayarlar → Uygulamalar</strong> altında zaten bağladığınız bir Google hesabı aracılığıyla çalışır. Önce hesabı bağlayın, ardından Google Calendar aracını oluşturun ve onu o hesaba yönlendirin.</blockquote>
+<blockquote class="note">Bu, Verasist'in kendi yerleşik <a href="/guides/iş akışları/araçlar/calendar">Takvim</a> aracından ayrı, bağlantılı bir <strong>Google</strong> takvimidir. Aracının Verasist'in dahili takvim girişleri yerine gerçek bir Google Calendarinden okuma yapmasına veya gerçek bir Google Calendarine yazmasına ihtiyacınız olduğunda bu aracı kullanın.</blockquote>
+<h2>Hesap Bağlama</h2>
+<ol>
+<li><strong>Ayarlar → Uygulamalar</strong>'a gidin ve <strong>Google Hesabını Bağla</strong></li>'yı seçin
+<li>OAuth izin akışı sırasında <code>calendar.events</code> kapsamını verin (Google Calendar, Görevler ve E-Tablolar aynı bağlı Google hesabını paylaşır)</li>
+<li>Aracı yapılandırdığınızda, bağlı hesap Google Calendar aracının hesap seçicisinde görünür</li>
+</ol>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Google Hesabı</strong>: Bu aracın kullandığı bağlı hesap</li>
+<li><strong>Oluşturmaya İzin Ver</strong>: Temsilcinin bu araç aracılığıyla etkinlik oluşturmasına izin verin (varsayılan: açık)</li>
+<li><strong>İzin Verilenler Listesi</strong>: Aracının bu araç aracılığıyla etkinlikleri listelemesine / kullanılabilirliğini kontrol etmesine izin verin (varsayılan: açık)</li>
+<li><strong>Güncellemeye İzin Ver</strong>: Aracının bu araç aracılığıyla etkinlikleri güncellemesine izin verin (varsayılan: açık)</li>
+<li><strong>İptal Etmeye İzin Ver</strong>: Temsilcinin bu araç aracılığıyla etkinlikleri iptal etmesine izin verin (varsayılan: açık)</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+En az bir özelliğin etkinleştirilmesi gerekir.
+<h2>Aracı Kullanımı</h2>
+<h3>Etkinlik Oluşturma</h3>
+<pre><code class="language-">google_calendar_araç(summary="Jane Doe ile Danışma", start="2026-07-22T10:00:00-07:00", end="2026-07-22T10:30:00-07:00", katılımcılar=["jane@example.com"])
+</code></pre>
+<code>özet</code>, <code>başlangıç</code> ve <code>bitiş</code> gereklidir (RFC 3339 tarih/saatler).
+<h3>Etkinlikleri Listeleme / Kullanılabilirliği Kontrol Etme</h3>
+<pre><code class="language-">google_calendar_araç_list(time_min="2026-07-22T00:00:00-07:00", time_max="2026-07-22T23:59:59-07:00")
+</code></pre>
+<h3>Bir Etkinliği Güncelleme</h3>
+<pre><code class="language-">google_calendar_araç_update(event_id="abc123", start="2026-07-22T11:00:00-07:00", end="2026-07-22T11:30:00-07:00")
+</code></pre>
+<h3>Bir Etkinliği İptal Etme</h3>
+<pre><code class="language-">google_calendar_araç_cancel(event_id="abc123")
+</code></pre>
+<code>event_id</code> önceki bir listeden veya çağrı oluşturmadan gelir.
+<p>Genel senaryolar:
+<ul>
+<li>Görüşme sırasında doğrudan gerçek bir Google Calendar üzerinden randevu alma</li>
+<li>Bir zaman aralığı sunmadan önce müsaitlik durumu kontrol ediliyor</li>
+<li>Arayanın bahsettiği mevcut bir toplantıyı yeniden planlamak veya iptal etmek</li>
+</ul>
+<blockquote class="note">Yapılandırılan Google hesabı kuruluşunuza ait değilse veya etkin değilse araç kapatılamaz; aracı açık bir hata alır ve çağrıyı başarısız kılmak yerine görüşme devam eder.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Google Takvim: google bağlantısı, takvim ve işlem izinleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;check_availability&quot;,
+    &quot;date&quot;: &quot;2026-12-01&quot;
+  },
+  &quot;result&quot;: {
+    &quot;available_slots&quot;: [
+      &quot;10:00&quot;,
+      &quot;11:00&quot;
+    ]
+  }
+}</code></pre>

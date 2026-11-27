@@ -1,0 +1,137 @@
+---
+path: "guides/workflows/tools/http-api"
+title: "Harici HTTP API"
+excerpt: "Harici HTTP API aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 1
+---
+
+<p>HTTP API araçları, harici REST API çağrılarını doğrudan iş akışı düğümlerine eklemenize olanak tanıyarak, sesli aracılarınızın LLM kararlarına ve istemlerinize göre canlı görüşmeler sırasında herhangi bir dahili veya harici sistemi aramasına olanak tanır. Bu, herhangi bir aracı platformdaki işlev çağrısına benzer şekilde çalışır ve %100 açık kaynaklıdır ve tamamen özelleştirilebilir.</p>
+<h2>Eğitim Videosu</h2>
+<h2>HTTP API Aracı nedir?</h2>
+<p>HTTP API Aracı, LLM'nin çalışma zamanında çağırabileceği bir REST API tanımıdır.</p>
+<strong>Tipik kullanım örnekleri:</strong>
+<ul>
+<li>Kendi arka uç uç noktalarınızı arayın</li>
+<li>n8n otomasyonlarını tetikleyin</li>
+<li>Verileri bir CRM ile senkronize edin</li>
+<li>Harici API'lerden veri alma (hava durumu, fiyatlandırma, müsaitlik durumu vb.)</li>
+<li>Rest API'sini kullanarak veri yazma/güncelleme/okuma</li>
+</ul>
+<strong>LLM aşağıdakilere karar verir:</strong>
+<ul>
+<li>hangi aracı çağırmalı</li>
+<li>ne zaman aranmalı</li>
+<li>hangi parametrelerin gönderileceği</li>
+</ul>
+<strong>Tümü aşağıdakilere dayanmaktadır:</strong>
+<ul>
+<li>İstemleriniz: Basit İngilizce (veya herhangi bir dilde) düğüm düzeyindeki talimatlar</li>
+<li>Araç adı</li>
+<li>Araç açıklaması</li>
+<li>Parametre tanımları</li>
+</ul>
+<br/>
+<div style={{ borderBottom: '2px katı #e5e5e5', marj: '20px 0' }}></div>
+<h2>Bir HTTP API Aracı Tanımlama</h2>
+<h3>1. Araç Adı</h3>
+<ul>
+<li>Açık ve eylem odaklı olmalıdır.</li>
+</ul>
+<ul>
+<li><strong>Örnekler:</strong> <code>capture_lead_interest</code>, <code>fetch_weather</code>, 'create_crm_contact' vb.</li>
+</ul>
+<h3>2. Araç Açıklaması</h3>
+<ul>
+<li>Son derece önemli</li>
+<li>LLM, aracı <strong>ne zaman</strong> kullanacağına bu şekilde karar verir. </li>
+<li>Sade ve anlaşılır bir İngilizceyle yazın.</li>
+</ul>
+<strong>Kötü:</strong>
+"Veri yakalamak için API"
+<strong>İyi:</strong>
+"Bu araç ilgi çekmek içindir. Kullanıcı ürünle ilgilendiğini açıkça ifade ettiğinde veya kendisiyle iletişime geçilmesini istediğinde bu aracı kullanın"
+<h3>3. Uç Nokta Yapılandırması</h3>
+<ul>
+<li>Tam URL (<strong><code>http://</code> veya <code>https://</code></strong> içermelidir)</li>
+<li><strong>REST</strong> yöntemlerini destekler</li>
+</ul>
+<blockquote class="note">Yaygın hata: URL'de https://'nin unutulması.</blockquote>
+<p><br/>
+<div style={{ borderBottom: '2px katı #e5e5e5', marj: '20px 0' }}></div></p>
+<h3>4. Kimlik Doğrulama ve Başlıklar</h3>
+<ul>
+<li>Özel kimlik doğrulama ekle</li>
+<li>Özel başlıklar ekleyin</li>
+<li>Dahili hizmetler ve üçüncü taraf API'lerle çalışır</li>
+</ul>
+<br/>
+<div style={{ borderBottom: '2px katı #e5e5e5', marj: '20px 0' }}></div>
+<h3>5. Parametreler</h3>
+<p>Her parametrede şunlar bulunmalıdır:
+<ul>
+<li>Ad</li>
+<li>Tür</li>
+<li>Açıklama</li>
+<li>Zorunlu/İsteğe bağlı işaret</li>
+</ul>
+<strong>Parametre açıklamaları türlerden daha önemlidir.</strong></p>
+<p>Yönergeler:
+<ul>
+<li>Mümkünse dize parametreleriyle başlayın</li>
+<li>Değerin neyi temsil ettiğini açıkça belirtin</li>
+<li>Yalnızca gerçekten zorunlu olan alanları gerektiği gibi işaretleyin</li>
+</ul>
+Örnek:
+<ul>
+<li>ilgi alanı (dize):</li>
+</ul> "Kullanıcı açıkça satın alma niyetini gösteriyorsa veya takip edilmek istiyorsa doğru olarak ayarlayın. Aksi takdirde yanlış."</p>
+<p><br/>
+<div style={{ borderBottom: '2px katı #e5e5e5', marj: '20px 0' }}></div></p>
+<h2>Araçları İş Akışı Düğümlerine Ekleme</h2>
+<ul>
+<li><strong>Birden fazla aracı tek bir düğüme</strong></li> ekleyebilirsiniz
+<li>Oluşturduğunuz tüm araçlar düğümde seçilebilecektir</li>
+<li>Araçlar yalnızca söz konusu düğüme eklendiğinde çağrılabilir</li>
+<li>LLM hangisini arayacağına karar verecek</li>
+</ul>
+Düğümün içinde, <strong>basit İngilizce talimatları</strong> kullanarak LLM'ye rehberlik edin.
+<p>Örnek:</p>
+<p>"Kullanıcı satış ekibiyle görüşmeye ilgi gösterirse veya geri aranmak isterse hemen capture_lead_interest aracını arayın ve ilgiyi true olarak ayarlayın."
+Bu talimat genellikle doğru alet kullanımı için belirleyici faktördür.</p>
+<p>Bu talimat genellikle doğru alet kullanımı için <strong>karar verme faktörüdür</strong>.</p>
+<p><br/>
+<div style={{ borderBottom: '2px katı #e5e5e5', marj: '20px 0' }}></div></p><h2>Araç Çağırma Mantığı (LLM Nasıl Düşünüyor)</h2>
+<p>LLM şunları dikkate alır:
+<ul>
+<li>Kullanıcının sözlü amacı</li>
+<li>Düğüm istemi talimatları</li>
+<li>Araç adı ve açıklaması</li>
+<li>Parametre açıklamaları</li>
+</ul>
+Bunlar net bir şekilde hizalanırsa araç otomatik olarak çağrılır.</p>
+<p>Kötü adlandırma veya belirsiz açıklamalar şunlara yol açar:
+<ul>
+<li>Cevapsız araç çağrıları</li>
+<li>Yanlış parametreler</li>
+<li>Halüsinasyonlu değerler</li>
+</ul>
+<br/>
+<div style={{ borderBottom: '2px katı #e5e5e5', marj: '20px 0' }}></div></p>
+<h2>Temel En İyi Uygulamalar</h2>
+<ul>
+<li>Araçları açıkça adlandırın</li>
+<li>Ayrıntılı, eyleme dayalı açıklamalar yazın</li>
+<li>Parametreleri ilk başta basit tutun</li>
+<li>URL'lere her zaman http/https ekleyin</li>
+<li>Düğüm talimatlarında sade İngilizce kullanın</li>
+<li>Her düğüme yalnızca ilgili araçları ekleyin</li>
+</ul>
+<strong>İyi tanımlanmış araçlar + anlaşılır istemler = güvenilir, üretim düzeyinde ses aracıları.</strong></p><h2>Güncel kurulum ve çalışma</h2><p>Harici HTTP API: url, http yöntemi, kimlik doğrulama ve parametre şeması ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;order_id&quot;: &quot;DEMO-42&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;shipped&quot;
+  }
+}</code></pre>

@@ -1,0 +1,69 @@
+---
+path: "guides/workflows/tools/transfer-to-channel"
+title: "Transfer to Channel"
+excerpt: "Configure Transfer to Channel and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 10
+---
+
+<p>The Transfer to Channel tool lets your AI agent continue the current conversation on a <strong>different messaging channel</strong> — for example, moving a live phone call or WhatsApp chat over to Telegram, or starting a WhatsApp conversation for a caller who wants to keep chatting after hanging up. The destination conversation is seeded with everything discussed so far, so it doesn't start from a blank slate.</p>
+<h2>How It Works</h2>
+<p>Unlike <a href="/guides/workflows/tools/transfer-to-assistant">Transfer to Assistant</a> (which switches to a different workflow within the same conversation) or <a href="/guides/workflows/tools/call-transfer">Call Transfer</a> (a blind transfer to a phone number/SIP endpoint with no context), Transfer to Channel starts a <strong>brand-new session on another channel</strong>:</p>
+<ol>
+<li><strong>Agent Decision</strong>: The AI agent determines the caller wants to continue elsewhere (e.g. "can you text me on WhatsApp instead?") and calls the tool with the recipient's identity</li>
+<li><strong>New Session Created</strong>: A new conversation is started on the destination channel, using the target workflow configured on the tool</li>
+<li><strong>History Carried Over</strong>: Everything said so far in the current conversation is seeded into the destination session, and it resumes from the <strong>same workflow node</strong> the source conversation was on — not the start node — so the agent's next reply picks up naturally instead of repeating a generic greeting</li>
+<li><strong>Source Conversation Ends</strong>: Once the destination session has been created successfully, the source conversation (the live call or the original text chat) is ended. Exactly one active session remains — the transferred one.</li>
+</ol>
+If the destination session fails to start (invalid destination, misconfigured channel, quota exceeded, etc.), the source conversation is <strong>left untouched</strong> and continues normally. The tool also has a built-in deduplication guard — if the LLM accidentally invokes the transfer twice within 30 seconds for the same destination, the second call is silently ignored.
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Destination Channel</strong>: The channel type (<code>whatsapp</code>, <code>telegram</code>, or <code>instagram</code>) and the specific <strong>Channel Configuration</strong> to send from</li>
+<li><strong>Target Workflow</strong>: The workflow (assistant) that should run the destination conversation</li>
+<li><strong>Custom Message</strong>: Optional message played/sent before the transfer</li>
+</ul>
+The destination channel and target workflow are fixed when the tool is configured — the LLM only supplies the recipient's identity at call time.
+<h2>Agent Usage</h2>
+<p>Your AI agent transfers the conversation by providing the destination identity:</p>
+<pre><code class="language-">transfer_to_channel(target_identity="+14155550100")
+</code></pre>
+<p>The expected format for <code>target_identity</code> depends on the configured destination channel:</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th><code>target_identity</code> format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WhatsApp</td>
+<td>E.164 phone number, e.g. <code>+14155550100</code></td>
+</tr>
+<tr>
+<td>Telegram</td>
+<td>Telegram chat ID</td>
+</tr>
+<tr>
+<td>Instagram</td>
+<td>Instagram-scoped user ID</td>
+</tr>
+</tbody>
+</table>
+<p>Common scenarios:
+<ul>
+<li>Caller on a phone call asks to continue over WhatsApp/Telegram instead</li>
+<li>A text-chat user asks to switch to a different messaging app</li>
+<li>Business hours end for voice support but chat support should keep going</li>
+</ul>
+<blockquote class="note">This tool <strong>ends the current conversation</strong> once the destination conversation has successfully started — the two do not run side by side. If you want both the source and destination to keep running independently, use <a href="/guides/workflows/tools/send-message">Send Message</a> instead, which sends a one-off message without ending the current conversation. A transferred session cannot be transferred again — only <strong>1 channel transfer</strong> is allowed per conversation to prevent loops.</blockquote></p>
+<blockquote class="warning">If the caller sends another message on the transferred channel shortly after, it re-attaches to the same transferred session rather than starting a new one — as long as the destination channel configuration's identity matches on both the outbound and inbound side (this is automatic for channels set up through Verasist).</blockquote><h2>Current setup and execution</h2><p>Transfer to Channel: configure target channel connection and recipient, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;channel&quot;: &quot;whatsapp&quot;,
+    &quot;target&quot;: &quot;+905551112233&quot;
+  },
+  &quot;result&quot;: {
+    &quot;handoff&quot;: &quot;conversation history retained&quot;
+  }
+}</code></pre>

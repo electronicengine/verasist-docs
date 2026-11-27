@@ -7,6 +7,8 @@ import { api } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translateTab, translateSection } from "@/lib/translations";
 import { ChevronRight, ArrowLeft, ArrowRight } from "lucide-react";
+import {canonicalLabHref} from '@/components/telephony/story/labRoutes';
+import TelephonyEmbed from '@/components/telephony/TelephonyEmbed';
 import VideoGrid from "@/components/VideoGrid";
 
 export default function DocPage() {
@@ -123,6 +125,9 @@ export default function DocPage() {
     if (!doc || !contentRef.current) return;
     return enhanceCodePanels(contentRef.current, lang);
   }, [doc, lang]);
+
+  // Normalize links in older stored documents without rewriting document data.
+  useEffect(()=>{if(!doc||!contentRef.current)return;for(const anchor of contentRef.current.querySelectorAll('a[href]')){const href=anchor.getAttribute('href'),next=canonicalLabHref(href,window.location.origin);if(next!==href)anchor.setAttribute('href',next);}},[doc]);
 
   // Build TOC from rendered content
   useEffect(() => {
@@ -303,6 +308,8 @@ export default function DocPage() {
             {doc.excerpt}
           </p>
         )}
+
+        {['guides/integrations/telephony/ip-pbx', 'guides/integrations/telephony/sip-trunk'].includes(doc.path || lookupPath) && <TelephonyEmbed />}
 
         {/* Related Video Tutorials */}
         <div className="mb-8">

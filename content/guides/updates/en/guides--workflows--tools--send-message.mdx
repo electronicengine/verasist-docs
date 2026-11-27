@@ -1,0 +1,73 @@
+---
+path: "guides/workflows/tools/send-message"
+title: "Send Message"
+excerpt: "Configure Send Message and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 8
+---
+
+<p>The Send Message tool lets your AI agent send a text message to the caller (or a third party) through one of your organization's configured chat channels — WhatsApp, Telegram, or Instagram — without leaving the live conversation.</p>
+<blockquote class="note">This tool sends through a channel you've already connected under <strong>Channels</strong>. Configure the channel first, then create the Send Message tool and point it at that channel.</blockquote>
+<h2>How It Works</h2>
+<p>The channel is fixed when you configure the tool — you pick one connected WhatsApp, Telegram, or Instagram channel. At call time, the LLM only supplies:</p>
+<ol>
+<li><strong>Target Identity</strong>: Who to send the message to, in the format expected by that channel</li>
+<li><strong>Message</strong>: The text content to send</li>
+</ol>
+Verasist resolves the channel configuration for your organization, validates it, and sends the message through that channel's provider.
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Channel</strong>: Select one of your organization's configured chat channels (WhatsApp, Telegram, or Instagram). Only chat-capable channels appear in this list — configure one under <strong>Channels</strong> first if none are available.</li>
+<li><strong>Custom Message</strong>: Optional message (text or audio) played to the caller before the tool executes</li>
+</ul>
+<h2>Agent Usage</h2>
+<p>The LLM calls the tool with a recipient identity and message text. The expected identity format depends on the selected channel:</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Target Identity Format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WhatsApp</td>
+<td>Phone number in E.164 format, e.g. <code>+14155552671</code></td>
+</tr>
+<tr>
+<td>Telegram</td>
+<td>Telegram chat ID (numeric or string)</td>
+</tr>
+<tr>
+<td>Instagram</td>
+<td>Instagram-scoped user ID (IGSID) — a numeric string</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-">send_message(target_identity="+14155552671", message="Here's the confirmation link you asked for: https://example.com/confirm")
+</code></pre>
+<p>Common scenarios:
+<ul>
+<li>Caller asks you to text them a confirmation, receipt, or summary</li>
+<li>Sending a link or document reference that's easier to read than to say aloud</li>
+<li>Following up with a written recap after a phone or web call</li>
+</ul>
+<h2>Returned Data</h2></p>
+<p>After sending, the tool reports back to the agent:
+<ul>
+<li><strong>Status</strong>: Whether the send succeeded</li>
+<li><strong>Message ID</strong>: The provider's message identifier, when available</li>
+<li><strong>Channel Type</strong>: Which channel the message was sent through</li>
+<li><strong>Target</strong>: The normalized recipient identity used</li>
+</ul>
+If the channel isn't configured, isn't found for your organization, or the provider rejects the send, the tool returns an error to the agent instead of failing the call — the conversation continues.</p>
+<blockquote class="note">The tool only sends through the single channel selected at configuration time. To send through a different channel (e.g. Telegram instead of WhatsApp), create a separate Send Message tool pointed at that channel.</blockquote><h2>Current setup and execution</h2><p>Send Message: configure connected whatsapp, telegram or instagram channel, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;target&quot;: &quot;+905551112233&quot;,
+    &quot;message&quot;: &quot;Your appointment is confirmed.&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;sent&quot;
+  }
+}</code></pre>

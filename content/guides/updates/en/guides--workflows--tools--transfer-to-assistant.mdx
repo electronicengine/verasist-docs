@@ -1,0 +1,56 @@
+---
+path: "guides/workflows/tools/transfer-to-assistant"
+title: "Transfer to Assistant"
+excerpt: "Configure Transfer to Assistant and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 9
+---
+
+<p>The Transfer to Assistant tool lets your AI agent hand off the current conversation to another workflow (assistant) within your organization. The target assistant receives the caller's context and a conversation summary, starting fresh from its beginning node.</p>
+<h2>How It Works</h2>
+<p>Unlike <a href="/guides/workflows/tools/call-transfer">Call Transfer</a> which transfers to an external phone number, Transfer to Assistant redirects the conversation to another AI workflow within Verasist:</p>
+<ol>
+<li><strong>Agent Decision</strong>: The AI agent determines the caller needs a different assistant (e.g., sales → support)</li>
+<li><strong>Summary Generation</strong>: The agent creates a concise summary of the conversation so far</li>
+<li><strong>Context Merge</strong>: Current call context is merged with any configured variable mappings and passed to the target</li>
+<li><strong>Transition</strong>: The target assistant's start node becomes active, and the conversation continues seamlessly</li>
+</ol>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Target Workflow UUID</strong>: The UUID of the destination workflow/assistant to transfer to</li>
+<li><strong>Transfer Message</strong>: Optional message played to the caller before the transfer (e.g., "Let me transfer you to our billing department")</li>
+<li><strong>Initial Context Mapping</strong>: Optional key-value mapping to rename context variables for the target assistant</li>
+</ul>  - Example: <code>{"customer_name": "caller_name"}</code> copies <code>customer_name</code> from the current context into <code>caller_name</code> for the target
+<ul>
+<li><strong>Custom Message</strong>: Optional pre-recorded audio message before transfer</li>
+</ul>
+<h3>Context Handoff</h3>
+<p>The target assistant automatically receives:
+<ul>
+<li>All existing <code>initial_context</code> variables</li>
+<li>All <code>gathered_context</code> variables</li>
+<li><code>transfer_summary</code> — the agent's conversation summary</li>
+<li><code>transferred_from_workflow</code> — the source workflow ID</li>
+<li><code>transferred_from_run_id</code> — the source workflow run ID</li>
+</ul>
+Any explicit mappings in <strong>Initial Context Mapping</strong> are applied on top of these defaults.</p>
+<h2>Agent Usage</h2>
+<p>Your AI agent transfers conversations with a summary:</p>
+<pre><code class="language-">transfer_to_assistant(summary="Caller is John Smith, calling about an overcharge on invoice #12345. Discussed the charges for March and April. Needs billing to issue a refund.")
+</code></pre>
+<p>Common scenarios:
+<ul>
+<li>Caller needs to speak to a different department (sales → support, support → billing)</li>
+<li>Conversation topic changes and requires a specialized assistant</li>
+<li>Escalation to a supervisor workflow</li>
+<li>Multi-step processes where different assistants handle different stages</li>
+</ul>
+<blockquote class="note">Transfer to Assistant only works between workflows within the same organization. For external phone transfers, use the <a href="/guides/workflows/tools/call-transfer">Call Transfer</a> tool. A single conversation can transfer at most <strong>3 times</strong> consecutively to prevent infinite transfer loops — if the cap is reached, the agent stays on the current workflow.</blockquote></p><h2>Current setup and execution</h2><p>Transfer to Assistant: configure target workflow and allowed destinations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;target_workflow&quot;: &quot;support&quot;
+  },
+  &quot;result&quot;: {
+    &quot;active_workflow&quot;: &quot;support&quot;
+  }
+}</code></pre>

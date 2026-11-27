@@ -1,0 +1,705 @@
+{
+  "calculator": {
+    "title": {
+      "tr": "Hesap Makinesi",
+      "en": "Calculator"
+    },
+    "settings": {
+      "tr": "İfade ve araca erişim",
+      "en": "Expression and tool access"
+    },
+    "request": {
+      "expression": "125 * 1.20"
+    },
+    "result": {
+      "result": 150
+    }
+  },
+  "calendar": {
+    "title": {
+      "tr": "Takvim",
+      "en": "Calendar"
+    },
+    "settings": {
+      "tr": "Başlık, zaman dilimi ve geri arama hedefi",
+      "en": "Title, timezone and callback target"
+    },
+    "request": {
+      "title": "Geri arama / Callback",
+      "time": "2026-12-01T10:00:00+03:00"
+    },
+    "result": {
+      "scheduled": true
+    }
+  },
+  "call-history": {
+    "title": {
+      "tr": "Arama Geçmişi",
+      "en": "Call History"
+    },
+    "settings": {
+      "tr": "Araca erişim ve mevcut arayan kimliği",
+      "en": "Tool access and current caller identity"
+    },
+    "request": {
+      "query": "previous conversations"
+    },
+    "result": {
+      "calls": [
+        {
+          "summary": "Delivery question"
+        }
+      ]
+    }
+  },
+  "call-transfer": {
+    "title": {
+      "tr": "Çağrı Transferi",
+      "en": "Call Transfer"
+    },
+    "settings": {
+      "tr": "Hedef, zaman aşımı, anons; isteğe bağlı aktarım sonrası STT",
+      "en": "Destination, timeout, message; optional post-transfer STT"
+    },
+    "request": {
+      "destination": "+905551112233",
+      "timeout": 30
+    },
+    "result": {
+      "status": "answered",
+      "ai_speaking": false
+    }
+  },
+  "end-call": {
+    "title": {
+      "tr": "Çağrıyı Sonlandır",
+      "en": "End Call"
+    },
+    "settings": {
+      "tr": "Kapanış koşulu ve metin veya sesli veda",
+      "en": "End condition and text or audio farewell"
+    },
+    "request": {
+      "reason": "completed"
+    },
+    "result": {
+      "call_state": "ended"
+    }
+  },
+  "incoming-messages": {
+    "title": {
+      "tr": "Gelen Mesajları Listele",
+      "en": "Incoming Messages"
+    },
+    "settings": {
+      "tr": "Bağlı kanal ve tarih aralığı",
+      "en": "Connected channel and date range"
+    },
+    "request": {
+      "start_date": "2026-12-01",
+      "end_date": "2026-12-02"
+    },
+    "result": {
+      "messages": [
+        {
+          "text": "Order status?"
+        }
+      ]
+    }
+  },
+  "media-generation": {
+    "title": {
+      "tr": "Medya Üretimi",
+      "en": "Media Generation"
+    },
+    "settings": {
+      "tr": "Görsel/video türü, model ve çıktı seçenekleri",
+      "en": "Image/video type, model and output options"
+    },
+    "request": {
+      "prompt": "A product on a plain background"
+    },
+    "result": {
+      "asset_url": "https://example.invalid/asset.png"
+    }
+  },
+  "send-message": {
+    "title": {
+      "tr": "Mesaj Gönder",
+      "en": "Send Message"
+    },
+    "settings": {
+      "tr": "Bağlı WhatsApp, Telegram veya Instagram kanalı",
+      "en": "Connected WhatsApp, Telegram or Instagram channel"
+    },
+    "request": {
+      "target": "+905551112233",
+      "message": "Your appointment is confirmed."
+    },
+    "result": {
+      "status": "sent"
+    }
+  },
+  "transfer-to-assistant": {
+    "title": {
+      "tr": "Ajan Aktarımı",
+      "en": "Transfer to Assistant"
+    },
+    "settings": {
+      "tr": "Hedef iş akışı ve izinli aktarım hedefleri",
+      "en": "Target workflow and allowed destinations"
+    },
+    "request": {
+      "target_workflow": "support"
+    },
+    "result": {
+      "active_workflow": "support"
+    }
+  },
+  "transfer-to-channel": {
+    "title": {
+      "tr": "Kanala Aktar",
+      "en": "Transfer to Channel"
+    },
+    "settings": {
+      "tr": "Hedef kanal bağlantısı ve alıcı",
+      "en": "Target channel connection and recipient"
+    },
+    "request": {
+      "channel": "whatsapp",
+      "target": "+905551112233"
+    },
+    "result": {
+      "handoff": "conversation history retained"
+    }
+  },
+  "web-page-query": {
+    "title": {
+      "tr": "Web Arama",
+      "en": "Web Search"
+    },
+    "settings": {
+      "tr": "Arama sağlayıcısı, model ve kaynak seçenekleri",
+      "en": "Search provider, model and source options"
+    },
+    "request": {
+      "query": "shipping policy"
+    },
+    "result": {
+      "answer": "Policy summary",
+      "sources": [
+        "https://example.invalid/policy"
+      ]
+    }
+  },
+  "crm": {
+    "title": {
+      "tr": "CRM",
+      "en": "CRM"
+    },
+    "settings": {
+      "tr": "CRM bağlantısı ve izinli kişi işlemleri",
+      "en": "CRM connection and enabled contact operations"
+    },
+    "request": {
+      "operation": "search",
+      "email": "ada@example.invalid"
+    },
+    "result": {
+      "contacts": [
+        {
+          "name": "Ada"
+        }
+      ]
+    }
+  },
+  "email": {
+    "title": {
+      "tr": "E-posta",
+      "en": "Email"
+    },
+    "settings": {
+      "tr": "Bağlı Gmail/Microsoft hesabı ve izinli işlemler",
+      "en": "Connected Gmail/Microsoft mailbox and permitted operations"
+    },
+    "request": {
+      "operation": "send",
+      "to": "ada@example.invalid",
+      "subject": "Appointment"
+    },
+    "result": {
+      "status": "sent"
+    }
+  },
+  "google-calendar": {
+    "title": {
+      "tr": "Google Takvim",
+      "en": "Google Calendar"
+    },
+    "settings": {
+      "tr": "Google bağlantısı, takvim ve işlem izinleri",
+      "en": "Google connection, calendar and allowed operations"
+    },
+    "request": {
+      "operation": "check_availability",
+      "date": "2026-12-01"
+    },
+    "result": {
+      "available_slots": [
+        "10:00",
+        "11:00"
+      ]
+    }
+  },
+  "google-sheets": {
+    "title": {
+      "tr": "Google Tablolar",
+      "en": "Google Sheets"
+    },
+    "settings": {
+      "tr": "Google bağlantısı, sabit dosya ve sayfa",
+      "en": "Google connection, fixed spreadsheet and sheet"
+    },
+    "request": {
+      "operation": "append",
+      "row": [
+        "Ada",
+        "confirmed"
+      ]
+    },
+    "result": {
+      "updated_rows": 1
+    }
+  },
+  "google-tasks": {
+    "title": {
+      "tr": "Google Tasks",
+      "en": "Google Tasks"
+    },
+    "settings": {
+      "tr": "Google bağlantısı ve görev listesi",
+      "en": "Google connection and task list"
+    },
+    "request": {
+      "operation": "create",
+      "title": "Call Ada"
+    },
+    "result": {
+      "status": "created"
+    }
+  },
+  "trendyol": {
+    "title": {
+      "tr": "Trendyol",
+      "en": "Trendyol"
+    },
+    "settings": {
+      "tr": "Satıcı bağlantısı ve ürün/sipariş/soru izinleri",
+      "en": "Seller connection and product/order/question permissions"
+    },
+    "request": {
+      "operation": "lookup_order",
+      "order_number": "DEMO-42"
+    },
+    "result": {
+      "order_status": "preparing"
+    }
+  },
+  "yemeksepeti": {
+    "title": {
+      "tr": "Yemek Sepeti",
+      "en": "Yemek Sepeti"
+    },
+    "settings": {
+      "tr": "Restoran bağlantısı ve sipariş işlemleri",
+      "en": "Restaurant connection and order operations"
+    },
+    "request": {
+      "operation": "list_orders"
+    },
+    "result": {
+      "orders": [
+        {
+          "id": "DEMO-7",
+          "status": "accepted"
+        }
+      ]
+    }
+  },
+  "http-api": {
+    "title": {
+      "tr": "Harici HTTP API",
+      "en": "External HTTP API"
+    },
+    "settings": {
+      "tr": "URL, HTTP yöntemi, kimlik doğrulama ve parametre şeması",
+      "en": "URL, HTTP method, authentication and parameter schema"
+    },
+    "request": {
+      "order_id": "DEMO-42"
+    },
+    "result": {
+      "status": "shipped"
+    }
+  },
+  "mcp-tool": {
+    "title": {
+      "tr": "MCP Sunucusu",
+      "en": "MCP Server"
+    },
+    "settings": {
+      "tr": "MCP bağlantısı, kimlik doğrulama ve seçili araçlar",
+      "en": "MCP connection, authentication and selected tools"
+    },
+    "request": {
+      "tool": "lookup_order",
+      "arguments": {
+        "order_id": "DEMO-42"
+      }
+    },
+    "result": {
+      "content": "Order shipped"
+    }
+  },
+  "database": {
+    "title": {
+      "tr": "Veritabanı",
+      "en": "Database"
+    },
+    "settings": {
+      "tr": "Tablo, sütunlar ve izinli kayıt işlemleri",
+      "en": "Table, columns and allowed record operations"
+    },
+    "request": {
+      "operation": "lookup",
+      "email": "ada@example.invalid"
+    },
+    "result": {
+      "records": [
+        {
+          "name": "Ada",
+          "status": "active"
+        }
+      ]
+    }
+  },
+  "shopify": {
+    "title": {
+      "tr": "Shopify",
+      "en": "Shopify"
+    },
+    "settings": {
+      "tr": "Mağaza bağlantısı, ürün/sipariş/yarım kalan ödeme izinleri",
+      "en": "Store connection and product/order/abandoned-checkout permissions"
+    },
+    "request": {
+      "operation": "lookup_order",
+      "order_number": "DEMO-1001"
+    },
+    "result": {
+      "order_status": "fulfilled"
+    }
+  },
+  "call-plan": {
+    "title": {
+      "tr": "Liste ile Arama Planı",
+      "en": "Contact List Call Plan"
+    },
+    "settings": {
+      "tr": "Yayımlanmış hedef akış, giden bağlantı ve kişi sınırı",
+      "en": "Published target workflow, outbound connection and contact limit"
+    },
+    "request": {
+      "name": "Follow up",
+      "contacts": [
+        {
+          "phone_number": "+905551112233"
+        }
+      ]
+    },
+    "result": {
+      "campaign_id": "demo-plan",
+      "contact_count": 1
+    }
+  },
+  "workflow-trigger": {
+    "title": {
+      "tr": "İş Akışı Tetikleyici",
+      "en": "Workflow Trigger"
+    },
+    "settings": {
+      "tr": "Yayımlanmış hedef akış, kanal, bağlantı ve isteğe bağlı sabit alıcı",
+      "en": "Published target workflow, channel, connection and optional fixed recipient"
+    },
+    "request": {
+      "target": "+905551112233",
+      "initial_context": {
+        "customer_name": "Ada"
+      }
+    },
+    "result": {
+      "workflow_run_id": "demo-run",
+      "status": "queued"
+    }
+  },
+  "google-maps": {
+    "title": {
+      "tr": "Google Haritalar",
+      "en": "Google Maps"
+    },
+    "settings": {
+      "tr": "Yer, yorum, yol tarifi ve hava durumu yetenekleri",
+      "en": "Places, reviews, directions and weather capabilities"
+    },
+    "request": {
+      "query": "pharmacy in Kadikoy"
+    },
+    "result": {
+      "places": [
+        {
+          "name": "Example Pharmacy",
+          "place_id": "demo-place"
+        }
+      ]
+    }
+  },
+  "parallel-search": {
+    "title": {
+      "tr": "Web Arama (Parallel)",
+      "en": "Web Search (Parallel)"
+    },
+    "settings": {
+      "tr": "Arama modu ve sonuç sınırı",
+      "en": "Search mode and result limit"
+    },
+    "request": {
+      "objective": "Find opening hours",
+      "search_queries": [
+        "Example store hours"
+      ]
+    },
+    "result": {
+      "results": [
+        {
+          "title": "Opening hours",
+          "url": "https://example.invalid/hours"
+        }
+      ]
+    }
+  },
+  "parallel-extract": {
+    "title": {
+      "tr": "Web Sayfası Çıkarma (Parallel)",
+      "en": "Web Page Extract (Parallel)"
+    },
+    "settings": {
+      "tr": "Tam içerik seçeneği ve ön mesaj",
+      "en": "Full-content option and pre-execution message"
+    },
+    "request": {
+      "urls": [
+        "https://example.invalid/hours"
+      ],
+      "objective": "Opening hours"
+    },
+    "result": {
+      "pages": [
+        {
+          "title": "Hours",
+          "excerpts": [
+            "09:00–18:00"
+          ]
+        }
+      ]
+    }
+  },
+  "searxncrawl-search": {
+    "title": {
+      "tr": "Websearch (searxNcrawl)",
+      "en": "Websearch (searxNcrawl)"
+    },
+    "settings": {
+      "tr": "fast/basic/detailed modu ve sonuç sınırı",
+      "en": "fast/basic/detailed mode and result limit"
+    },
+    "request": {
+      "query": "Example store hours"
+    },
+    "result": {
+      "results": [
+        {
+          "url": "https://example.invalid/hours",
+          "title": "Hours"
+        }
+      ]
+    }
+  },
+  "searxncrawl-extract": {
+    "title": {
+      "tr": "Sayfa Çıkarma (searxNcrawl)",
+      "en": "Page Extract (searxNcrawl)"
+    },
+    "settings": {
+      "tr": "Sayfa çıkarma aracı ve ön mesaj",
+      "en": "Page-extraction tool and pre-execution message"
+    },
+    "request": {
+      "url": "https://example.invalid/hours"
+    },
+    "result": {
+      "markdown": "# Hours\n09:00–18:00"
+    }
+  },
+  "instagram-post": {
+    "title": {
+      "tr": "Instagram Gönderisi",
+      "en": "Instagram Post"
+    },
+    "settings": {
+      "tr": "Bağlı Instagram hesabı ve izinli yayın işlemleri",
+      "en": "Connected Instagram account and allowed publishing operations"
+    },
+    "request": {
+      "operation": "publish",
+      "content": "Product announcement",
+      "media_url": "https://example.invalid/video.mp4"
+    },
+    "result": {
+      "status": "published",
+      "post_id": "demo-post"
+    }
+  },
+  "facebook-post": {
+    "title": {
+      "tr": "Facebook Gönderisi",
+      "en": "Facebook Post"
+    },
+    "settings": {
+      "tr": "Bağlı Facebook hesabı ve izinli yayın işlemleri",
+      "en": "Connected Facebook account and allowed publishing operations"
+    },
+    "request": {
+      "operation": "publish",
+      "content": "Product announcement",
+      "media_url": "https://example.invalid/video.mp4"
+    },
+    "result": {
+      "status": "published",
+      "post_id": "demo-post"
+    }
+  },
+  "linkedin-post": {
+    "title": {
+      "tr": "LinkedIn Gönderisi",
+      "en": "LinkedIn Post"
+    },
+    "settings": {
+      "tr": "Bağlı LinkedIn hesabı ve izinli yayın işlemleri",
+      "en": "Connected LinkedIn account and allowed publishing operations"
+    },
+    "request": {
+      "operation": "publish",
+      "content": "Product announcement",
+      "media_url": "https://example.invalid/video.mp4"
+    },
+    "result": {
+      "status": "published",
+      "post_id": "demo-post"
+    }
+  },
+  "tiktok-post": {
+    "title": {
+      "tr": "TikTok Gönderisi",
+      "en": "TikTok Post"
+    },
+    "settings": {
+      "tr": "Bağlı TikTok hesabı ve izinli yayın işlemleri",
+      "en": "Connected TikTok account and allowed publishing operations"
+    },
+    "request": {
+      "operation": "publish",
+      "content": "Product announcement",
+      "media_url": "https://example.invalid/video.mp4"
+    },
+    "result": {
+      "status": "published",
+      "post_id": "demo-post"
+    }
+  },
+  "threads-post": {
+    "title": {
+      "tr": "Threads Gönderisi",
+      "en": "Threads Post"
+    },
+    "settings": {
+      "tr": "Bağlı Threads hesabı ve izinli yayın işlemleri",
+      "en": "Connected Threads account and allowed publishing operations"
+    },
+    "request": {
+      "operation": "publish",
+      "content": "Product announcement",
+      "media_url": "https://example.invalid/video.mp4"
+    },
+    "result": {
+      "status": "published",
+      "post_id": "demo-post"
+    }
+  },
+  "x-post": {
+    "title": {
+      "tr": "X Gönderisi",
+      "en": "X Post"
+    },
+    "settings": {
+      "tr": "Bağlı X hesabı ve izinli yayın işlemleri",
+      "en": "Connected X account and allowed publishing operations"
+    },
+    "request": {
+      "operation": "publish",
+      "content": "Product announcement",
+      "media_url": "https://example.invalid/video.mp4"
+    },
+    "result": {
+      "status": "published",
+      "post_id": "demo-post"
+    }
+  },
+  "wordpress-post": {
+    "title": {
+      "tr": "WordPress Gönderisi",
+      "en": "WordPress Post"
+    },
+    "settings": {
+      "tr": "Bağlı WordPress hesabı ve izinli yayın işlemleri",
+      "en": "Connected WordPress account and allowed publishing operations"
+    },
+    "request": {
+      "operation": "publish",
+      "content": "Product announcement",
+      "media_url": "https://example.invalid/video.mp4"
+    },
+    "result": {
+      "status": "published",
+      "post_id": "demo-post"
+    }
+  },
+  "youtube-post": {
+    "title": {
+      "tr": "YouTube Gönderisi",
+      "en": "YouTube Post"
+    },
+    "settings": {
+      "tr": "Bağlı YouTube hesabı ve izinli yayın işlemleri",
+      "en": "Connected YouTube account and allowed publishing operations"
+    },
+    "request": {
+      "operation": "publish",
+      "content": "Product announcement",
+      "media_url": "https://example.invalid/video.mp4"
+    },
+    "result": {
+      "status": "published",
+      "post_id": "demo-post"
+    }
+  }
+}

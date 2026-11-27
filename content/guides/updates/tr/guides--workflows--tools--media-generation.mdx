@@ -1,0 +1,45 @@
+---
+path: "guides/workflows/tools/media-generation"
+title: "Medya Üretimi"
+excerpt: "Medya Üretimi aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 7
+---
+
+<p>Medya Oluşturma aracı, yapay zeka aracınızın doğal dildeki istemlerden görüntüler ve videolar oluşturmasına ve bunları konuşmaya dahil etmesine olanak tanır. Ayrıca aracının, oluşturulan veya yüklenen bir resmi/videoyu kriterlerinize göre eleştirmesine de olanak tanır.</p>
+<blockquote class="note">Anthropic/Claude'da resim veya video oluşturma API'si <strong>hiç</strong> yoktur; oluşturma sağlayıcı seçenekleri yalnızca <strong>OpenAI</strong> ve <strong>Google</strong>'dır.</blockquote>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Ad ve açıklama</strong> — aracın düğümde nasıl göründüğü ve LLM'nin onu ne zaman çağıracağına karar vermek için ne kullandığı</li>
+<li><strong>Görüntü oluşturma</strong> — etkinleştirin/devre dışı bırakın, ardından bir sağlayıcı (OpenAI veya Google) ve bir model seçin (ör. OpenAI için <code>gpt-image-1</code> veya Google için Gemini görüntü modeli)</li>
+<li><strong>Video oluşturma</strong> — etkinleştirin/devre dışı bırakın, ardından bir sağlayıcı (OpenAI veya Google) ve bir model seçin (ör. Google için <code>veo-3.0</code>)</li>
+<li><strong>Özel mesaj</strong> — araç çalıştırılmadan önce çalınan isteğe bağlı kısa mesaj veya sesli mesaj</li>
+</ul>
+<h2>Nasıl Çalışır</h2>
+<ol>
+<li>Aracı, ayrıntılı bir istemle oluşturma işlevini çağırır</li>
+<li>Verasist, yapılandırılmış sağlayıcının API'sini doğrudan çağırır ve sonucu depolama alanına yükler</li>
+<li>Oluşturulan resim/video mevcut görüşme sırasına eklenir ve bir medya balonu olarak oluşturulur (test panelinde, yerleşik widget'ta ve desteklenen kanallarda)</li>
+<li>Oluşturulan medya, medya oluşturma faturalandırmanıza dahil edilir</li>
+</ol>
+<h2>Aracı Kullanımı</h2>
+<h3>Bir resim oluşturun</h3>
+<pre><code class="language-">generate_image(komut istemi="Kulaklık takan dost canlısı bir lama, düz illüstrasyon")
+</code></pre>
+<h3>Bir video oluşturun</h3>
+<pre><code class = "language-">generate_video(komut istemi = "Bir kahve markası için 5 saniyelik ürün tanıtımı, sıcak aydınlatma")
+</code></pre>
+<h3>Oluşturulan veya yüklenen medyayı analiz edin</h3>
+<p>Temsilci, sorulduğunda medyayı kriterlerinize göre inceleyebilir; başarılı bir nesilden sonra bunu asla otomatik olarak çağırmaz:</p>
+<pre><code class = "language-">analyze_media(attachment_uuid = "...", kriter = "Logo ortalanmış, metin kesilmemiş")
+</code></pre>
+<p><code>attachment_uuid</code> önceki nesilden veya kullanıcının görüşme sırasında yüklediği medyadan geliyor.</p>
+<blockquote class="note">Araç, <code>generate_image</code>, <code>generate_video</code> ve <code>analyze_media</code> işlevlerini kullanıma sunar; tam işlev adlarının önüne, yapılandırdığınız araç adı eklenir.</blockquote><h2>Güncel kurulum ve çalışma</h2><p>Medya Üretimi: görsel/video türü, model ve çıktı seçenekleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;prompt&quot;: &quot;A product on a plain background&quot;
+  },
+  &quot;result&quot;: {
+    &quot;asset_url&quot;: &quot;https://example.invalid/asset.png&quot;
+  }
+}</code></pre>

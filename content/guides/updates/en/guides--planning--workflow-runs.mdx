@@ -1,0 +1,284 @@
+---
+path: "guides/planning/workflow-runs"
+title: "Running Workflows"
+excerpt: "All the ways to trigger a workflow — API, dashboard, test panel, campaigns — and what happens after a run completes."
+reference: "guides/planning/workflow-runs"
+order: 1
+---
+
+<p>A workflow is a blueprint. To bring it to life, you need to <strong>trigger a run</strong> — start the conversation with a caller or chat user. Verasist gives you several ways to do this, from one-click test calls to fully automated API triggers.</p>
+<h2>Ways to trigger a workflow</h2>
+<div class="mermaid">
+graph TD
+    A[Workflow] --> B[API Trigger]
+    A --> C[Dashboard Test Call]
+    A --> D[In-Editor Tester]
+    A --> E[Campaign]
+    A --> F[Calendar Trigger]
+    A --> G[Inbound Call / Message]
+    A --> H[Transfer Tool]
+
+    B --> B1[External systems, n8n, custom apps]
+    C --> C1[Quick test from sidebar]
+    D --> D1[Voice or text test in workflow editor]
+    E --> E1[Bulk outbound from CSV]
+    F --> F1[Scheduled automated run]
+    G --> G1[Customer calls your number]
+    H --> H1[Agent transfers mid-call]
+
+</div>
+<h3>API trigger (external systems)</h3>
+<p>The most flexible way — any external system can trigger a workflow by calling a REST endpoint.</p>
+<strong>How to set it up:</strong>
+<ol>
+<li>Add an <strong>API Trigger</strong> node to your workflow</li>
+<li>The node gets a unique <code>trigger_path</code> (a UUID)</li>
+<li>Your workflow is now callable at:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /api/v1/public/agent/{trigger_path}</code></td>
+<td>Run the <strong>published</strong> version</td>
+</tr>
+<tr>
+<td><code>POST /api/v1/public/agent/test/{trigger_path}</code></td>
+<td>Run the <strong>draft</strong> version (for testing)</td>
+</tr>
+</tbody>
+</table>
+<strong>Request:</strong>
+<pre><code class="language-json">{
+  "phone_number": "+905551234567",
+  "initial_context": {
+    "customer_name": "Ahmet",
+    "order_id": "ORD-12345"
+  }
+}
+</code></pre>
+<p>Include your <strong>API key</strong> in the <code>X-API-Key</code> header. The <code>initial_context</code> fields become template variables (<code>{{customer_name}}</code>, <code>{{order_id}}</code>) available in your agent's prompts.</p>
+<strong>Response:</strong>
+<pre><code class="language-json">{
+  "status": "ok",
+  "workflow_run_id": 142,
+  "workflow_run_name": "Call with Ahmet",
+  "message": "Call initiated"
+}
+</code></pre>
+<p>The trigger node also supports chat channels — set <code>channel</code> to <code>whatsapp</code>, <code>telegram</code>, or <code>instagram</code> to send messages instead of making calls. Omit <code>phone_number</code> and use <code>target</code> with a chat ID instead.</p>
+<blockquote class="note">Use the <code>/test/</code> variant while developing — it runs your draft workflow so you can iterate without publishing. Switch to the production endpoint once you're confident.</blockquote>
+<h3>Dashboard test call</h3>
+<p>The fastest way to test — no API setup needed.</p>
+<ol>
+<li>Click the <strong>phone icon</strong> in the sidebar</li>
+<li>Select your workflow</li>
+<li>Choose <strong>Telephony</strong> (enter your number) or a <strong>Channel</strong> (WhatsApp, etc.)</li>
+<li>Click <strong>Start Test</strong></li>
+</ol>
+Verasist calls you immediately. The call uses your draft workflow, so you can test changes before publishing.
+<h3>In-editor tester</h3>
+<p>While editing a workflow, you can test directly in the canvas:</p>
+<ul>
+<li><strong>Voice mode</strong>: Opens a WebRTC browser call — no phone needed</li>
+<li><strong>Text chat mode</strong>: Simulates a chat conversation in a panel next to the canvas</li>
+</ul>
+Access it from the <strong>Tester</strong> tab in the workflow editor.
+<h3>Campaign</h3>
+<p>For bulk outbound calls, create a campaign — upload a CSV and Verasist calls everyone automatically. See <a href="/guides/planning/campaigns">Campaigns</a> for the full guide.</p>
+<h3>Calendar trigger</h3>
+<p>Schedule a workflow to run at a specific time — useful for recurring tasks like daily reminder calls. See <a href="/guides/planning/calendar">Calendar & Scheduling</a> for setup.</p>
+<h3>Inbound calls & messages</h3>
+<p>When someone calls your Verasist phone number or messages your connected WhatsApp/Telegram/Instagram account, the platform automatically creates a run — no trigger configuration needed. Just connect a telephony provider or channel and assign a workflow.</p>
+<h3>Transfer tools</h3>
+<p>During a call, your agent can transfer to another workflow using the <a href="/guides/workflows/tools/call-transfer">Call Transfer</a> or <a href="/guides/workflows/tools/transfer-to-channel">Transfer to Channel</a> tools.</p>
+<hr />
+<h2>What happens when a workflow runs</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant Trigger as Trigger Source
+    participant API as Verasist
+    participant DB as Database
+    participant Pipeline as AI Pipeline
+    participant Storage as Storage
+
+    Trigger->>API: Initiate run (API call, test, campaign...)
+    API->>DB: Create workflow_run row
+    API->>API: Check quota (credits available?)
+    API->>Pipeline: Start AI pipeline
+
+    Note over Pipeline: STT → LLM → TTS (voice)<br/>or LLM only (chat)
+
+    Pipeline->>Pipeline: Process conversation
+    Pipeline->>Storage: Stream audio / store messages
+
+    Note over Pipeline: Call ends or chat closes
+
+    Pipeline->>DB: Save transcript, recording URL
+    Pipeline->>DB: Save gathered_context (extracted data)
+    Pipeline->>DB: Save cost_info, usage_info
+    Pipeline->>API: Run completed
+    API->>API: Fire webhooks, deduct credits
+
+</div>
+<p>Every run produces a permanent record with:</p>
+<table>
+<thead>
+<tr>
+<th>Data</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Transcript</strong></td>
+<td>Full conversation text (voice: STT output; chat: message history)</td>
+</tr>
+<tr>
+<td><strong>Recording</strong></td>
+<td>Audio file (voice calls only)</td>
+</tr>
+<tr>
+<td><strong>Gathered context</strong></td>
+<td>Structured data the agent extracted (disposition, dates, intent)</td>
+</tr>
+<tr>
+<td><strong>Cost info</strong></td>
+<td>Credit breakdown by service (LLM, TTS, STT, platform)</td>
+</tr>
+<tr>
+<td><strong>Connection logs</strong></td>
+<td>Technical details — provider, latency, any errors</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Viewing runs</h2>
+<h3>Run history</h3>
+<p>To see all runs for a workflow:</p>
+<ol>
+<li>Open the workflow in the editor</li>
+<li>Click the <strong>Runs</strong> button in the header dropdown</li>
+<li>You'll see a paginated table with:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Date</strong></td>
+<td>When the run started</td>
+</tr>
+<tr>
+<td><strong>Name</strong></td>
+<td>Auto-generated or custom name</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>Completed, failed, in progress</td>
+</tr>
+<tr>
+<td><strong>Duration</strong></td>
+<td>Call or chat session length</td>
+</tr>
+<tr>
+<td><strong>Cost</strong></td>
+<td>Credits charged</td>
+</tr>
+<tr>
+<td><strong>Tokens</strong></td>
+<td>Total LLM tokens used</td>
+</tr>
+</tbody>
+</table>
+<p>The table supports filtering by date range, disposition, duration, and status — and sorting by any column.</p>
+<h3>Run detail</h3>
+<p>Click any run to see its full detail page:</p>
+<ul>
+<li><strong>Transcript tab</strong>: Read the entire conversation, turn by turn</li>
+<li><strong>Recording tab</strong>: Play or download the audio (voice only)</li>
+<li><strong>Context tab</strong>: See <code>initial_context</code> (what the agent knew before the call) and <code>gathered_context</code> (what it extracted)</li>
+<li><strong>Cost tab</strong>: Breakdown of credits by service</li>
+<li><strong>Logs tab</strong>: Technical connection logs for debugging</li>
+</ul>
+<h3>Global usage history</h3>
+<p>To see runs across all workflows, go to <strong>Usage History</strong> (<code>/usage</code>) in the sidebar. Same filtering and export capabilities, but not scoped to a single workflow.</p>
+<hr />
+<h2>Testing best practices</h2>
+<h3>Before publishing</h3>
+<ol>
+<li><strong>Test in the editor first</strong> — use the in-editor tester for quick voice/chat checks</li>
+<li><strong>Test with a real call</strong> — use the dashboard test call to hear the actual phone experience</li>
+<li><strong>Test via API trigger</strong> — if you're using API triggers, test with the <code>/test/</code> endpoint</li>
+</ol>
+<h3>What to check</h3>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>How to verify</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Voice quality</strong></td>
+<td>Does the TTS sound natural? Right accent and language?</td>
+</tr>
+<tr>
+<td><strong>Response speed</strong></td>
+<td>Is there an awkward pause before the agent speaks?</td>
+</tr>
+<tr>
+<td><strong>Prompt accuracy</strong></td>
+<td>Does the agent follow instructions and stay on topic?</td>
+</tr>
+<tr>
+<td><strong>Edge transitions</strong></td>
+<td>Does the conversation flow correctly between nodes?</td>
+</tr>
+<tr>
+<td><strong>Data extraction</strong></td>
+<td>Check <code>gathered_context</code> — is the right data being captured?</td>
+</tr>
+<tr>
+<td><strong>Template variables</strong></td>
+<td>Are <code>{{variables}}</code> being replaced correctly?</td>
+</tr>
+<tr>
+<td><strong>Error handling</strong></td>
+<td>What happens when the caller says something unexpected?</td>
+</tr>
+</tbody>
+</table>
+<h3>Iterating</h3>
+<p>After each test:
+<ol>
+<li>Review the transcript in the run detail</li>
+<li>Check <code>gathered_context</code> for extraction accuracy</li>
+<li>Adjust prompts, edge conditions, or extraction settings</li>
+<li>Test again — iterate until satisfied</li>
+<li><strong>Publish</strong> only when confident</li>
+</ol>
+<h2>Next steps</h2></p>
+<div class="card-grid"><Card title="Campaigns" href="/guides/planning/campaigns">
+    Run your workflow at scale with bulk campaigns
+  </Card>
+  <Card title="Calendar & Scheduling" href="/guides/planning/calendar">
+    Schedule automated workflow runs
+  </Card>
+  <Card title="API Trigger Node" href="/guides/workflows/api-trigger">
+    Configure the API trigger node in detail
+  </Card>
+  <Card title="Calls & Runs" href="/developer/core-concepts/calls-and-runs">
+    Deep dive into the run lifecycle
+  </Card>
+</div><h2>Live operations</h2><ul><li><a href="/guides/planning/live-monitoring">Live monitoring</a></li><li><a href="/guides/planning/live-guidance">Live guidance</a></li><li><a href="/guides/planning/call-transfers">Call transfer and post-transfer tracking</a></li></ul>

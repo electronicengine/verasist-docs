@@ -1,0 +1,61 @@
+---
+path: "guides/workflows/tools/google-calendar"
+title: "Google Calendar"
+excerpt: "Configure Google Calendar and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 3
+---
+
+<p>The Google Calendar tool lets your AI agent create an event, list events / check availability, update an event, or cancel an event in a connected Google account — all during a live conversation.</p>
+<blockquote class="note">This tool acts through a Google account you've already connected under <strong>Settings → Applications</strong>. Connect the account first, then create the Google Calendar tool and point it at that account.</blockquote>
+<blockquote class="note">This is a connected <strong>Google</strong> calendar, separate from Verasist's own built-in <a href="/guides/workflows/tools/calendar">Calendar</a> tool. Use this tool when you need the agent to read from or write to a real Google Calendar rather than Verasist's internal calendar entries.</blockquote>
+<h2>Connecting an Account</h2>
+<ol>
+<li>Go to <strong>Settings → Applications</strong> and choose <strong>Connect Google Account</strong></li>
+<li>Grant the <code>calendar.events</code> scope during the OAuth consent flow (Google Calendar, Tasks, and Sheets share the same connected Google account)</li>
+<li>The connected account appears in the Google Calendar tool's account picker when you configure the tool</li>
+</ol>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Google Account</strong>: The connected account this tool uses</li>
+<li><strong>Allow Create</strong>: Let the agent create events through this tool (default: on)</li>
+<li><strong>Allow List</strong>: Let the agent list events / check availability through this tool (default: on)</li>
+<li><strong>Allow Update</strong>: Let the agent update events through this tool (default: on)</li>
+<li><strong>Allow Cancel</strong>: Let the agent cancel events through this tool (default: on)</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+At least one capability must be enabled.
+<h2>Agent Usage</h2>
+<h3>Creating an Event</h3>
+<pre><code class="language-">google_calendar_tool(summary="Consultation with Jane Doe", start="2026-07-22T10:00:00-07:00", end="2026-07-22T10:30:00-07:00", attendees=["jane@example.com"])
+</code></pre>
+<code>summary</code>, <code>start</code>, and <code>end</code> are required (RFC 3339 date/times).
+<h3>Listing Events / Checking Availability</h3>
+<pre><code class="language-">google_calendar_tool_list(time_min="2026-07-22T00:00:00-07:00", time_max="2026-07-22T23:59:59-07:00")
+</code></pre>
+<h3>Updating an Event</h3>
+<pre><code class="language-">google_calendar_tool_update(event_id="abc123", start="2026-07-22T11:00:00-07:00", end="2026-07-22T11:30:00-07:00")
+</code></pre>
+<h3>Cancelling an Event</h3>
+<pre><code class="language-">google_calendar_tool_cancel(event_id="abc123")
+</code></pre>
+<code>event_id</code> comes from a prior list or create call.
+<p>Common scenarios:
+<ul>
+<li>Booking an appointment directly on a real Google Calendar during the call</li>
+<li>Checking availability before offering a time slot</li>
+<li>Rescheduling or cancelling an existing meeting the caller mentions</li>
+</ul>
+<blockquote class="note">The tool fails closed if the configured Google account doesn't belong to your organization or is inactive — the agent receives a clear error and the conversation continues instead of failing the call.</blockquote></p><h2>Current setup and execution</h2><p>Google Calendar: configure google connection, calendar and allowed operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;check_availability&quot;,
+    &quot;date&quot;: &quot;2026-12-01&quot;
+  },
+  &quot;result&quot;: {
+    &quot;available_slots&quot;: [
+      &quot;10:00&quot;,
+      &quot;11:00&quot;
+    ]
+  }
+}</code></pre>

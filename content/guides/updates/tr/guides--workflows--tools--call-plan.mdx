@@ -1,0 +1,22 @@
+---
+path: "guides/workflows/tools/call-plan"
+title: "Liste ile Arama Planı"
+excerpt: "Liste ile Arama Planı aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 24
+---
+
+<p>Liste ile Arama Planı: yayımlanmış hedef akış, giden bağlantı ve kişi sınırı ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><h2>Yapılandırın</h2><ul><li>Araçlar → Yeni araç → Liste ile Arama Planı</li><li>Yayımlanmış hedef akış, giden bağlantı ve kişi sınırı</li><li>Kaydedin, ajana ekleyin ve yayımlamadan önce test edin.</li></ul><h2>Davranış ve sınırlar</h2><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li><li>Aktif yayımlanmış hedef akışı, giden bağlantıyı ve kişi sınırını seçin (1–500; varsayılan 100). Kişiler liste sırasıyla, birer birer aranır. Çağrı Planları ekranından izleyin, duraklatın ve devam ettirin. Geçersiz/yinelenen numaralar reddedilir; yeni araç planları başarısız çağrıları otomatik yeniden denemez.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;name&quot;: &quot;Follow up&quot;,
+    &quot;contacts&quot;: [
+      {
+        &quot;phone_number&quot;: &quot;+905551112233&quot;
+      }
+    ]
+  },
+  &quot;result&quot;: {
+    &quot;campaign_id&quot;: &quot;demo-plan&quot;,
+    &quot;contact_count&quot;: 1
+  }
+}</code></pre>

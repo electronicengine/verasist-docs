@@ -1,0 +1,49 @@
+---
+path: "guides/workflows/tools/wordpress-post"
+title: "WordPress Post"
+excerpt: "Configure WordPress Post and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 7
+---
+
+<p>The WordPress Post tool lets your AI agent publish and update blog posts, list existing posts and pages, and upload media — all on a connected WordPress site — during a live conversation.</p>
+<blockquote class="note">This tool acts through a WordPress site you've already connected under <strong>Channels → Blog</strong>. Connect the site first, then create the tool and point it at that site. See the <a href="/guides/integrations/channels/wordpress">WordPress integration guide</a> for setup.</blockquote>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>WordPress Site</strong> — the connected WordPress site this tool publishes to</li>
+<li><strong>Allow publishing posts</strong> — create new posts, with categories, tags, and a featured image (default: on)</li>
+<li><strong>Allow updating posts</strong> — edit existing posts by ID (default: on)</li>
+<li><strong>Allow listing content</strong> — list existing posts and pages (default: on)</li>
+<li><strong>Allow uploading media</strong> — attach a featured image and inline images to posts (default: on)</li>
+<li><strong>Default status</strong> — <code>draft</code>, <code>publish</code>, or <code>pending</code> — used when the agent doesn't specify one</li>
+<li><strong>Custom message</strong> — optional message played to the caller before the tool executes</li>
+</ul>
+<h2>How It Works</h2>
+<p>The site is fixed when you configure the tool — the LLM only supplies post content at call time. Verasist uses the site's own WordPress REST API (<code>/wp-json/wp/v2</code>), authenticated with HTTP Basic Auth (username + Application Password).</p>
+<blockquote class="note">WordPress's media endpoint requires actual file bytes — it cannot fetch an image from a URL server-side. When the agent attaches a photo, Verasist downloads it (up to 15 MB) and re-uploads it to the site's media library.</blockquote>
+<h2>Agent Usage</h2>
+<h3>Publish a post</h3>
+<pre><code class="language-">publish_post(title="Welcome!", content="<p>Hello world.</p>", status="draft", category_names=["News"])
+</code></pre>
+<h3>Update a post</h3>
+<pre><code class="language-">update_post(post_id=123, title="Updated title")
+</code></pre>
+<h3>List posts or pages</h3>
+<pre><code class="language-">list_posts()
+list_pages()
+</code></pre>
+<h3>Upload media</h3>
+<pre><code class="language-">upload_media(image_url="https://example.com/photo.jpg")
+</code></pre>
+<blockquote class="note">Function names are prefixed with your tool name — e.g. a tool named "blog" exposes <code>blog_publish_post</code>.</blockquote><h2>Current setup and execution</h2><p>WordPress Post: configure connected wordpress account and allowed publishing operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

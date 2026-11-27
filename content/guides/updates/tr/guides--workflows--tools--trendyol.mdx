@@ -1,0 +1,75 @@
+---
+path: "guides/workflows/tools/trendyol"
+title: "Trendyol"
+excerpt: "Trendyol aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 6
+---
+
+<p>Trendyol aracı, AI temsilcinizin Trendyol'da satıcı tarafındaki ortak görevleri (müşteri sorularını listeleme ve yanıtlama, sipariş durumunu kontrol etme ve iade edilen/talep edilen siparişleri inceleme) canlı bir görüşme sırasında gerçekleştirmesine olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Ayarlar → E-Ticaret</strong> altından bağladığınız Trendyol satıcı hesabı üzerinden çalışır. Önce hesabı bağlayın, ardından Trendyol aracını oluşturun ve o hesaba yönlendirin.</blockquote>
+<h2>Hesap Bağlama</h2>
+<ol>
+<li><strong>Ayarlar → E-Ticaret</strong>'e gidin ve <strong>Trendyol'a Bağlan</strong></li>'ı seçin
+<li><strong>Tedarikçi Kimliğinizi</strong>, <strong>API Anahtarınızı</strong> ve <strong>API Sırrınızı</strong> girin (Trendyol Satıcı Merkezi entegrasyon kimlik bilgilerinizden)</li>
+<li><strong>Ortam</strong>'ı seçin: <code>üretim</code> veya <code>aşama</code></li>
+<li>Web Kancası bildirimleri için hangi sipariş durumlarına abone olunacağını seçin (varsayılan olarak tümü): <code>CREATED</code>, <code>PICKING</code>, <code>FATURALANDIRILDI</code>, <code>GÖNDERİLDİ</code>, <code>İPTAL EDİLDİ</code>, <code>DELIVERED</code>, <code>ELIVERED</code>, <code>RETURNED</code>, <code>SUPPLIED</code>, <code>BEKLİYOR</code>, <code>PAKETLENMEDİ</code>, <code>AT_COLLECTION_POINT</code>, <code>DOĞRULANDI</code></li>
+<li>Verasist, Trendyol'a bir web kancası kaydettirerek sipariş durumu güncellemelerinin otomatik olarak gelmesini sağlar</li>
+</ol>
+<h2>Nasıl Çalışır</h2>
+<p>Hesap, aracı yapılandırdığınızda sabitlenir (<code>trendyol_config_id</code>) — LLM yalnızca arama sırasında soru/sipariş ayrıntılarını sağlar.</p>
+<ul>
+<li><strong>Sorular ve talepler</strong> (liste, ayrıntı, yanıt, talep listesi, sorun nedenleri, talep öğesi denetimleri), kayıtlı Tedarikçi Kimliğinizi/API Anahtarınızı/API Sırrınızı kullanarak Trendyol API'sini canlı olarak çağırın</li>
+<li><strong>Sipariş durumu</strong> canlı olarak <em>getirilmez</em>; Verasist'in söz konusu sipariş numarası için yerel olarak sakladığı en son web kancası etkinliğinden okunur. Bu, çağrı sırasında sipariş aramalarının anında yapılmasını sağlar, ancak durumun yalnızca Trendyol'un söz konusu sipariş için sunduğu son web kancası kadar güncel olduğu anlamına gelir</li>
+</ul>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Trendyol Hesabı</strong>: Bu aracın kullandığı bağlı satıcı hesabı</li>
+<li><strong>Soru Listesine İzin Ver</strong>: Temsilcinin müşteri sorularını listelemesine izin verin (varsayılan: açık)</li>
+<li><strong>Soru Ayrıntısını Almaya İzin Ver</strong>: Temsilcinin tek bir sorunun tüm ayrıntılarını getirmesine izin verin (varsayılan: açık)</li>
+<li><strong>Soruların Yanıtlanmasına İzin Ver</strong>: Temsilcinin bir soruya yanıt göndermesine izin verin (varsayılan: açık)</li>
+<li><strong>Sipariş Durumunu Kontrol Etmeye İzin Ver</strong>: Temsilcinin bir siparişin bilinen en son durumunu kontrol etmesine izin verin (varsayılan: açık)</li>
+<li><strong>Talep Listesine İzin Ver</strong>: Temsilcinin iade edilen/talep edilen siparişleri listelemesine izin verin (varsayılan: açık)</li>
+<li><strong>Talep Sorununun Nedenlerini Almaya İzin Ver</strong>: Temsilcinin, talep sorunu/reddedilme nedenlerinin genel listesini getirmesine izin verin (varsayılan: açık)</li>
+<li><strong>Talep Öğesi Denetimlerinin Alınmasına İzin Ver</strong>: Temsilcinin tek bir talep öğesinin durumunu/denetim geçmişini getirmesine izin verin (varsayılan: açık)</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+En az bir özelliğin etkinleştirilmesi gerekir.
+<h2>Aracı Kullanımı</h2>
+<h3>Müşteri Sorularını Listeleme</h3>
+<pre><code class="language-">trendyol_list_questions(status="WAITING_FOR_ANSWER", limit=10)
+</code></pre>
+<p>İsteğe bağlı filtreler: <code>durum</code> (<code>WAITING_FOR_ANSWER</code>, <code>ANSWERED</code>, <code>REJECTED</code>, <code>REPORTED</code>), <code>barkod</code>.</p>
+<h3>Soru Ayrıntısını Al</h3>
+<pre><code class="language-">trendyol_question_detail(question_id="123456")
+</code></pre>
+<h3>Bir Soruyu Yanıtlayın</h3>
+<pre><code class="language-">trendyol_answer_question(question_id="123456", answer_text=Siparişiniz onaylandıktan sonraki 24 saat içinde gönderilir.")
+</code></pre>
+<p>Cevap metni 10-2000 karakterden oluşmalıdır.</p><h3>Sipariş Durumunu Kontrol Edin</h3>
+<pre><code class="language-">trendyol_order_status(order_number="TY123456789")
+</code></pre>
+<h3>İadeleri/Talepleri Listele</h3>
+<pre><code class="language-">trendyol_list_claims(status="Oluşturuldu", limit=10)
+</code></pre>
+<h3>Hak Talebi Sorununun Nedenleri ve Denetimler</h3>
+<pre><code class="language-">trendyol_claim_issue_reasons()
+trendyol_claim_item_audits(claim_item_id = "789")
+</code></pre>
+<p>Genel senaryolar:
+<ul>
+<li>Bir müşteri, yanıtlanmamış sorularına henüz yanıt verilip verilmediğini sormak için arar</li>
+<li>Temsilci, rutin bir müşteri sorusunu doğrudan görüşme sırasında yanıtlar</li>
+<li>Arayan, siparişinin gönderilip gönderilmediğini öğrenmek istiyor</li>
+<li>İadenin neden reddedildiğini incelemek veya hak talebinin denetim izini kontrol etmek</li>
+</ul>
+<blockquote class="note">Yapılandırılan Trendyol hesabı kuruluşunuza ait değilse veya etkin değilse araç başarısız şekilde kapatılır; temsilci açık bir hata alır ve çağrıyı başarısız kılmak yerine görüşme devam eder.</blockquote></p></p><h2>Güncel kurulum ve çalışma</h2><p>Trendyol: satıcı bağlantısı ve ürün/sipariş/soru izinleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;lookup_order&quot;,
+    &quot;order_number&quot;: &quot;DEMO-42&quot;
+  },
+  &quot;result&quot;: {
+    &quot;order_status&quot;: &quot;preparing&quot;
+  }
+}</code></pre>

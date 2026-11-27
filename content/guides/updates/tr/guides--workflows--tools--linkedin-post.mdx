@@ -1,0 +1,43 @@
+---
+path: "guides/workflows/tools/linkedin-post"
+title: "LinkedIn Gönderisi"
+excerpt: "LinkedIn Gönderisi aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 3
+---
+
+<p>The LinkedIn Post araç lets your AI agent publish posts to a connected LinkedIn member profile — text, images, and videos — during a live conversation.</p>
+<blockquote class="note">This araç acts through a LinkedIn account you've already connected under <strong>Channels</strong>. Connect the account first, then create the araç and point it at that account. See the <a href="/guides/integrations/channels/linkedin">LinkedIn channel guide</a> for setup.</blockquote>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>LinkedIn Account</strong> — the connected LinkedIn member profile this araç publishes to</li>
+<li><strong>Allow publishing</strong> — let the agent publish text and image posts (default: on)</li>
+<li><strong>Allow video posts</strong> — let the agent publish video posts (default: on)</li>
+<li><strong>Custom message</strong> — optional message played to the caller before the araç executes</li>
+</ul>
+<h2>How It Works</h2>
+<p>The account is fixed when you configure the araç — the LLM only supplies post content at call time. Verasist uses LinkedIn's versioned REST API to upload any image/video and publish the post, returning the post permalink to the agent.</p>
+<blockquote class="note">LinkedIn access tokens expire roughly every 60 days. Verasist refreshes the token automatically and persists the new one, so long-running ajanlar keep working without re-authentication.</blockquote>
+<h2>Agent Usage</h2>
+<h3>Publish a text post</h3>
+<pre><code class="language-">publish_post(media_type="text", text="We just launched our new sesli ajan!")
+</code></pre>
+<h3>Publish an image post</h3>
+<pre><code class="language-">publish_post(media_type="image", image_url="https://example.com/photo.jpg", text="Behind the scenes")
+</code></pre>
+<h3>Publish a video post</h3>
+<pre><code class="language-">publish_post(media_type="video", video_url="https://example.com/video.mp4", text="Demo time")
+</code></pre>
+<p>Media can be a public HTTPS URL or an <code>attachment_uuid</code> from a previously generated/uploaded file.</p>
+<blockquote class="note">Function names are prefixed with your araç name — e.g. a araç named "li" exposes <code>li_publish_post</code>.</blockquote><h2>Güncel kurulum ve çalışma</h2><p>LinkedIn Gönderisi: bağlı linkedin hesabı ve izinli yayın işlemleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

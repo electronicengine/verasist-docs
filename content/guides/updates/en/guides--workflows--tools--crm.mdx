@@ -1,0 +1,135 @@
+---
+path: "guides/workflows/tools/crm"
+title: "CRM"
+excerpt: "Configure CRM and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 1
+---
+
+<p>The CRM tool lets your AI agent manage contacts in your organization's connected CRM — search for an existing contact, create a new one, update one, or list recent contacts — all during a live conversation.</p>
+<blockquote class="note">This tool acts through a CRM account you've already connected under <strong>Settings → CRM</strong>. Connect the account first, then create the CRM tool and point it at that account.</blockquote>
+<h2>Supported Providers</h2>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Auth Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HubSpot</strong></td>
+<td>OAuth 2.0</td>
+<td>Uses Verasist's platform HubSpot app by default — no client ID/secret needed from you</td>
+</tr>
+<tr>
+<td><strong>Microsoft Dynamics 365</strong></td>
+<td>OAuth 2.0</td>
+<td>Requires your Azure AD <strong>Tenant ID</strong> and Dynamics <strong>Instance URL</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Salesforce, Zoho CRM, and Pipedrive are listed as providers but are <strong>coming soon</strong>.</p>
+<h2>Connecting an Account</h2>
+<ol>
+<li>Go to <strong>Settings → CRM</strong> and choose <strong>Connect Account</strong></li>
+<li>Select a provider (HubSpot or Dynamics 365)</li>
+<li>For Dynamics 365, enter your <strong>Tenant ID</strong> and <strong>Instance URL</strong> (e.g. <code>https://yourorg.crm.dynamics.com</code>); HubSpot needs no extra fields</li>
+<li>Complete the OAuth consent flow in the popup/redirect</li>
+<li>The connected account appears in the CRM tool's account picker when you configure the tool</li>
+</ol>
+Verasist automatically refreshes the OAuth access token when it expires, so long-running agent sessions keep working without re-authentication.
+<h2>How It Works</h2>
+<p>The account is fixed when you configure the tool (<code>crm_config_id</code>) — the LLM only supplies contact details at call time. Verasist translates the standard contact fields the LLM works with into each provider's raw field names before calling the CRM:</p>
+<table>
+<thead>
+<tr>
+<th>Standard Field</th>
+<th>HubSpot Property</th>
+<th>Dynamics 365 (<code>contact</code>) Attribute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>first_name</code></td>
+<td><code>firstname</code></td>
+<td><code>firstname</code></td>
+</tr>
+<tr>
+<td><code>last_name</code></td>
+<td><code>lastname</code></td>
+<td><code>lastname</code></td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td><code>email</code></td>
+<td><code>emailaddress1</code></td>
+</tr>
+<tr>
+<td><code>phone</code></td>
+<td><code>phone</code></td>
+<td><code>telephone1</code></td>
+</tr>
+<tr>
+<td><code>company</code></td>
+<td><code>company</code></td>
+<td><em>(not mapped — requires a lookup field)</em></td>
+</tr>
+<tr>
+<td><code>job_title</code></td>
+<td><code>jobtitle</code></td>
+<td><code>jobtitle</code></td>
+</tr>
+<tr>
+<td><code>notes</code></td>
+<td><em>(not mapped)</em></td>
+<td><em>(not mapped)</em></td>
+</tr>
+</tbody>
+</table>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>CRM Account</strong>: The connected HubSpot or Dynamics 365 account this tool uses</li>
+<li><strong>Allow Search</strong>: Let the agent search for a contact by email or phone (default: on)</li>
+<li><strong>Allow Create</strong>: Let the agent create a new contact (default: on)</li>
+<li><strong>Allow Update</strong>: Let the agent update an existing contact (default: on)</li>
+<li><strong>Allow List</strong>: Let the agent list recent contacts (default: on)</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+At least one capability (search, create, update, or list) must be enabled.
+<h2>Agent Usage</h2>
+<h3>Search for a Contact</h3>
+<pre><code class="language-">crm_search_contact(email="jane@example.com")
+</code></pre>
+<h3>Create a Contact</h3>
+<pre><code class="language-">crm_create_contact(first_name="Jane", last_name="Doe", email="jane@example.com", phone="+14155552671", company="Acme Inc.")
+</code></pre>
+<h3>Update a Contact</h3>
+<pre><code class="language-">crm_update_contact(record_id="12345", phone="+14155552672")
+</code></pre>
+<code>record_id</code> comes from a prior search, create, or list call.
+<h3>List Recent Contacts</h3>
+<pre><code class="language-">crm_list_contacts(limit=10)
+</code></pre>
+<p>Common scenarios:
+<ul>
+<li>Checking whether a caller already exists in the CRM before creating a duplicate</li>
+<li>Logging a new lead captured during the call</li>
+<li>Updating a contact's phone number or job title after the caller confirms it</li>
+<li>Pulling up recently added contacts for a sales follow-up</li>
+</ul>
+<blockquote class="note">The tool fails closed if the configured CRM account doesn't belong to your organization, is inactive, or its OAuth token can't be refreshed — the agent receives a clear error and the conversation continues instead of failing the call.</blockquote></p><h2>Current setup and execution</h2><p>CRM: configure crm connection and enabled contact operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;search&quot;,
+    &quot;email&quot;: &quot;ada@example.invalid&quot;
+  },
+  &quot;result&quot;: {
+    &quot;contacts&quot;: [
+      {
+        &quot;name&quot;: &quot;Ada&quot;
+      }
+    ]
+  }
+}</code></pre>

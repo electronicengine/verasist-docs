@@ -1,0 +1,47 @@
+---
+path: "guides/workflows/tools/web-page-query"
+title: "Web Arama"
+excerpt: "Web Arama aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 11
+---
+
+<p>Web Sayfası Sorgulama aracı, yapay zeka aracınızın bir veya daha fazla genel web sayfasını getirmesine ve canlı bir görüşme sırasında temiz, okunabilir metinler (makale gövdesi, ürün kataloğu listeleri veya genel sayfa içeriği) çıkarmasına olanak tanır.</p>
+<h2>Nasıl Çalışır</h2>
+<ol>
+<li><strong>Getir</strong>: Verasist, sayfaları HTTP(S) üzerinden talep ederek bir yanıt boyutu sınırı ve zaman aşımı uygular</li>
+<li><strong>Ayıkla</strong>: Genel metin (gezinme, alt bilgiler, komut dosyaları) çıkarılır ve okunabilir içerik çıkarılır; önce makale ayıklama, ardından yapılandırılmış bir JSON-LD katalog ayrıştırıcı ve ardından genel bir HTML metni geri dönüşü kullanılarak</li>
+<li><strong>Geri Gönder</strong>: Temizlenen metin (en fazla 100.000 karakter), özetlemek veya soruları yanıtlamak için temsilciye geri gönderilir</li>
+</ol>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Sabit URL</strong> <em>(isteğe bağlı)</em>: Aracı tek bir genel URL'ye sabitleyin. Ayarlanırsa aracının aracı çağırırken bir URL sağlamasına gerek yoktur. Boş bırakılırsa aracının bir veya daha fazla URL'yi kendisi sağlaması gerekir</li>
+<li><strong>Maksimum Sonuç</strong>: Temsilcinin tek bir aramada getirebileceği maksimum sayfa sayısı (1-50, varsayılan 10)</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+<h2>Aracı Kullanımı</h2>
+<p>Sabit bir URL yapılandırılmamışsa aracı, getirilecek URL'leri sağlar:</p>
+<pre><code class="language-">web_page_query(urls=["https://example.com/faq"])
+</code></pre>
+<p>Birden fazla URL, yapılandırılan maksimum değere kadar paralel olarak getirilir:</p>
+<pre><code class="language-">web_page_query(urls=["https://example.com/products/1", "https://example.com/products/2"], max_results=2)
+</code></pre>
+<p>Sabit bir URL yapılandırılmışsa aracı, aracı bağımsız değişken olmadan arayabilir ve bu URL'yi otomatik olarak getirir.</p>
+<p>Genel senaryolar:
+<ul>
+<li>Arayanın sorusunu yanıtlamak için genel bir SSS veya politika sayfasını okumak</li>
+<li>Genel katalog sayfasından mevcut fiyatları veya ürün listelerini kontrol etme</li>
+<li>En son içeriği bir durum veya duyuru sayfasından alma</li>
+</ul>
+<blockquote class="note">Yalnızca genel <code>http(s)</code> URL'leri desteklenir; bu araç, kimliği doğrulanmış sayfalara, dahili sistemlere veya API'lere erişemez. Kimliği doğrulanmış bir API'yi çağırmak için bunun yerine bir <a href="/guides/iş akışları/araçlar/http-api">HTTP API</a> aracını kullanın.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Web Arama: arama sağlayıcısı, model ve kaynak seçenekleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;query&quot;: &quot;shipping policy&quot;
+  },
+  &quot;result&quot;: {
+    &quot;answer&quot;: &quot;Policy summary&quot;,
+    &quot;sources&quot;: [
+      &quot;https://example.invalid/policy&quot;
+    ]
+  }
+}</code></pre>

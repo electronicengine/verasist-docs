@@ -1,0 +1,21 @@
+---
+path: "guides/workflows/tools/searxncrawl-search"
+title: "Websearch (searxNcrawl)"
+excerpt: "Configure Websearch (searxNcrawl) and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 29
+---
+
+<p>Websearch (searxNcrawl): configure fast/basic/detailed mode and result limit, attach the saved tool to an agent, and test its operation in a workflow.</p><h2>Configure</h2><ul><li>Tools → New tool → Websearch (searxNcrawl)</li><li>fast/basic/detailed mode and result limit</li><li>Save, attach to the agent and test before publishing.</li></ul><h2>Behavior and limits</h2><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li><li>Service availability and usage charges depend on your hosted service configuration. If unavailable, contact your service administrator; no server environment changes are required in this customer guide.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;query&quot;: &quot;Example store hours&quot;
+  },
+  &quot;result&quot;: {
+    &quot;results&quot;: [
+      {
+        &quot;url&quot;: &quot;https://example.invalid/hours&quot;,
+        &quot;title&quot;: &quot;Hours&quot;
+      }
+    ]
+  }
+}</code></pre>

@@ -1,0 +1,40 @@
+---
+path: "guides/workflows/tools/tiktok-post"
+title: "TikTok Post"
+excerpt: "Configure TikTok Post and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 4
+---
+
+<p>The TikTok Post tool lets your AI agent publish videos to a connected TikTok creator account during a live conversation.</p>
+<blockquote class="note">This tool acts through a TikTok account you've already connected under <strong>Channels</strong>. Connect the account first, then create the tool and point it at that account. See the <a href="/guides/integrations/channels/tiktok">TikTok channel guide</a> for setup.</blockquote>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>TikTok Account</strong> — the connected TikTok creator account this tool publishes to</li>
+<li><strong>Allow publishing</strong> — let the agent publish videos (default: on)</li>
+<li><strong>Privacy level</strong> — who can view the published video:</li>
+</ul>  - <strong>Only you</strong> (<code>SELF_ONLY</code>, default) — visible only to the creator
+  - <strong>Mutual followers</strong> (<code>MUTUAL_FOLLOW_FRIENDS</code>)
+  - <strong>Everyone</strong> (<code>PUBLIC_TO_EVERYONE</code>)
+<ul>
+<li><strong>Custom message</strong> — optional message played to the caller before the tool executes</li>
+</ul>
+<blockquote class="note">Unaudited TikTok apps are forced to <code>SELF_ONLY</code>. Pass TikTok's app review to use <code>PUBLIC_TO_EVERYONE</code>.</blockquote>
+<h2>How It Works</h2>
+<p>The account is fixed when you configure the tool — the LLM only supplies the video and title at call time. Verasist uses TikTok's Content Posting API (Direct Post) to upload the video and poll until the platform finishes processing.</p>
+<h2>Agent Usage</h2>
+<pre><code class="language-">publish_video(title="Our new voice assistant in action", video_url="https://example.com/video.mp4")
+</code></pre>
+<p>The video can be a public HTTPS URL or an <code>attachment_uuid</code> from a previously generated/uploaded file.</p>
+<blockquote class="note">TikTok access tokens expire roughly every 24 hours. Verasist refreshes the token automatically and persists the new one.</blockquote><h2>Current setup and execution</h2><p>TikTok Post: configure connected tiktok account and allowed publishing operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

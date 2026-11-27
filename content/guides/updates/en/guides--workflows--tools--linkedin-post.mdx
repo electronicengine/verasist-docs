@@ -1,0 +1,43 @@
+---
+path: "guides/workflows/tools/linkedin-post"
+title: "LinkedIn Post"
+excerpt: "Configure LinkedIn Post and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 3
+---
+
+<p>The LinkedIn Post tool lets your AI agent publish posts to a connected LinkedIn member profile — text, images, and videos — during a live conversation.</p>
+<blockquote class="note">This tool acts through a LinkedIn account you've already connected under <strong>Channels</strong>. Connect the account first, then create the tool and point it at that account. See the <a href="/guides/integrations/channels/linkedin">LinkedIn channel guide</a> for setup.</blockquote>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>LinkedIn Account</strong> — the connected LinkedIn member profile this tool publishes to</li>
+<li><strong>Allow publishing</strong> — let the agent publish text and image posts (default: on)</li>
+<li><strong>Allow video posts</strong> — let the agent publish video posts (default: on)</li>
+<li><strong>Custom message</strong> — optional message played to the caller before the tool executes</li>
+</ul>
+<h2>How It Works</h2>
+<p>The account is fixed when you configure the tool — the LLM only supplies post content at call time. Verasist uses LinkedIn's versioned REST API to upload any image/video and publish the post, returning the post permalink to the agent.</p>
+<blockquote class="note">LinkedIn access tokens expire roughly every 60 days. Verasist refreshes the token automatically and persists the new one, so long-running agents keep working without re-authentication.</blockquote>
+<h2>Agent Usage</h2>
+<h3>Publish a text post</h3>
+<pre><code class="language-">publish_post(media_type="text", text="We just launched our new voice agent!")
+</code></pre>
+<h3>Publish an image post</h3>
+<pre><code class="language-">publish_post(media_type="image", image_url="https://example.com/photo.jpg", text="Behind the scenes")
+</code></pre>
+<h3>Publish a video post</h3>
+<pre><code class="language-">publish_post(media_type="video", video_url="https://example.com/video.mp4", text="Demo time")
+</code></pre>
+<p>Media can be a public HTTPS URL or an <code>attachment_uuid</code> from a previously generated/uploaded file.</p>
+<blockquote class="note">Function names are prefixed with your tool name — e.g. a tool named "li" exposes <code>li_publish_post</code>.</blockquote><h2>Current setup and execution</h2><p>LinkedIn Post: configure connected linkedin account and allowed publishing operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

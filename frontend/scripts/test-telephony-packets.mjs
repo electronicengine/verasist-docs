@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || '@playwright/test');
+const base=process.env.DOCS_LAB_TEST_URL || 'http://localhost:7317';
+const browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader']});
+try {
+  for(const lang of ['tr','en']) for(const theme of ['light','dark']) {
+    const context=await browser.newContext({viewport:{width:1440,height:1000},locale:lang==='tr'?'tr-TR':'en-US',reducedMotion:'reduce'});
+    await context.addInitScript(({lang,theme})=>{localStorage.setItem('dokuman_lang',lang);localStorage.setItem('dokuman_theme',theme);},{lang,theme});
+    if(process.env.DOCS_LAB_REAL_API!=='1') await context.route('**/api/**',r=>{const path=new URL(r.request().url()).pathname.split('/documents/by-path/')[1];return r.fulfill({json:path?{id:path,path,title:'Telephony',content:'<h2>Setup</h2><p>Connection guide.</p>'}:[]})});
+    const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+    const open=async()=>{await page.getByRole('button',{name:lang==='en'?'Details':'Ayrıntı',exact:true}).click();await page.getByTestId('packet-stack').waitFor()};
+    const close=async()=>{await page.getByRole('button',{name:lang==='en'?'Close details':'Ayrıntıyı kapat',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'})};
+    const step=async i=>{await page.locator('.story-timeline button').nth(i).click();await page.waitForFunction(i=>Number(document.querySelector('[data-testid="story-canvas"]').dataset.step)===i,i)};
+    const field=name=>page.locator('.packet-field').filter({has:page.locator(`button .packet-field-name`,{hasText:name})}).first();
+    await page.goto(base+'/ogren/telefon-santrali?senaryo=pbx&lang='+lang);
+    await page.waitForFunction(()=>document.querySelectorAll('.story-node-labels button').length===8);
+    const device=page.locator('.story-node-labels [aria-label="'+(lang==='en'?'Office PBX':'Kurum santrali')+'"]');
+    const small=await device.evaluate(e=>parseFloat(getComputedStyle(e).fontSize));assert.ok(small<=7);
+    await device.hover();assert.ok(await device.evaluate(e=>parseFloat(getComputedStyle(e).fontSize))>small);
+    assert.ok(await device.locator('.story-label-full').isVisible());
+    const box=await device.boundingBox();assert.ok(box.x>=0&&box.x+box.width<=1440);
+    await page.mouse.move(5,5);assert.equal(await device.locator('.story-label-full').isVisible(),false);
+    const rest=await device.boundingBox();
+    assert.ok(await device.evaluate(e=>getComputedStyle(e).backgroundColor.includes('0.25')));
+    assert.ok(await device.evaluate(e=>Math.abs(new DOMMatrix(getComputedStyle(e).transform).f+e.getBoundingClientRect().height/2)<1));
+    await page.mouse.move(rest.x+rest.width+8,rest.y+rest.height/2);
+    await device.locator('.story-label-full').waitFor({state:'visible'});
+    await page.mouse.move(5,5);
+
+    await step(1);await open();
+    assert.equal(await page.getByRole('dialog').locator('pre').count(),0);
+    assert.equal(await page.locator('.packet-layer[data-layer="sdp"]').count(),1);
+    const seq=page.locator('.packet-field[data-field="CSeq"] button');await seq.click();
+    assert.equal(await seq.getAttribute('aria-expanded'),'true');
+    assert.match(await page.locator('.packet-field-explanation').textContent(),/INVITE/);
+    await page.locator('.packet-field[data-field="Call-ID"] button').focus();await page.keyboard.press('Enter');
+    assert.equal(await seq.getAttribute('aria-expanded'),'false');
+    assert.match(await page.locator('.packet-field-explanation').textContent(),/B2BUA/);
+    await page.locator('.packet-field[data-field="m="] button').click();
+    assert.match(await page.locator('.packet-field-explanation').textContent(),/10000/);
+    if(lang==='en') assert.doesNotMatch(await page.getByRole('dialog').textContent(),/[çğıöşüÇĞİÖŞÜ]/);
+    await page.screenshot({path:`/tmp/telephony-packet-sip-${lang}-${theme}.png`});await close();
+    await page.getByRole('tab').nth(1).click();await page.getByRole('combobox').selectOption('phones');await step(2);await open();
+    assert.equal(await page.locator('.packet-layer[data-layer="sip-auth"]').count(),1);
+    await page.locator('.packet-field[data-field="nonce"] button').click();assert.ok((await page.locator('.packet-field-explanation').textContent()).length>70);
+    await close();
+    await page.getByRole('tab').last().click();await step(10);await open();
+    assert.equal(await page.getByTestId('packet-stack').getAttribute('data-kind'),'rtp');
+    await page.locator('.packet-field[data-field="Timestamp"] button').click();assert.match(await page.locator('.packet-field-explanation').textContent(),/160/);await close();
+    await step(11);await open();assert.equal(await page.getByTestId('packet-stack').getAttribute('data-kind'),'websocket');assert.equal(await page.locator('[data-layer="rtp-header"]').count(),0);
+    await page.locator('.packet-field-button').first().click();await page.screenshot({path:`/tmp/telephony-packet-ws-${lang}-${theme}.png`});await close();
+    await page.getByRole('tab').nth(3).click();
+    await page.getByRole('button',{name:lang==='en'?/The transfer result is reported to staff/:/Aktarım sonucu personele bildirilir/}).click();await open();
+    await page.locator('[data-layer="sipfrag"] button').click();assert.match(await page.locator('.packet-field-explanation').textContent(),/NOTIFY/);await close();
+    await page.setViewportSize({width:390,height:844});await page.getByRole('tab').nth(0).click();await step(1);await open();
+    await page.locator('.packet-field[data-field="Via"] button').click();
+    assert.equal(await page.getByRole('dialog').evaluate(e=>e.scrollWidth>e.clientWidth),false);
+    await page.screenshot({path:`/tmp/telephony-packet-mobile-${lang}-${theme}.png`});await close();
+    assert.deepEqual(errors,[]);await context.close();
+    console.log('PASS',lang,theme,'SIP/SDP/auth/RTP/raw WebSocket/SIPfrag blocks, field explanations, keyboard controls, compact hover labels and mobile drawer');
+  }
+} finally {await browser.close();}

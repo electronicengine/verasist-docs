@@ -1,0 +1,22 @@
+---
+path: "guides/workflows/tools/database"
+title: "Database"
+excerpt: "Configure Database and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 22
+---
+
+<p>Database: configure table, columns and allowed record operations, attach the saved tool to an agent, and test its operation in a workflow.</p><h2>Configure</h2><ul><li>Tools → New tool → Database</li><li>Table, columns and allowed record operations</li><li>Save, attach to the agent and test before publishing.</li></ul><h2>Behavior and limits</h2><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li><li>Define table columns and allowed record operations in the tool workspace. This is a shared record store for assistants in your organization, not arbitrary SQL access to the platform database.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;lookup&quot;,
+    &quot;email&quot;: &quot;ada@example.invalid&quot;
+  },
+  &quot;result&quot;: {
+    &quot;records&quot;: [
+      {
+        &quot;name&quot;: &quot;Ada&quot;,
+        &quot;status&quot;: &quot;active&quot;
+      }
+    ]
+  }
+}</code></pre>

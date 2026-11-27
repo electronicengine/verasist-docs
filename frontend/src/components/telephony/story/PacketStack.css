@@ -1,0 +1,37 @@
+.packet-stack { margin: 12px 0 20px; }
+.packet-stack-intro { display: flex; align-items: flex-start; gap: 9px; color: hsl(var(--muted-foreground)); margin-bottom: 16px; }
+.packet-stack-intro > svg { flex: 0 0 auto; margin-top: 2px; color: hsl(var(--primary)); }
+.packet-stack-intro p { font-size: 12px; line-height: 1.6; }
+.packet-stack-layers { display: grid; gap: 12px; }
+.packet-layer { --packet-tone: #476bd6; border: 1px solid hsl(var(--border)); border-left: 4px solid var(--packet-tone); border-radius: 8px; background: hsl(var(--surface)); min-width: 0; }
+.packet-layer[data-tone="violet"] { --packet-tone: #9363cc; }
+.packet-layer[data-tone="amber"] { --packet-tone: #b87918; }
+.packet-layer[data-tone="teal"] { --packet-tone: #17856e; }
+.packet-layer[data-tone="neutral"] { --packet-tone: #75829b; }
+.dark .packet-layer[data-tone="blue"] { --packet-tone: #85a7f3; }
+.dark .packet-layer[data-tone="violet"] { --packet-tone: #bd9bea; }
+.dark .packet-layer[data-tone="amber"] { --packet-tone: #e5b368; }
+.dark .packet-layer[data-tone="teal"] { --packet-tone: #6bd2b6; }
+.packet-layer-header { display: flex; gap: 9px; align-items: center; padding: 10px 12px; background: color-mix(in srgb,var(--packet-tone) 9%,hsl(var(--surface))); border-bottom: 1px solid hsl(var(--border)); border-radius: 4px 7px 0 0; }
+.packet-layer-header h4 { font-family: 'Outfit',system-ui,sans-serif; font-size: 13px; line-height: 1.4; font-weight: 600; color: hsl(var(--foreground)); margin: 0; }
+.packet-layer-index { display: grid; place-items: center; min-width: 21px; height: 21px; font-size: 10px; font-weight: 600; color: var(--packet-tone); border: 1px solid color-mix(in srgb,var(--packet-tone) 45%,transparent); border-radius: 5px; }
+.packet-layer-count { margin-left: auto; color: hsl(var(--muted-foreground)); font-size: 11px; }
+.packet-layer-fields { padding: 3px 10px; }
+.packet-field + .packet-field { border-top: 1px solid hsl(var(--border) / .65); }
+.packet-field-button { width: 100%; min-width: 0; display: grid; grid-template-columns: minmax(80px,.8fr) minmax(0,1.5fr) auto; gap: 7px; align-items: start; text-align: left; padding: 11px 0; cursor: pointer; border-radius: 3px; }
+.packet-field-button:hover, .packet-field[data-open="true"] > .packet-field-button { background: hsl(var(--accent) / .5); }
+.packet-field-name { font-size: 11px; font-weight: 500; line-height: 1.6; color: hsl(var(--muted-foreground)); overflow-wrap: anywhere; }
+.packet-field-button code { font-size: 11px; line-height: 1.6; color: hsl(var(--foreground)); overflow-wrap: anywhere; white-space: pre-wrap; min-width: 0; }
+.packet-field-action { display: flex; align-items: center; gap: 7px; color: hsl(var(--muted-foreground)); padding-top: 3px; }
+.packet-field-action > span { white-space: nowrap; font-size: 9px; }
+.packet-field[data-open="true"] .packet-field-action > svg { transform: rotate(180deg); }
+.packet-field-explanation { background: color-mix(in srgb,var(--packet-tone) 7%,hsl(var(--background))); border-left: 2px solid var(--packet-tone); padding: 12px; margin: 0 0 10px; border-radius: 4px; }
+.packet-field-explanation > strong { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: hsl(var(--foreground)); }
+.packet-field-explanation p { font-size: 12px; line-height: 1.7; color: hsl(var(--muted-foreground)); margin-top: 6px; }
+.packet-field-explanation a { display: inline-block; margin-top: 8px; font-size: 11px; }
+.packet-empty { border: 1px dashed hsl(var(--border)); padding: 12px; border-radius: 6px; margin-top: 12px; }
+.packet-empty strong { font-size: 12px; font-weight: 500; }
+.packet-empty p, .packet-stack-scope { font-size: 11px; line-height: 1.7; color: hsl(var(--muted-foreground)); margin-top: 6px; }
+.packet-stack-scope { margin-top: 12px; }
+.packet-field-button:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
+@media(max-width:440px) { .packet-field-button { grid-template-columns: minmax(62px,.7fr) minmax(0,1.3fr) auto; gap: 5px; } .packet-layer-fields { padding-inline: 8px; } .packet-field-action > span { display: none; } }

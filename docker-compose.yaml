@@ -36,7 +36,7 @@ services:
         aliases: [verasist-docs-backend]
 
   frontend:
-    image: "${DOCS_FRONTEND_IMAGE:-local/verasist-docs-frontend:agent-terminology-20261119}"
+    image: "${DOCS_FRONTEND_IMAGE:-local/verasist-docs-frontend:lab-fxo-three-analog-20261127}"
     pull_policy: never
     build:
       context: .

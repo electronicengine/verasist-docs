@@ -1,0 +1,9 @@
+---
+path: "guides/planning/call-transfers"
+title: "Call Transfer and Post-transfer Tracking"
+excerpt: "Successful handoff, failure recovery and optional human-conversation processing."
+reference: "guides/planning/workflow-runs"
+order: 10
+---
+
+<p>Successful handoff, failure recovery and optional human-conversation processing.</p><h2>Transfer scenarios</h2><ul><li>AI may greet first or receive the call from the office PBX. Transfer needs an allowed SIP destination or a separate staff number.</li><li>If the carrier cannot route SIP externally, forwarding to a separate Verasist phone number may be an alternative; verify the service/plan conditions.</li><li>Do not transfer back to the main number if it routes to the same AI agent.</li></ul><h2>Outcome and optional processing</h2><ul><li>On answer, customer and representative are connected and AI stops speaking. If busy or unanswered, the agent can recover.</li><li>Compatible SIP/ARI calls can transcribe caller and representative separately after transfer.</li><li>Post-transfer extraction requires STT; configure fields and instructions in the Call Transfer tool.</li><li>Do not interpret ongoing human-call processing as the AI continuing to answer.</li></ul><p><a href="/guides/workflows/tools/call-transfer">Call Transfer settings</a> · <a href="/guides/planning/workflow-runs">Workflow runs</a></p>

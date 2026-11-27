@@ -1,0 +1,49 @@
+---
+path: "guides/workflows/tools/wordpress-post"
+title: "WordPress Gönderisi"
+excerpt: "WordPress Gönderisi aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 7
+---
+
+<p>WordPress Gönderi aracı, canlı bir görüşme sırasında yapay zeka aracınızın blog gönderilerini yayınlamasına ve güncellemesine, mevcut gönderileri ve sayfaları listelemesine ve medya yüklemesine (hepsi bağlı bir WordPress sitesine) olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Kanallar → Blog</strong> altından zaten bağladığınız bir WordPress sitesi aracılığıyla çalışır. Önce siteyi bağlayın, ardından aracı oluşturun ve o siteye yönlendirin. Kurulum için <a href="/guides/integrations/channels/wordpress">WordPress entegrasyon kılavuzuna</a> bakın.</blockquote>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>WordPress Sitesi</strong> — bu aracın yayınladığı bağlı WordPress sitesi</li>
+<li><strong>Yayınların yayınlanmasına izin ver</strong> — Kategoriler, etiketler ve öne çıkan görsellerle yeni gönderiler oluşturun (varsayılan: açık)</li>
+<li><strong>Yayınların güncellenmesine izin ver</strong> — mevcut gönderileri kimliğe göre düzenleyin (varsayılan: açık)</li>
+<li><strong>İçeriğin listelenmesine izin ver</strong> — mevcut gönderileri ve sayfaları listeleyin (varsayılan: açık)</li>
+<li><strong>Medya yüklemeye izin ver</strong> — gönderilere öne çıkan bir görsel ve satır içi görseller ekleyin (varsayılan: açık)</li>
+<li><strong>Varsayılan durum</strong> — <code>taslak</code>, <code>yayınlama</code> veya <code>beklemede</code> — aracı bir tane belirtmediğinde kullanılır</li>
+<li><strong>Özel mesaj</strong> — araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+<h2>Nasıl Çalışır</h2>
+<p>Site, aracı yapılandırdığınızda sabitlenir; LLM yalnızca çağrı sırasında gönderi içeriği sağlar. Verasist, sitenin kendi WordPress REST API'sini (<code>/wp-json/wp/v2</code>) kullanır ve HTTP Temel Kimlik Doğrulaması (kullanıcı adı + Uygulama Şifresi) ile doğrulanır.</p>
+<blockquote class="note">WordPress'in medya uç noktası gerçek dosya baytlarını gerektirir; sunucu tarafındaki bir URL'den resim getiremez. Temsilci bir fotoğraf eklediğinde Verasist onu (15 MB'a kadar) indirir ve sitenin medya kitaplığına yeniden yükler.</blockquote>
+<h2>Aracı Kullanımı</h2>
+<h3>Bir yayın yayınlayın</h3>
+<pre><code class = "language-">publish_post(title = "Hoş Geldiniz!", content = "<p>Merhaba dünya.</p>", status = "taslak",categor_names=["Haberler"])
+</code></pre>
+<h3>Bir yayını güncelleme</h3>
+<pre><code class="language-">update_post(post_id=123, title="Güncellenen başlık")
+</code></pre>
+<h3>Yayınları veya sayfaları listeleme</h3>
+<pre><code class="language-">list_posts()
+list_pages()
+</code></pre>
+<h3>Medya yükle</h3>
+<pre><code class="language-">upload_media(image_url="https://example.com/photo.jpg")
+</code></pre>
+<blockquote class="note">İşlev adlarının önüne araç adı gelir — ör. "blog" adlı bir araç <code>blog_publish_post</code>'u ortaya çıkarır.</blockquote><h2>Güncel kurulum ve çalışma</h2><p>WordPress Gönderisi: bağlı wordpress hesabı ve izinli yayın işlemleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

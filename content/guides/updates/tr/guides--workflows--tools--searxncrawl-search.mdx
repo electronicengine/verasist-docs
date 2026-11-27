@@ -1,0 +1,21 @@
+---
+path: "guides/workflows/tools/searxncrawl-search"
+title: "Websearch (searxNcrawl)"
+excerpt: "Websearch (searxNcrawl) aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 29
+---
+
+<p>Websearch (searxNcrawl): fast/basic/detailed modu ve sonuç sınırı ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><h2>Yapılandırın</h2><ul><li>Araçlar → Yeni araç → Websearch (searxNcrawl)</li><li>fast/basic/detailed modu ve sonuç sınırı</li><li>Kaydedin, ajana ekleyin ve yayımlamadan önce test edin.</li></ul><h2>Davranış ve sınırlar</h2><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li><li>Servis kullanılabilirliği ve kullanım ücretleri barındırılan hizmet yapılandırmasına bağlıdır. Kullanılamıyorsa hizmet yöneticinize başvurun; bu müşteri rehberi sunucu ortam değişkeni kurulumu gerektirmez.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;query&quot;: &quot;Example store hours&quot;
+  },
+  &quot;result&quot;: {
+    &quot;results&quot;: [
+      {
+        &quot;url&quot;: &quot;https://example.invalid/hours&quot;,
+        &quot;title&quot;: &quot;Hours&quot;
+      }
+    ]
+  }
+}</code></pre>

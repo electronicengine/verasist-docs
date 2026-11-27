@@ -1,0 +1,134 @@
+---
+path: "guides/workflows/tools/crm"
+title: "CRM"
+excerpt: "CRM aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 1
+---
+
+<p>CRM aracı, yapay zeka aracınızın kuruluşunuzun bağlı CRM'sindeki kişileri yönetmesine (mevcut bir kişiyi aramanıza, yeni bir kişi oluşturmanıza, güncellemenize veya son kişileri listelemenize) olanak tanır ve bunların tümünü canlı bir görüşme sırasında gerçekleştirir.</p>
+<blockquote class="note">Bu araç, <strong>Ayarlar → CRM</strong> altında zaten bağladığınız bir CRM hesabı aracılığıyla çalışır. Önce hesabı bağlayın, ardından CRM aracını oluşturun ve onu o hesaba yönlendirin.</blockquote>
+<h2>Desteklenen Sağlayıcılar</h2>
+<tablo>
+<thead>
+<tr>
+<th>Sağlayıcı</th>
+<th>Kimlik Doğrulama Türü</th>
+<th>Notlar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HubSpot</strong></td>
+<td>OAuth 2.0</td>
+<td>Varsayılan olarak Verasist'in HubSpot platformu uygulamasını kullanır; sizden müşteri kimliği/sırrı gerekmez</td>
+</tr>
+<tr>
+<td><strong>Microsoft Dynamics 365</strong></td>
+<td>OAuth 2.0</td>
+<td>Azure AD <strong>Kiracı Kimliğinizi</strong> ve Dynamics <strong>Örnek URL'nizi</strong></td> gerektirir
+</tr>
+</tbody>
+</table>
+<p>Salesforce, Zoho CRM ve Pipedrive sağlayıcılar olarak listelenmiştir ancak <strong>yakında kullanıma sunulacaktır</strong>.</p>
+<h2>Hesap Bağlama</h2>
+<ol>
+<li><strong>Ayarlar → CRM</strong>'ye gidin ve <strong>Hesabı Bağla</strong></li>'yı seçin
+<li>Bir sağlayıcı seçin (HubSpot veya Dynamics 365)</li>
+<li>Dynamics 365 için <strong>Kiracı Kimliğinizi</strong> ve <strong>Örnek URL'nizi</strong> girin (ör. <code>https://yourorg.crm.dynamics.com</code>); HubSpot'un ekstra alana ihtiyacı yoktur</li>
+<li>Açılır pencerede/yönlendirmede OAuth izin akışını tamamlayın</li>
+<li>Bağlı hesap, aracı yapılandırdığınızda CRM aracının hesap seçicisinde görünür</li>
+</ol>
+Verasist, süresi dolduğunda OAuth erişim belirtecini otomatik olarak yeniler, böylece uzun süren temsilci oturumları yeniden kimlik doğrulama gerekmeden çalışmaya devam eder.
+<h2>Nasıl Çalışır</h2>
+<p>Hesap, aracı yapılandırdığınızda sabitlenir (<code>crm_config_id</code>) — LLM yalnızca arama sırasında iletişim ayrıntılarını sağlar. Verasist, LLM'nin birlikte çalıştığı standart iletişim alanlarını, CRM'yi çağırmadan önce her sağlayıcının ham alan adlarına çevirir:</p><tablo>
+<thead>
+<tr>
+<th>Standart Alan</th>
+<th>HubSpot Özelliği</th>
+<th>Dynamics 365 (<code>iletişim</code>) Özelliği</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ad_ad</code></td>
+<td><code>ad</code></td>
+<td><code>ad</code></td>
+</tr>
+<tr>
+<td><code>soyadı</code></td>
+<td><code>soyadı</code></td>
+<td><code>soyadı</code></td>
+</tr>
+<tr>
+<td><code>e-posta</code></td>
+<td><code>e-posta</code></td>
+<td><code>e-posta adresi1</code></td>
+</tr>
+<tr>
+<td><code>telefon</code></td>
+<td><code>telefon</code></td>
+<td><code>telefon1</code></td>
+</tr>
+<tr>
+<td><code>şirket</code></td>
+<td><code>şirket</code></td>
+<td><em>(eşlenmemiş — bir arama alanı gerektirir)</em></td>
+</tr>
+<tr>
+<td><code>iş_başlığı</code></td>
+<td><code>iş unvanı</code></td>
+<td><code>iş unvanı</code></td>
+</tr>
+<tr>
+<td><code>notlar</code></td>
+<td><em>(eşlenmemiş)</em></td>
+<td><em>(eşlenmemiş)</em></td>
+</tr>
+</tbody>
+</table>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>CRM Hesabı</strong>: Bu aracın kullandığı bağlı HubSpot veya Dynamics 365 hesabı</li>
+<li><strong>Aramaya İzin Ver</strong>: Temsilcinin e-posta veya telefon yoluyla bir kişiyi aramasına izin verin (varsayılan: açık)</li>
+<li><strong>Oluşturmaya İzin Ver</strong>: Temsilcinin yeni bir kişi oluşturmasına izin verin (varsayılan: açık)</li>
+<li><strong>Güncellemeye İzin Ver</strong>: Temsilcinin mevcut bir kişiyi güncellemesine izin verin (varsayılan: açık)</li>
+<li><strong>İzin Verilenler Listesi</strong>: Temsilcinin son kişileri listelemesine izin verin (varsayılan: açık)</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+En az bir özelliğin (arama, oluşturma, güncelleme veya listeleme) etkinleştirilmesi gerekir.
+<h2>Aracı Kullanımı</h2>
+<h3>Kişi Arama</h3>
+<pre><code class = "language-">crm_search_contact(email = "jane@example.com")
+</code></pre>
+<h3>Bir Kişi Oluşturun</h3>
+<pre><code class = "language-">crm_create_contact(first_name = "Jane", last_name = "Doe", email = "jane@example.com", telefon = "+14155552671", şirket = "Acme Inc.")
+</code></pre>
+<h3>Bir Kişiyi Güncelleme</h3>
+<pre><code class = "language-">crm_update_contact(record_id = "12345", telefon = "+14155552672")
+</code></pre>
+<code>record_id</code> önceki bir arama, oluşturma veya liste çağrısından gelir.
+<h3>Son Kişileri Listele</h3>
+<pre><code class="language-">crm_list_contacts(limit=10)
+</code></pre>
+<p>Genel senaryolar:
+<ul>
+<li>Bir kopya oluşturmadan önce arayanın CRM'de zaten mevcut olup olmadığını kontrol etme</li>
+<li>Görüşme sırasında yakalanan yeni bir potansiyel müşteriyi günlüğe kaydetme</li>
+<li>Arayan kişi onayladıktan sonra kişinin telefon numarasını veya iş unvanını güncelleme</li>
+<li>Satış takibi için yeni eklenen kişileri bulma</li>
+</ul>
+<blockquote class="note">Yapılandırılan CRM hesabı kuruluşunuza ait değilse, etkin değilse veya OAuth belirteci yenilenemiyorsa araç başarısız bir şekilde kapatılır; aracı açık bir hata alır ve çağrıyı başarısız kılmak yerine görüşme devam eder.</blockquote></p></p><h2>Güncel kurulum ve çalışma</h2><p>CRM: crm bağlantısı ve izinli kişi işlemleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;search&quot;,
+    &quot;email&quot;: &quot;ada@example.invalid&quot;
+  },
+  &quot;result&quot;: {
+    &quot;contacts&quot;: [
+      {
+        &quot;name&quot;: &quot;Ada&quot;
+      }
+    ]
+  }
+}</code></pre>

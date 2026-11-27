@@ -1,7 +1,8 @@
 import "@/App.css";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
+import { LanguageProvider, useLanguage } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import DocsLayout from "@/components/DocsLayout";
 import HomePage from "@/pages/HomePage";
@@ -15,6 +16,13 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import AdminEditor from "@/pages/AdminEditor";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
+const TelephonyLabPage = lazy(() => import("@/pages/TelephonyLabPage"));
+
+function WorkshopLoading() {
+  const { lang } = useLanguage();
+  return <p role="status">{lang === "en" ? "Loading workshop…" : "Atölye yükleniyor…"}</p>;
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -22,6 +30,9 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/verasistLAB" element={<Suspense fallback={<WorkshopLoading />}><TelephonyLabPage /></Suspense>} />
+            <Route path="/verasistLAB/:animation" element={<Suspense fallback={<WorkshopLoading />}><TelephonyLabPage /></Suspense>} />
+            <Route path="/ogren/telefon-santrali" element={<Suspense fallback={<WorkshopLoading />}><TelephonyLabPage /></Suspense>} />
             <Route element={<DocsLayout />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/docs" element={<DocsIndexPage />} />

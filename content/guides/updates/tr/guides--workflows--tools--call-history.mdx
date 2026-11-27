@@ -1,0 +1,69 @@
+---
+path: "guides/workflows/tools/call-history"
+title: "Arama Geçmişi"
+excerpt: "Arama Geçmişi aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 3
+---
+
+<p>Arama Geçmişi aracı, AI temsilcinizin, arayanla tüm kanallarda (telefon aramaları, web aramaları ve yazılı sohbetler) geçmiş etkileşimlerini aramasına olanak tanır. Bu, temsilcinin geri gelen müşterileri tanımasına, önceki sorunları hatırlamasına ve kişiselleştirilmiş hizmet sunmasına yardımcı olur.</p>
+<h2>Nasıl Çalışır</h2>
+<p>Çağrı Geçmişi aracı kuruluşunuzun geçmiş <code>İş AkışıRun</code> kayıtlarını arar:</p>
+<ol>
+<li><strong>Otomatik Arayanı Algılama</strong>: Araç her zaman mevcut arayanın telefon numarasını aramaya otomatik olarak ekler</li>
+<li><strong>LLM Tarafından Sağlanan Arama</strong>: Temsilci ayrıca müşteri adına, anahtar kelimelere veya alternatif bir telefon numarasına göre de arama yapabilir</li>
+<li><strong>Çok Kanallı Sonuçlar</strong>: Sonuçlara geçmiş aramalar, web aramaları ve yazılı sohbet etkileşimleri dahildir</li>
+<li><strong>Zengin Bağlam</strong>: Her sonuç çağrı meta verilerini, düzenini, toplanan bağlamı ve transkript kullanılabilirliğini içerir</li>
+</ol>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Maksimum Sonuç</strong>: Döndürülecek maksimum geçmiş kayıt sayısı (1-50, varsayılan 10). Temsilcinin yalnızca en alakalı son etkileşimleri görebilmesi için bunu küçük tutun.</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+<h2>Aracı Kullanımı</h2>
+<h3>Müşteri Adına Göre Arama</h3>
+<pre><code class = "language-">call_history(query = "Yusuf Bülbül")
+</code></pre>
+<h3>Konuya veya Anahtar Kelimeye göre arama yapın</h3>
+<pre><code class="language-">call_history(query="geri ödeme isteği")
+</code></pre>
+<h3>Telefon Numarasına Göre Arama</h3>
+<pre><code class="language-">call_history(phone_number="+905551234567")
+</code></pre>
+<h3>Birleşik Arama</h3>
+<pre><code class = "language-">call_history(query = "fatura anlaşmazlığı", telefon_number = "+905551234567")
+</code></pre>
+<h2>Verileri Döndürdü</h2>
+<p>Eşleşen her kayıt şunları içerir:
+<ul>
+<li><strong>Çalıştırma Kimliği ve Adı</strong>: İş akışı çalıştırmasının benzersiz tanımlayıcısı ve adı</li>
+<li><strong>İş Akışı Adı</strong>: Etkileşimi hangi ajan gerçekleştirdi</li>
+<li><strong>Arama Türü ve Modu</strong>: Gelen arama, giden arama, web araması veya yazılı sohbet</li>
+<li><strong>Durum ve Tamamlanma</strong>: Etkileşimin başarıyla tamamlanıp tamamlanmadığı</li>
+<li><strong>Oluşturulma Tarihi</strong>: Etkileşimin gerçekleştiği zaman</li>
+<li><strong>Arayan/Aranan Numaralar</strong>: İlgili telefon numaraları</li>
+<li><strong>Yön</strong>: Gelen veya giden</li>
+<li><strong>Yerleştirme</strong>: Çağrı sonucu (ör. "tamamlandı", "aktarıldı")</li>
+<li><strong>Transkript Var</strong>: Transkriptin mevcut olup olmadığı</li>
+<li><strong>Ek Açıklamalar ve Toplanan Bağlam</strong>: Görüşme sırasında çıkarılan veya açıklama eklenen tüm veriler</li>
+</ul>
+Yaygın senaryolar:
+<ul>
+<li>Adını söyleyen geri dönen bir müşteriyi tanımak</li>
+<li>Arayanın atıfta bulunduğu önceki bir konuyu hatırlamak</li>
+<li>Arayanın daha önce aynı sorunla ilgili olarak arayıp aramadığını kontrol etme</li>
+<li>Arayan farklı bir telefon numarasındayken bağlama duyarlı hizmet sağlama</li>
+<li>Önceki görüşmelerde bahsedilen geçmiş siparişlere veya destek biletlerine bakma</li>
+</ul></p><h2>Güncel kurulum ve çalışma</h2><p>Arama Geçmişi: araca erişim ve mevcut arayan kimliği ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;query&quot;: &quot;previous conversations&quot;
+  },
+  &quot;result&quot;: {
+    &quot;calls&quot;: [
+      {
+        &quot;summary&quot;: &quot;Delivery question&quot;
+      }
+    ]
+  }
+}</code></pre>

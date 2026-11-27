@@ -1,0 +1,90 @@
+---
+path: "guides/workflows/tools/mcp-tool"
+title: "MCP Server"
+excerpt: "Configure MCP Server and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 2
+---
+
+<blockquote class="note">This page is about using an external MCP server as a <strong>tool inside a voice agent</strong>. If you want Claude, Cursor, or another coding agent to control Verasist itself over MCP, see <a href="/integrations/mcp">Verasist MCP Server</a>.</blockquote>
+<blockquote class="note">You can also ask the Automation Assistant (the chat assistant on the <strong>Automation</strong> page) to create an MCP tool for you — give it the server URL and, if needed, the credential to use — and it will wire the resulting tool into the agent it's building.</blockquote>
+<p>MCP tools let a Verasist voice agent call tools exposed by a remote <a href="https://modelcontextprotocol.io/">Model Context Protocol</a> server during a live conversation. Verasist discovers the remote tool catalog, turns those tools into LLM-callable functions, and forwards invocations to the MCP server over authenticated Streamable HTTP.</p>
+<h2>What to configure</h2>
+<p>An MCP tool in Verasist has four important pieces:</p>
+<ul>
+<li><strong>Name</strong>: the server label shown in Verasist</li>
+<li><strong>Description</strong>: tells the LLM when this MCP server is relevant</li>
+<li><strong>URL</strong>: the remote MCP server endpoint (<code>http://</code> or <code>https://</code>)</li>
+<li><strong>Credential</strong>: the auth Verasist should send when connecting to that server</li>
+</ul>
+You can also set a <strong>tool filter</strong> to allow only specific remote MCP tools to be exposed.
+<h2>Authentication</h2>
+<p>Most hosted MCP servers expect:</p>
+<pre><code class="language-http">Authorization: Bearer <token>
+</code></pre>
+<p>So before creating the MCP tool, create a credential in Verasist with:</p>
+<ul>
+<li><strong>Credential Type</strong>: <code>Bearer Token</code></li>
+<li><strong>Token</strong>: the access token issued by your MCP server</li>
+</ul>
+Then select that credential on the MCP tool.
+<blockquote class="note">If the remote MCP server documentation says to use Bearer auth, choose <strong>Bearer Token</strong> in the credential dialog. Verasist will translate that into the exact <code>Authorization: Bearer <token></code> header on the MCP connection.</blockquote>
+<p>Verasist also supports other credential types, but <strong>Bearer Token</strong> is the default thing to try for third-party MCP servers unless their docs say otherwise.</p>
+<h2>How it works</h2>
+<p>The runtime path is:</p>
+<ol>
+<li>When you save or refresh the MCP tool, Verasist opens a short-lived authenticated MCP session and fetches the remote tool catalog.</li>
+<li>Verasist stores that catalog as the tool's discovered tools so the UI can show you which remote functions exist.</li>
+<li>When a call starts, Verasist opens one live MCP session per attached MCP server and reuses your selected credential for that session.</li>
+<li>For each node, Verasist exposes only the MCP tools allowed by the server-level filter and the node-level selection.</li>
+<li>Verasist namespaces those remote tools into ordinary LLM function definitions so they can safely coexist with HTTP API tools, call transfer, end call, and other tools.</li>
+<li>During the conversation, the LLM sees only the tool name, description, and argument schema. It does <strong>not</strong> see the secret.</li>
+<li>When the LLM calls one of those tools, Verasist forwards the invocation to the MCP server over the active authenticated session, receives the result, and feeds that result back into the agent turn.</li>
+</ol>
+In short: <strong>Verasist handles discovery, authentication, session management, tool registration, and result plumbing; the LLM only decides when to call the tool and with which arguments.</strong>
+<h2>Creating an MCP tool</h2>
+<ol>
+<li>Go to <strong>Tools</strong> and create a new tool.</li>
+<li>Choose <strong>MCP Server</strong>.</li>
+<li>Enter a clear name and a description that explains when the LLM should use this server.</li>
+<li>Paste the MCP server URL.</li>
+<li>Select the credential. In most cases this should be a <strong>Bearer Token</strong> credential.</li>
+<li>Save the tool and confirm that Verasist discovered the remote tools.</li>
+</ol>
+If the server exposes many tools, use filtering to keep only the ones your agent actually needs.
+<h2>Refreshing the tool catalog</h2>
+<p>If the remote MCP server adds, removes, or changes its tools after you've already created the tool, you don't need to recreate it:</p>
+<ol>
+<li>Open the MCP tool in <strong>Tools</strong>.</li>
+<li>Trigger a refresh to re-discover the remote catalog.</li>
+<li>Verasist reconnects to the server and replaces the stored discovered tools with the current catalog.</li>
+</ol>
+If the remote server is unreachable when you refresh, Verasist keeps the previously discovered tools intact instead of clearing them — a failed refresh never leaves the tool without a usable catalog.
+<h2>Attaching it to a node</h2>
+<p>After the MCP tool is created:</p>
+<ol>
+<li>Open the workflow node where the tool should be available.</li>
+<li>Add the MCP tool from the node's tool list.</li>
+<li>Select only the remote MCP functions that should be callable on that node.</li>
+<li>In the node prompt, tell the LLM exactly when to use those functions.</li>
+</ol>
+The tighter the node-level selection and prompt guidance, the more reliable MCP tool usage becomes.
+<h2>Best practices</h2>
+<ul>
+<li>Use one MCP server per logical integration when possible.</li>
+<li>Keep the tool description explicit about <strong>when</strong> the LLM should use that server.</li>
+<li>Expose only the minimum remote functions needed for each node.</li>
+<li>Prefer a <strong>Bearer Token</strong> credential unless the MCP server specifies another auth scheme.</li>
+<li>Test discovery first, then test a real phone/web call to confirm the LLM invokes the right MCP function with the right arguments.</li>
+</ul>
+<blockquote class="note">If the remote MCP server is temporarily unavailable, Verasist degrades gracefully and the call can continue without those MCP tools rather than crashing the entire conversation.</blockquote><h2>Current setup and execution</h2><p>MCP Server: configure mcp connection, authentication and selected tools, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;tool&quot;: &quot;lookup_order&quot;,
+    &quot;arguments&quot;: {
+      &quot;order_id&quot;: &quot;DEMO-42&quot;
+    }
+  },
+  &quot;result&quot;: {
+    &quot;content&quot;: &quot;Order shipped&quot;
+  }
+}</code></pre>

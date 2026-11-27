@@ -1,0 +1,40 @@
+---
+path: "guides/workflows/tools/tiktok-post"
+title: "TikTok Gönderisi"
+excerpt: "TikTok Gönderisi aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 4
+---
+
+<p>TikTok Post aracı, AI temsilcinizin, canlı bir görüşme sırasında videoları bağlı bir TikTok içerik oluşturucu hesabında yayınlamasına olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Kanallar</strong> altında zaten bağladığınız bir TikTok hesabı aracılığıyla çalışır. Önce hesabı bağlayın, ardından aracı oluşturun ve o hesaba yönlendirin. Kurulum için <a href="/guides/integrations/channels/tiktok">TikTok kanal kılavuzuna</a> bakın.</blockquote>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>TikTok Hesabı</strong> — bu aracın yayınladığı bağlı TikTok içerik oluşturucu hesabı</li>
+<li><strong>Yayınlamaya izin ver</strong> — aracının videoları yayınlamasına izin verin (varsayılan: açık)</li>
+<li><strong>Gizlilik düzeyi</strong> — yayınlanan videoyu kimler görebilir:</li>
+</ul> - <strong>Yalnızca siz</strong> (<code>SELF_ONLY</code>, varsayılan) — yalnızca yaratıcıya görünür
+  - <strong>Karşılıklı takipçiler</strong> (<code>MUTUAL_FOLLOW_FRIENDS</code>)
+  - <strong>Herkes</strong> (<code>PUBLIC_TO_EVERYONE</code>)
+<ul>
+<li><strong>Özel mesaj</strong> — araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+<blockquote class="note">Denetlenmemiş TikTok uygulamaları <code>SELF_ONLY</code> kodunu kullanmaya zorlanır. <code>PUBLIC_TO_EVERYONE</code>'u kullanmak için TikTok'un uygulama incelemesini geçin.</blockquote>
+<h2>Nasıl Çalışır</h2>
+<p>Hesap, aracı yapılandırdığınızda sabitlenir; LLM, arama sırasında yalnızca videoyu ve başlığı sağlar. Verasist, platformun işlenmesi tamamlanana kadar videoyu yüklemek ve anket yapmak için TikTok'un İçerik Gönderme API'sini (Doğrudan Gönderi) kullanıyor.</p>
+<h2>Aracı Kullanımı</h2>
+<pre><code class="language-">publish_video(title="Yeni sesli ajanımız iş başında", video_url="https://example.com/video.mp4")
+</code></pre>
+<p>Video, genel bir HTTPS URL'si veya önceden oluşturulmuş/yüklenmiş bir dosyadan bir <code>attachment_uuid</code> olabilir.</p>
+<blockquote class="note">TikTok erişim belirteçlerinin süresi yaklaşık olarak her 24 saatte bir dolar. Verasist, jetonu otomatik olarak yeniler ve yenisini sürdürür.</blockquote><h2>Güncel kurulum ve çalışma</h2><p>TikTok Gönderisi: bağlı tiktok hesabı ve izinli yayın işlemleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

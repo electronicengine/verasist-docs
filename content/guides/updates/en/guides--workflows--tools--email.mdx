@@ -1,0 +1,71 @@
+---
+path: "guides/workflows/tools/email"
+title: "Email"
+excerpt: "Configure Email and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 2
+---
+
+<p>The Email tool lets your AI agent send an email or search/read recent email in a connected mailbox — all during a live conversation.</p>
+<blockquote class="note">This tool acts through a mailbox you've already connected under <strong>Settings → Email</strong>. Connect the account first, then create the Email tool and point it at that mailbox.</blockquote>
+<h2>Supported Providers</h2>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Scopes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Gmail</strong></td>
+<td><code>gmail.send</code>, <code>gmail.readonly</code></td>
+</tr>
+<tr>
+<td><strong>Microsoft (Outlook / Microsoft 365)</strong></td>
+<td><code>Mail.Read</code>, <code>Mail.Send</code>, <code>offline_access</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Connecting an Account</h2>
+<ol>
+<li>Go to <strong>Settings → Email</strong> and choose <strong>Connect Mailbox</strong></li>
+<li>Select <strong>Gmail</strong> or <strong>Microsoft</strong></li>
+<li>Complete the OAuth consent flow in the popup/redirect</li>
+<li>The connected mailbox appears in the Email tool's account picker when you configure the tool</li>
+</ol>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Mailbox</strong>: The connected Gmail or Microsoft account this tool uses</li>
+<li><strong>Allow Send</strong>: Let the agent send email through this tool (default: on)</li>
+<li><strong>Allow Read</strong>: Let the agent search/read email through this tool (default: on)</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+At least one of Allow Send / Allow Read must be enabled.
+<h2>Agent Usage</h2>
+<h3>Sending an Email</h3>
+<pre><code class="language-">email_tool(to=["customer@example.com"], subject="Your requested confirmation", body="Here's the confirmation you asked for during our call.", cc=["sales@yourcompany.com"])
+</code></pre>
+<code>to</code>, <code>subject</code>, and <code>body</code> are required; <code>cc</code> is optional.
+<h3>Searching/Reading Email</h3>
+<pre><code class="language-">email_tool_search(query="invoice", since="2026-07-01", limit=10)
+</code></pre>
+<p>All search parameters are optional — omit them to get the most recent emails in the inbox.</p>
+<p>Common scenarios:
+<ul>
+<li>Emailing a caller a confirmation, receipt, or document they asked for</li>
+<li>Looking up a prior email thread before answering a question</li>
+<li>Confirming whether a previous message from the caller was received</li>
+<li>Sending a written recap after a phone or web call</li>
+</ul>
+<blockquote class="note">The tool fails closed if the configured mailbox doesn't belong to your organization, is inactive, or the provider isn't supported — the agent receives a clear error and the conversation continues instead of failing the call.</blockquote></p><h2>Current setup and execution</h2><p>Email: configure connected gmail/microsoft mailbox and permitted operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;send&quot;,
+    &quot;to&quot;: &quot;ada@example.invalid&quot;,
+    &quot;subject&quot;: &quot;Appointment&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;sent&quot;
+  }
+}</code></pre>

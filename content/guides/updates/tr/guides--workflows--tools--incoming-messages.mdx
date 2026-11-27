@@ -1,0 +1,55 @@
+---
+path: "guides/workflows/tools/incoming-messages"
+title: "Gelen Mesajları Listele"
+excerpt: "Gelen Mesajları Listele aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 6
+---
+
+<p>The Incoming Messages araç lets your AI agent look up inbound messages your organization has received through its connected chat channels — WhatsApp, Telegram, and Instagram — within a date range.</p>
+<h2>How It Works</h2>
+<p>The araç searches the messages Verasist has already recorded for your organization's chat channels:</p>
+<ol>
+<li><strong>Date Range</strong>: The agent supplies a start and end date/time (date-only values are accepted; the end date includes the full day)</li>
+<li><strong>Optional Filters</strong>: Channel type, exact sender identity, and result limit</li>
+<li><strong>Sender Details</strong>: Results include the sender's display name (when the provider supplies one) and phone number for WhatsApp senders</li>
+<li><strong>Attachments</strong>: Results include attachment UUIDs available in the active conversation. Use <code>incoming_messages_open_attachment</code> to open one.</li>
+</ol>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Channel</strong>: Optionally restrict results to a single configured channel; leave unset to search across all channels</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the araç executes</li>
+</ul>
+<h2>Agent Usage</h2>
+<pre><code class="language-">incoming_messages(start_date="2026-07-20", end_date="2026-07-21", channel_type="whatsapp", limit=20)
+</code></pre>
+<p>When an attachment is available, call:</p>
+<pre><code class="language-">incoming_messages_open_attachment(attachment_uuid="...")
+</code></pre>
+<p>Images and videos are added to the current LLM context for analysis. Supported documents (PDF, DOCX, CSV, XLSX, TXT, Markdown, JSON, and HTML) are extracted locally and added as text to the same LLM request. Long documents are bounded before they are added to the komut istemi. The provider-reported komut istemi tokens for that request are included in normal text-chat usage and billing. The response also includes a temporary <code>media_url</code>; pass that URL to the Send Message araç with <code>media_type</code> set to <code>image</code>, <code>video</code>, or <code>document</code> to forward the attachment.</p>
+<ul>
+<li><code>start_date</code> / <code>end_date</code> — required, ISO 8601 (date-only values accepted)</li>
+<li><code>channel_type</code> — optional filter: <code>telegram</code>, <code>whatsapp</code>, or <code>instagram</code></li>
+<li><code>sender_identity</code> — optional exact sender filter</li>
+<li><code>limit</code> — optional, 1–200 (default 50)</li>
+</ul>
+Common scenarios:
+<ul>
+<li>Checking whether a customer already messaged in about an issue before calling</li>
+<li>Reviewing recent inbound messages during a shift handoff</li>
+<li>Looking up a specific sender's message history across channels</li>
+</ul>
+<blockquote class="note">For WhatsApp results, the agent is instructed to always surface both the phone number and sender name (when available) so you can identify the customer.</blockquote><h2>Güncel kurulum ve çalışma</h2><p>Gelen Mesajları Listele: bağlı kanal ve tarih aralığı ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;start_date&quot;: &quot;2026-12-01&quot;,
+    &quot;end_date&quot;: &quot;2026-12-02&quot;
+  },
+  &quot;result&quot;: {
+    &quot;messages&quot;: [
+      {
+        &quot;text&quot;: &quot;Order status?&quot;
+      }
+    ]
+  }
+}</code></pre>

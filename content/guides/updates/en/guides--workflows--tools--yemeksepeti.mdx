@@ -1,0 +1,62 @@
+---
+path: "guides/workflows/tools/yemeksepeti"
+title: "Yemek Sepeti"
+excerpt: "Configure Yemek Sepeti and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 7
+---
+
+<p>The Yemek Sepeti tool lets your AI agent handle restaurant-side order operations on Yemek Sepeti — fetching order detail, updating order status, and listing recent orders — all during a live conversation.</p>
+<blockquote class="note">This tool acts through a Yemek Sepeti partner account you've already connected under <strong>Settings → E-Commerce</strong>. Connect the account first, then create the Yemek Sepeti tool and point it at that account.</blockquote>
+<h2>Connecting an Account</h2>
+<ol>
+<li>Go to <strong>Settings → E-Commerce</strong> and choose <strong>Connect Yemek Sepeti</strong></li>
+<li>Enter your <strong>Chain ID</strong>, <strong>Client ID</strong>, and <strong>Client Secret</strong> (from your Yemek Sepeti / Delivery Hero partner integration credentials)</li>
+<li>Optionally enter a specific <strong>Vendor ID</strong> to scope the connection to a single store</li>
+<li>Verasist generates a webhook URL and secret you can register with Yemek Sepeti for order notifications</li>
+</ol>
+<h2>How It Works</h2>
+<p>The account is fixed when you configure the tool (<code>yemeksepeti_config_id</code>) — the LLM only supplies order details at call time. All operations (order detail, status update, list) call the Yemek Sepeti API live using your stored Chain ID/Client ID/Client Secret (and Vendor ID, if set).</p>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Yemek Sepeti Account</strong>: The connected partner account this tool uses</li>
+<li><strong>Allow Get Order Detail</strong>: Let the agent fetch a single order's full detail (default: on)</li>
+<li><strong>Allow Update Order Status</strong>: Let the agent change an order's status (default: on)</li>
+<li><strong>Allow List Orders</strong>: Let the agent list recent orders (default: on)</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+At least one capability must be enabled.
+<h2>Agent Usage</h2>
+<h3>Get Order Detail</h3>
+<pre><code class="language-">yemeksepeti_get_order_detail(order_id="ORD-12345")
+</code></pre>
+<h3>Update Order Status</h3>
+<pre><code class="language-">yemeksepeti_update_order_status(order_id="ORD-12345", status="DISPATCHED")
+</code></pre>
+<p>Allowed status values: <code>READY_FOR_PICKUP</code>, <code>DISPATCHED</code>, <code>CANCELLED</code>. When cancelling, provide a <code>cancellation_reason</code>: <code>CLOSED</code>, <code>ITEM_UNAVAILABLE</code>, or <code>TOO_BUSY</code>.</p>
+<pre><code class="language-">yemeksepeti_update_order_status(order_id="ORD-12345", status="CANCELLED", cancellation_reason="ITEM_UNAVAILABLE")
+</code></pre>
+<h3>List Recent Orders</h3>
+<pre><code class="language-">yemeksepeti_list_orders(start_time="2026-07-20T00:00:00Z", end_time="2026-07-21T00:00:00Z", limit=20)
+</code></pre>
+<p>Common scenarios:
+<ul>
+<li>A courier or customer calls to check the status of an order</li>
+<li>Marking an order as ready for pickup or dispatched while on the phone with a courier</li>
+<li>Cancelling an order because an item is unavailable</li>
+<li>Reviewing a batch of recent orders during a shift handoff call</li>
+</ul>
+<blockquote class="note">The tool fails closed if the configured Yemek Sepeti account doesn't belong to your organization or is inactive — the agent receives a clear error and the conversation continues instead of failing the call.</blockquote></p><h2>Current setup and execution</h2><p>Yemek Sepeti: configure restaurant connection and order operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;list_orders&quot;
+  },
+  &quot;result&quot;: {
+    &quot;orders&quot;: [
+      {
+        &quot;id&quot;: &quot;DEMO-7&quot;,
+        &quot;status&quot;: &quot;accepted&quot;
+      }
+    ]
+  }
+}</code></pre>

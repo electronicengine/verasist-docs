@@ -1,0 +1,61 @@
+---
+path: "guides/workflows/tools/google-sheets"
+title: "Google Sheets"
+excerpt: "Configure Google Sheets and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 4
+---
+
+<p>The Google Sheets tool lets your AI agent append a new row, read a range of rows, or overwrite a specific row in a fixed Google Sheet — all during a live conversation.</p>
+<blockquote class="note">This tool acts through a Google account you've already connected under <strong>Settings → Applications</strong>. Connect the account first, then create the Google Sheets tool and point it at that account and spreadsheet.</blockquote>
+<h2>Connecting an Account</h2>
+<ol>
+<li>Go to <strong>Settings → Applications</strong> and choose <strong>Connect Google Account</strong></li>
+<li>Grant the <code>spreadsheets</code> scope during the OAuth consent flow (Google Sheets, Tasks, and Calendar share the same connected Google account)</li>
+<li>When configuring the tool, provide the target <strong>Spreadsheet ID</strong> (from the sheet's URL) and <strong>Sheet/Tab Name</strong> (defaults to <code>Sheet1</code>)</li>
+</ol>
+<h2>How It Works</h2>
+<p>The Google account <strong>and</strong> the target spreadsheet/tab are both fixed when you configure the tool — the LLM only supplies row values or a lookup range at call time. All operations resolve to A1-notation ranges within the configured sheet/tab.</p>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Google Account</strong>: The connected account this tool uses</li>
+<li><strong>Spreadsheet ID</strong>: The fixed target spreadsheet (copy the ID from the sheet's URL, e.g. <code>https://docs.google.com/spreadsheets/d/</code><strong><code><spreadsheet_id></code></strong><code>/edit</code>)</li>
+<li><strong>Sheet Name</strong>: The fixed target tab within the spreadsheet (default <code>Sheet1</code>)</li>
+<li><strong>Allow Append</strong>: Let the agent append rows through this tool (default: on)</li>
+<li><strong>Allow Read</strong>: Let the agent read rows through this tool (default: on)</li>
+<li><strong>Allow Update</strong>: Let the agent overwrite a row through this tool (default: on)</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+At least one capability must be enabled.
+<h2>Agent Usage</h2>
+<h3>Appending a Row</h3>
+<pre><code class="language-">google_sheets_tool(values=["Jane Doe", "jane@example.com", "+14155552671", "Interested in premium plan"])
+</code></pre>
+<code>values</code> is an ordered list of cell values, left to right.
+<h3>Reading Rows</h3>
+<pre><code class="language-">google_sheets_tool_read(range="A1:D20")
+</code></pre>
+<code>range</code> is optional — omit it to read the whole sheet.
+<h3>Updating a Row</h3>
+<pre><code class="language-">google_sheets_tool_update(row=5, values=["Jane Doe", "jane@example.com", "+14155552672", "Upgraded to premium"])
+</code></pre>
+<code>row</code> is the 1-based row number to overwrite (e.g. <code>2</code> for the row right after headers).
+<p>Common scenarios:
+<ul>
+<li>Logging a new lead or call outcome to a shared spreadsheet</li>
+<li>Looking up existing rows to check whether an entry already exists</li>
+<li>Correcting or updating a row after the caller confirms new details</li>
+</ul>
+<blockquote class="note">The tool fails closed if the configured Google account doesn't belong to your organization or is inactive — the agent receives a clear error and the conversation continues instead of failing the call.</blockquote></p><h2>Current setup and execution</h2><p>Google Sheets: configure google connection, fixed spreadsheet and sheet, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;append&quot;,
+    &quot;row&quot;: [
+      &quot;Ada&quot;,
+      &quot;confirmed&quot;
+    ]
+  },
+  &quot;result&quot;: {
+    &quot;updated_rows&quot;: 1
+  }
+}</code></pre>

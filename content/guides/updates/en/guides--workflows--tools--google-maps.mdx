@@ -1,0 +1,21 @@
+---
+path: "guides/workflows/tools/google-maps"
+title: "Google Maps"
+excerpt: "Configure Google Maps and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 26
+---
+
+<p>Google Maps: configure places, reviews, directions and weather capabilities, attach the saved tool to an agent, and test its operation in a workflow.</p><h2>Configure</h2><ul><li>Tools → New tool → Google Maps</li><li>Places, reviews, directions and weather capabilities</li><li>Save, attach to the agent and test before publishing.</li></ul><h2>Behavior and limits</h2><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li><li>Service availability and usage charges depend on your hosted service configuration. If unavailable, contact your service administrator; no server environment changes are required in this customer guide.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;query&quot;: &quot;pharmacy in Kadikoy&quot;
+  },
+  &quot;result&quot;: {
+    &quot;places&quot;: [
+      {
+        &quot;name&quot;: &quot;Example Pharmacy&quot;,
+        &quot;place_id&quot;: &quot;demo-place&quot;
+      }
+    ]
+  }
+}</code></pre>

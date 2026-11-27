@@ -1,0 +1,155 @@
+---
+path: "guides/workflows/tools/calendar"
+title: "Takvim"
+excerpt: "Takvim aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 2
+---
+
+<p>Takvim aracı, AI temsilcinizin canlı bir görüşme sırasında takvim girişlerini yönetmesine, yeni randevular, notlar, hatırlatıcılar veya yapılacaklar oluşturmasına ve mevcut girişlerde arama yapmasına olanak tanır.</p>
+<h2>Nasıl Çalışır</h2>
+<p>Takvim aracı LLM'a iki işlevi sunar:</p>
+<ol>
+<li><strong>Yaz (Giriş Oluştur)</strong>: Temsilci, tarih, isteğe bağlı saat, başlık ve açıklama içeren yeni bir takvim girişi oluşturur</li>
+<li><strong>Oku (Sorgu Girişleri)</strong>: Aracı, mevcut girişleri tarih aralığına veya anahtar kelimeye göre arar</li>
+</ol>
+Arayan kişi "Gelecek hafta planlanmış bir şeyim var mı?" veya "Dişçi randevum için bir hatırlatıcı ayarlayabilir misiniz?", temsilci girişleri okumak veya yazmak için Takvim aracını kullanır.
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Giriş Türü</strong>: Bu aracın oluşturduğu varsayılan giriş türü. Şunlardan birini seçin:</li>
+</ul> - <code>not</code> — Genel not
+  - <code>randevu</code> — Planlanmış randevu
+  - <code>hatırlatıcı</code> — Zamana dayalı hatırlatıcı
+  - <code>todo</code> — Tamamlanacak görev
+<ul>
+<li><strong>Varsayılan Başlık Şablonu</strong>: <code>{{initial_context.<em>}</code> ve <code>{{gathered_context.</em>}</code> değişkenlerini</li> kullanarak giriş başlıklarını otomatik olarak oluşturmak için isteğe bağlı şablon
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+<h2>Aracı Kullanımı</h2>
+<h3>Giriş Oluşturma</h3>
+<p>Yapay zeka temsilciniz tarih, başlık ve isteğe bağlı saat/açıklama içeren takvim girişleri oluşturur:</p>
+<pre><code class = "language-">calendar_araç(date = "2026-07-10", time = "14:00", title = "Diş Hekimi Randevusu", açıklama = "Dr. Smith'in ofisinde yıllık kontrol")
+</code></pre>
+<h3>Girişleri Sorgulama</h3>
+<p>Aracı, mevcut girişleri tarih aralığına veya anahtar kelimeye göre arayabilir:</p>
+<pre><code class = "language-">calendar_araç_read(start_date = "2026-07-01", end_date = "2026-07-31", query = "dişçi")
+</code></pre>
+<p>Genel senaryolar:
+<ul>
+<li>Arayan kişi randevu planlamayı veya hatırlatıcı ayarlamayı ister</li>
+<li>Arayan, hangi randevularının yaklaştığını sorar</li>
+<li>Acentenin rezervasyondan önce müsaitlik durumunu kontrol etmesi gerekiyor</li>
+<li>Görüşme sırasında toplantı notlarını kaydetme</li>
+</ul>
+<h2>Giriş Türleri</h2></p>
+<tablo>
+<thead>
+<tr>
+<th>Tür</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>not</code></td>
+<td>Belirli zaman kısıtlamaları olmayan genel bir not</td>
+</tr>
+<tr>
+<td><code>randevu</code></td>
+<td>Tarihi/saati olan, planlanmış bir toplantı veya randevu</td>
+</tr>
+<tr>
+<td><code>hatırlatıcı</code></td>
+<td>Gelecekteki işlemler için zamana dayalı bir hatırlatma</td>
+</tr>
+<tr>
+<td><code>yapılacaklar</code></td>
+<td>Tamamlanacak bir görev öğesi</td>
+</tr>
+<tr>
+<td><code>tetikleyici</code></td>
+<td>Planlanmış bir eylem (aşağıdaki <a href="#scheduled-tetikleyicis">Zamanlanmış Tetikleyiciler</a>'e bakın) — <code>action_type</code> ayarlandığında otomatik olarak oluşturulur</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="note">Aracı, yapılandırılmış varsayılan giriş türünü otomatik olarak kullanır, ancak görüşme bağlamına göre farklı bir tür önerebilir.</blockquote>
+<h2>Planlanmış Tetikleyiciler</h2>
+<p>Takvim girişi, sade notların ve hatırlatıcıların ötesinde, isteğe bağlı yinelemeyle gelecekteki bir tarih/saatte bir iş akışı çalıştırmasını otomatik olarak başlatan veya bir çağrı kampanyasını kontrol eden <strong>planlanmış bir tetikleyici</strong> de olabilir. Tetikleyiciler yaklaşık dakikada bir otomatik olarak kontrol edilir ve yürütülür.</p>
+<p>Hem AI temsilciniz (Takvim aracı aracılığıyla) hem de siz (kontrol panelindeki <strong>Takvim</strong> sayfasından) bu tetikleyicileri oluşturabilir, düzenleyebilir ve silebilirsiniz.</p>
+<h3>Eylemleri Tetikleyin</h3>
+<tablo>
+<thead>
+<tr>
+<th><code>action_type</code></th>
+<th>Etki</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>iş akışı_çalıştırılması</code></td>
+<td>Belirtilen iş akışının yeni bir çalışmasını başlatır</td>
+</tr>
+<tr>
+<td><code>çalıştırma planı_start</code></td>
+<td>Belirtilen telefon araması kampanyasını başlatır</td>
+</tr>
+<tr>
+<td><code>çalıştırma planı_pause</code></td>
+<td>Belirtilen telefon araması kampanyasını duraklatır</td>
+</tr>
+</tbody>
+</table>
+<p><code>iş akışı_run</code> tetikleyicileri için şunları da seçebilirsiniz:</p><ul>
+<li><strong><code>mod</code></strong> — çalıştırma modu, ör. <code>textchat</code> veya <code>webrtc</code> (<code>action_channel</code>, varsayılan <code>text</code> olduğunda kullanılır)</li>
+<li><strong><code>action_channel</code></strong> — iş akışının nasıl başlatıldığı: <code>text</code> (varsayılan, harici kanal yok), <code>telefon</code>, <code>whatsapp</code>, <code>telegram</code> veya <code>instagram</code></li>
+</ul> - <code>telefon</code> bir <code>action_target</code> telefon numarası gerektirir ve kuruluşunuzun varsayılan (veya özel olarak seçilmiş) telefon yapılandırması aracılığıyla arama yapar
+  - <code>whatsapp</code>/<code>telegram</code>/<code>instagram</code>, hangi kayıtlı kanal kimlik bilgilerinin kullanılacağını seçmek için bir <code>action_target</code> (telefon/JID veya sohbet kimliği) ve bir <code>action_channel_configuration_id</code> gerektirir
+<h3>Yineleme</h3>
+<p>Bir tetikleyicinin bir kez tetiklenmesi yerine tekrarlanmasını sağlamak için <code>yinelemeyi</code> ayarlayın:</p>
+<pre><code class="language-json">{"frequency": "weekly", "interval": 1, "days_of_week": [1, 3], "end_date": "2026-12-31"}
+</code></pre>
+<tablo>
+<thead>
+<tr>
+<th>Alan</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sıklık</code></td>
+<td><code>günlük</code>, <code>haftalık</code> veya <code>aylık</code></td>
+</tr>
+<tr>
+<td><code>aralık</code></td>
+<td>Her N periyotta bir tekrarla (varsayılan <code>1</code>)</td>
+</tr>
+<tr>
+<td><code>haftanın_günleri</code></td>
+<td>Haftalık yineleme için: hangi günler (<code>0</code>=Pazartesi … <code>6</code>=Pazar)</td>
+</tr>
+<tr>
+<td><code>bitiş_tarihi</code></td>
+<td>Tetikleyicinin yinelenmeyi durduracağı isteğe bağlı tarih</td>
+</tr>
+</tbody>
+</table>
+<p>Yinelenen bir tetikleyici etkinleştikten sonra, tamamlandı olarak işaretlenmek yerine otomatik olarak bir sonraki oluşumuna ilerletilir.</p>
+<h3>Aracı Kullanımı</h3>
+<p>Yapay zeka aracınız, <code>action_type</code>/<code>target_uuid</code> (ve gerekirse <code>mode</code>/<code>recurrence</code>) ekleyerek normal bir giriş oluşturduğu şekilde bir tetikleyici planlayabilir:</p>
+<pre><code class="language-">calendar_araç(
+  date = "2026-08-01", time = "09:00", title = "Haftalık takip kampanyası",
+  action_type = "çalıştırma planı_start", target_uuid = "<çalıştırma planı-uuid>",
+  recurrence='{"frequency":"weekly","interval":1}'
+)
+</code></pre>
+<blockquote class="note"><code>target_uuid</code>, <code>iş akışı_run</code> tetikleyicileri için iş akışı UUID'sidir veya <code>çalıştırma planı_start</code>/<code>çalıştırma planı_pause</code> tetikleyicileri için kampanya UUID'sidir.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Takvim: başlık, zaman dilimi ve geri arama hedefi ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;title&quot;: &quot;Geri arama / Callback&quot;,
+    &quot;time&quot;: &quot;2026-12-01T10:00:00+03:00&quot;
+  },
+  &quot;result&quot;: {
+    &quot;scheduled&quot;: true
+  }
+}</code></pre>

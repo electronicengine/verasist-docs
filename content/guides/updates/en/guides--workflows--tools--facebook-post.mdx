@@ -1,0 +1,48 @@
+---
+path: "guides/workflows/tools/facebook-post"
+title: "Facebook Post"
+excerpt: "Configure Facebook Post and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 2
+---
+
+<p>The Facebook Post tool lets your AI agent publish content to a connected Facebook Page — photos and videos — as well as list recent posts, read comments, and reply to them, during a live conversation.</p>
+<blockquote class="note">This tool acts through a Facebook Page you've already connected under <strong>Channels</strong>. Connect the Page first, then create the tool and point it at that Page. See the <a href="/guides/integrations/channels/facebook">Facebook channel guide</a> for setup.</blockquote>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Facebook Page</strong> — the connected Facebook Page this tool publishes to</li>
+<li><strong>Allow publishing</strong> — let the agent publish posts (photos and videos) (default: on)</li>
+<li><strong>Allow reading comments</strong> — let the agent list recent posts and read their comments (default: on)</li>
+<li><strong>Allow replying to comments</strong> — let the agent reply to a comment (default: on)</li>
+<li><strong>Custom message</strong> — optional message played to the caller before the tool executes</li>
+</ul>
+<h2>How It Works</h2>
+<p>The Page is fixed when you configure the tool — the LLM only supplies post content at call time. Verasist uses the Meta Graph API to upload the photo (or video) and publish it to the Page, then returns the post permalink.</p>
+<blockquote class="note">Facebook publishing is content-only — there is no inbox/messaging via this tool, and video posts do not offer a "share to feed" toggle (unlike Instagram Reels).</blockquote>
+<h2>Agent Usage</h2>
+<h3>Publish a photo</h3>
+<pre><code class="language-">publish_post(media_type="image", image_url="https://example.com/photo.jpg", message="Big news!")
+</code></pre>
+<h3>Publish a video</h3>
+<pre><code class="language-">publish_post(media_type="video", video_url="https://example.com/video.mp4", message="Watch this")
+</code></pre>
+<p>Media can be a public HTTPS URL or an <code>attachment_uuid</code> from a previously generated/uploaded file.</p>
+<h3>Read comments</h3>
+<pre><code class="language-">read_comments(post_id="...")
+</code></pre>
+<h3>Reply to a comment</h3>
+<pre><code class="language-">reply_to_comment(comment_id="...", message="Thanks for the kind words!")
+</code></pre>
+<p>Post and comment IDs come from prior <code>list_recent_posts</code> / <code>read_comments</code> calls.</p>
+<blockquote class="note">Function names are prefixed with your tool name — e.g. a tool named "fb" exposes <code>fb_publish_post</code>.</blockquote><h2>Current setup and execution</h2><p>Facebook Post: configure connected facebook account and allowed publishing operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

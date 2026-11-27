@@ -1,0 +1,9 @@
+---
+path: "guides/planning/live-guidance"
+title: "Live Intervention: Operator Guidance"
+excerpt: "Send private written guidance scoped to the agent’s next response."
+reference: "guides/planning/workflow-runs"
+order: 10
+---
+
+<p>Send private written guidance scoped to the agent’s next response.</p><h2>Send guidance</h2><ul><li>Start live monitoring in an active voice run.</li><li>Write a short instruction in Operator guidance and click Send guidance.</li><li>Example: Verify the order number first; do not guarantee a delivery date.</li></ul><h2>Scope and statuses</h2><ul><li>The instruction is sent privately to the model, not as caller speech, and must not be read to the customer.</li><li>It applies to the next response and its tool calls, expiring when that response ends or is interrupted. It does not edit permanent agent instructions.</li><li>Observe queued, applied, expired, failed and unapplied statuses. Submission is not the same as application.</li></ul><h2>Unavailable or unconfirmed delivery</h2><ul><li>Sending can be disabled when monitoring or guidance is unavailable.</li><li>An unconfirmed-delivery notice is not proof of application; inspect the resulting status.</li><li>This is not audio barge-in or a human taking over the call.</li></ul><p><a href="/guides/workflows/tools/call-transfer">Call Transfer settings</a> · <a href="/guides/planning/workflow-runs">Workflow runs</a></p>

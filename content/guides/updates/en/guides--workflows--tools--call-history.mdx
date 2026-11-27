@@ -1,0 +1,69 @@
+---
+path: "guides/workflows/tools/call-history"
+title: "Call History"
+excerpt: "Configure Call History and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 3
+---
+
+<p>The Call History tool enables your AI agent to look up past interactions with a caller across all channels — phone calls, web calls, and text chats. This helps the agent recognize returning customers, recall previous issues, and provide personalized service.</p>
+<h2>How It Works</h2>
+<p>The Call History tool searches your organization's past <code>WorkflowRun</code> records:</p>
+<ol>
+<li><strong>Automatic Caller Detection</strong>: The tool always includes the current caller's phone number in the search automatically</li>
+<li><strong>LLM-Provided Search</strong>: The agent can also search by customer name, keywords, or an alternative phone number</li>
+<li><strong>Multi-Channel Results</strong>: Results include past calls, web calls, and text chat interactions</li>
+<li><strong>Rich Context</strong>: Each result includes call metadata, disposition, gathered context, and transcript availability</li>
+</ol>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Max Results</strong>: Maximum number of past records to return (1–50, default 10). Keep this small so the agent sees only the most relevant recent interactions.</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+<h2>Agent Usage</h2>
+<h3>Search by Customer Name</h3>
+<pre><code class="language-">call_history(query="Yusuf Bülbül")
+</code></pre>
+<h3>Search by Topic or Keyword</h3>
+<pre><code class="language-">call_history(query="refund request")
+</code></pre>
+<h3>Search by Phone Number</h3>
+<pre><code class="language-">call_history(phone_number="+905551234567")
+</code></pre>
+<h3>Combined Search</h3>
+<pre><code class="language-">call_history(query="invoice dispute", phone_number="+905551234567")
+</code></pre>
+<h2>Returned Data</h2>
+<p>Each matching record includes:
+<ul>
+<li><strong>Run ID & Name</strong>: Unique identifier and name of the workflow run</li>
+<li><strong>Workflow Name</strong>: Which assistant handled the interaction</li>
+<li><strong>Call Type & Mode</strong>: Inbound call, outbound call, web call, or text chat</li>
+<li><strong>State & Completion</strong>: Whether the interaction completed successfully</li>
+<li><strong>Created At</strong>: When the interaction occurred</li>
+<li><strong>Caller/Called Numbers</strong>: Phone numbers involved</li>
+<li><strong>Direction</strong>: Inbound or outbound</li>
+<li><strong>Disposition</strong>: Call outcome (e.g., "completed", "transferred")</li>
+<li><strong>Has Transcript</strong>: Whether a transcript is available</li>
+<li><strong>Annotations & Gathered Context</strong>: Any data extracted or annotated during the call</li>
+</ul>
+Common scenarios:
+<ul>
+<li>Recognizing a returning customer who mentions their name</li>
+<li>Recalling a previous issue the caller references</li>
+<li>Checking if the caller has called about the same problem before</li>
+<li>Providing context-aware service when the caller is on a different phone number</li>
+<li>Looking up past orders or support tickets mentioned in previous conversations</li>
+</ul></p><h2>Current setup and execution</h2><p>Call History: configure tool access and current caller identity, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;query&quot;: &quot;previous conversations&quot;
+  },
+  &quot;result&quot;: {
+    &quot;calls&quot;: [
+      {
+        &quot;summary&quot;: &quot;Delivery question&quot;
+      }
+    ]
+  }
+}</code></pre>

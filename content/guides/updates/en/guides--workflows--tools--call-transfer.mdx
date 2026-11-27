@@ -1,0 +1,45 @@
+---
+path: "guides/workflows/tools/call-transfer"
+title: "Call Transfer"
+excerpt: "Phone transfer, failure recovery, post-transfer transcription and extraction."
+reference: "guides/workflows/tools/introduction"
+order: 4
+---
+
+<p>The Call Transfer tool connects a telephony caller to a configured phone number or SIP endpoint. The agent leaves the conversation after successful handoff; optional post-transfer transcription observes the human conversation without reactivating AI speech.</p><h2>Configure the tool</h2><ul><li>Open Tools → New tool → Call Transfer; attach it to the agent in the workflow.</li><li>Enter a reachable E.164 number such as +905551112233, or a supported SIP endpoint such as PJSIP/201. Endpoint transfers require a compatible SIP/ARI connection; PSTN dialing requires a usable outbound trunk.</li><li>Set timeout between 5 and 120 seconds (default 30). Choose no message, custom text or a saved audio announcement.</li><li>Test a real telephony call. This tool does not transfer WebRTC or text-chat test sessions.</li></ul><h2>Transfer lifecycle</h2><ul><li>Verasist checks destination occupancy before dialing. An already occupied transfer target can return busy without ringing again.</li><li>If available, the configured announcement plays and the destination is dialed while the caller waits.</li><li>On answer, the two call legs are bridged and AI speaking stops. This is not a warm introduction or automatic spoken summary to the representative.</li><li>Busy, rejection or timeout returns a failure to the agent so it can continue helping. Do not tell the caller that an unanswered transfer succeeded.</li><li>Do not dial the main number that routes back into the same AI agent; use a separate staff destination to avoid loops.</li></ul><h2>Optional post-transfer transcription</h2><ul><li>Enable Post-transfer STT and select provider, model and language. This feature is supported for compatible SIP/ARI calls, not every telephony provider.</li><li>Caller and representative audio are transcribed separately. AI no longer participates; transcription is not an operator microphone or a new AI response.</li><li>Text and audio retention policies still apply. Optional transcription failure must not break an already connected human call.</li></ul><h2>Optional post-transfer extraction</h2><ul><li>Post-transfer extraction requires Post-transfer STT. Define extraction instructions and uniquely named typed fields.</li><li>Extraction uses the caller/representative transcript; review the extracted values and transfer status in run details.</li><li>Keep customer/caller and representative statements distinct. Missing information is not a confirmed value.</li></ul><p><a href="/guides/planning/live-monitoring">Live monitoring</a> · <a href="/guides/planning/call-transfers">Transfer scenarios</a></p>
+
+<h2>Call flow diagram</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant Caller
+    participant Agent as AI Agent
+    participant PBX as Verasist PBX
+    participant Dest as Destination
+
+    Agent->>Agent: LLM decides to transfer
+    Agent->>Caller: "Let me transfer you..."
+    Agent->>PBX: acquire_destination_lock(dest)
+    alt Destination is already in a call
+        PBX-->>Agent: LOCK DENIED (destination_busy)
+        Agent->>Caller: "That line is currently busy. Try again later?"
+    else Lock acquired
+        Agent->>Caller: Plays config message ("Transferring now...")
+        Agent->>PBX: Mute pipeline, start hold music
+        PBX->>Dest: Dial destination (with timeout)
+        alt Destination answers
+            Dest-->>PBX: ANSWER
+            PBX->>PBX: Bridge caller ↔ destination
+            PBX->>Caller: Connect to destination
+            Agent->>Agent: End involvement
+        else No answer (timeout)
+            PBX-->>Agent: TRANSFER_FAILED (no_answer)
+            Agent->>Caller: "They didn't answer. Can I help instead?"
+        else Busy / Declined
+            PBX-->>Agent: TRANSFER_FAILED (busy/declined)
+            Agent->>Caller: "The line is busy. Would you like to leave a message?"
+        end
+        Agent->>PBX: Stop hold music, unmute pipeline
+        Agent->>PBX: release_destination_lock(dest)
+    end
+
+</div>

@@ -1,0 +1,45 @@
+---
+path: "guides/workflows/tools/media-generation"
+title: "Media Generation"
+excerpt: "Configure Media Generation and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 7
+---
+
+<p>The Media Generation tool lets your AI agent create images and videos from natural-language prompts and deliver them into the conversation. It also lets the agent critique a generated or uploaded image/video against your criteria.</p>
+<blockquote class="note">Anthropic/Claude has <strong>no</strong> image or video generation API — the generation provider choices are <strong>OpenAI</strong> and <strong>Google</strong> only.</blockquote>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Name & description</strong> — how the tool appears in the node and what the LLM uses to decide when to call it</li>
+<li><strong>Image generation</strong> — enable/disable, then pick a provider (OpenAI or Google) and a model (e.g. <code>gpt-image-1</code> for OpenAI, or a Gemini image model for Google)</li>
+<li><strong>Video generation</strong> — enable/disable, then pick a provider (OpenAI or Google) and a model (e.g. <code>veo-3.0</code> for Google)</li>
+<li><strong>Custom message</strong> — optional text or audio message played before the tool runs</li>
+</ul>
+<h2>How It Works</h2>
+<ol>
+<li>The agent calls the generation function with a detailed prompt</li>
+<li>Verasist calls the configured provider's API directly and uploads the result to storage</li>
+<li>The generated image/video is attached to the current conversation turn and rendered as a media bubble (in the test panel, embed widget, and supported channels)</li>
+<li>Generated media counts toward your media-generation billing</li>
+</ol>
+<h2>Agent Usage</h2>
+<h3>Generate an image</h3>
+<pre><code class="language-">generate_image(prompt="A friendly llama wearing a headset, flat illustration")
+</code></pre>
+<h3>Generate a video</h3>
+<pre><code class="language-">generate_video(prompt="A 5-second product intro for a coffee brand, warm lighting")
+</code></pre>
+<h3>Analyze generated or uploaded media</h3>
+<p>The agent can review media against your criteria when asked — it never calls this automatically after a successful generation:</p>
+<pre><code class="language-">analyze_media(attachment_uuid="...", criteria="Logo centered, no text cut off")
+</code></pre>
+<p>The <code>attachment_uuid</code> comes from a prior generation or from media the user uploaded during the conversation.</p>
+<blockquote class="note">The tool exposes <code>generate_image</code>, <code>generate_video</code>, and <code>analyze_media</code> functions — the exact function names are prefixed with the tool name you configure.</blockquote><h2>Current setup and execution</h2><p>Media Generation: configure image/video type, model and output options, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;prompt&quot;: &quot;A product on a plain background&quot;
+  },
+  &quot;result&quot;: {
+    &quot;asset_url&quot;: &quot;https://example.invalid/asset.png&quot;
+  }
+}</code></pre>

@@ -1,0 +1,85 @@
+---
+path: "guides/workflows/tools/calculator"
+title: "Hesap Makinesi"
+excerpt: "Hesap Makinesi aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 1
+---
+
+<p>Hesap Makinesi aracı, AI temsilcinizin aramalar sırasında aritmetik ifadeleri değerlendirmesine olanak tanır. Yalnızca temel matematik işlemlerine izin veren, AST tabanlı güvenli bir değerlendirici kullanır; rastgele kod yürütülmesine izin vermez.</p>
+<h2>Nasıl Çalışır</h2>
+<p>Hesap Makinesi aracı, LLM'ye tek bir <code>safe_calculator</code> işlevi sunar:</p>
+<ol>
+<li><strong>Temsilci Kararı</strong>: Temsilci, görüşme sırasında bir matematik problemiyle karşılaşır (ör. fiyatlandırma hesaplaması, tarih matematiği, toplamlar)</li>
+<li><strong>İfade Değerlendirmesi</strong>: İfade Python'un AST'si aracılığıyla ayrıştırılır ve yalnızca izin verilen düğüm türlerine (<code>+</code>, <code>-</code>, <code><em></code>, <code>/</code>, <code></em>*</code>, <code>%</code>, parantez) izin verilir</li>
+<li><strong>Sonuç Döndürüldü</strong>: Sayısal sonuç temsilciye döndürülür ve temsilci bunu görüşmeye dahil edebilir</li>
+</ol>
+<h2>Desteklenen İşlemler</h2>
+<tablo>
+<thead>
+<tr>
+<th>Operatör</th>
+<th>Açıklama</th>
+<th>Örnek</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>+</code></td>
+<td>Ekleme</td>
+<td><code>2000 + 500</code></td>
+</tr>
+<tr>
+<td><code>-</code></td>
+<td>Çıkarma</td>
+<td><code>1000 - 350</code></td>
+</tr>
+<tr>
+<td><code>*</code></td>
+<td>Çarpma</td>
+<td><code>150 * 3</code></td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td>Bölüm</td>
+<td><code>1200 / 4</code></td>
+</tr>
+<tr>
+<td><code>**</code></td>
+<td>Üstelleştirme</td>
+<td><code>2 ** 10</code></td>
+</tr>
+<tr>
+<td><code>%</code></td>
+<td>Modulo (kalan)</td>
+<td><code>17 % 5</code></td>
+</tr>
+<tr>
+<td><code>()</code></td>
+<td>Parantezler (gruplama)</td>
+<td><code>(100 + 50) * 2</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Yapılandırma</h2>
+<p>Hesap Makinesi aracının ek bir yapılandırması yoktur; kutudan çıktığı gibi kullanıma hazırdır. Bunu Araçlar panelinden iş akışı düğümünüze eklemeniz yeterlidir.</p>
+<h2>Aracı Kullanımı</h2>
+<p>Yapay zeka temsilciniz hesap makinesini bir aritmetik ifadeyle çağırır:</p>
+<pre><code class = "language-">safe_calculator(expression = "(150 * 3) + (75 / 5)")
+</code></pre>
+<p>Genel senaryolar:
+<ul>
+<li>Satış görüşmeleri sırasında toplamları, indirimleri veya vergiyi hesaplama</li>
+<li>Tarih ve saat aritmetiği (ör. "Bundan 45 gün sonra hangi tarih var?")</li>
+<li>Birim dönüşümleri (ör. metrekare, sabit oranlı para birimi)</li>
+<li>Faturaları bölme veya kişi başı maliyetleri hesaplama</li>
+<li>Arayanın görüşme sırasında sorduğu herhangi bir matematik</li>
+</ul>
+<blockquote class="note">Hesap makinesi yalnızca sayısal aritmetiği destekler. Harici API'lere, veritabanlarına erişemez veya rastgele kod çalıştıramaz. Harici verilere dayanan karmaşık hesaplamalar için bunun yerine bir <a href="/guides/iş akışları/araçlar/http-api">HTTP API</a> aracını kullanın.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Hesap Makinesi: i̇fade ve araca erişim ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;expression&quot;: &quot;125 * 1.20&quot;
+  },
+  &quot;result&quot;: {
+    &quot;result&quot;: 150
+  }
+}</code></pre>

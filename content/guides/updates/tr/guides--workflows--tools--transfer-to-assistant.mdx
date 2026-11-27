@@ -1,0 +1,56 @@
+---
+path: "guides/workflows/tools/transfer-to-assistant"
+title: "Ajan Aktarımı"
+excerpt: "Ajan Aktarımı aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 9
+---
+
+<p>Ajan'a Aktarma aracı, AI temsilcinizin mevcut görüşmeyi kuruluşunuz içindeki başka bir iş akışına (ajan) aktarmasına olanak tanır. Hedef ajan, arayanın içeriğini ve konuşma özetini başlangıç düğümünden başlayarak alır.</p>
+<h2>Nasıl Çalışır</h2>
+<p>Harici bir telefon numarasına aktarım yapan <a href="/guides/iş akışları/araçlar/call-transfer">Çağrı Aktarımı</a>'nın aksine, Ajan'a Aktar, görüşmeyi Verasist içindeki başka bir AI iş akışına yönlendirir:</p>
+<ol>
+<li><strong>Temsilci Kararı</strong>: Yapay zeka temsilcisi, arayanın farklı bir ajana (ör. satış → destek) ihtiyacı olduğunu belirler</li>
+<li><strong>Özet Oluşturma</strong>: Temsilci, o ana kadar yapılan görüşmenin kısa bir özetini oluşturur</li>
+<li><strong>Bağlam Birleştirme</strong>: Geçerli çağrı bağlamı, yapılandırılmış değişken eşlemeleriyle birleştirilir ve hedefe iletilir</li>
+<li><strong>Geçiş</strong>: Hedef ajanın başlangıç düğümü etkin hale gelir ve görüşme sorunsuz bir şekilde devam eder</li>
+</ol>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Hedef İş Akışı UUID'si</strong>: Aktarılacak hedef iş akışının/ajanın UUID'si</li>
+<li><strong>Aktarım Mesajı</strong>: Aktarımdan önce arayana oynatılan isteğe bağlı mesaj (ör. "Seni faturalandırma departmanımıza aktarayım")</li>
+<li><strong>İlk Bağlam Eşlemesi</strong>: Hedef yardımcıya ilişkin bağlam değişkenlerini yeniden adlandırmak için isteğe bağlı anahtar/değer eşlemesi</li>
+</ul> - Örnek: <code>{"müşteri_adı": "arayanın_adı"</code>, hedef için <code>müşteri_adı</code>'ı geçerli bağlamdan <code>arayanın_adı</code>'a kopyalar
+<ul>
+<li><strong>Özel Mesaj</strong>: Aktarımdan önce isteğe bağlı önceden kaydedilmiş sesli mesaj</li>
+</ul>
+<h3>Bağlam Aktarımı</h3>
+<p>Hedef ajanı otomatik olarak şunları alır:
+<ul>
+<li>Mevcut tüm <code>initial_context</code> değişkenleri</li>
+<li>Tüm <code>gathered_context</code> değişkenleri</li>
+<li><code>transfer_summary</code> — temsilcinin görüşme özeti</li>
+<li><code>transferred_from_iş akışı</code> — kaynak iş akışı kimliği</li>
+<li><code>transferred_from_run_id</code> — kaynak iş akışı çalıştırma kimliği</li>
+</ul>
+<strong>İlk Bağlam Eşleme</strong>'deki açık eşlemeler bu varsayılanların üzerine uygulanır.</p>
+<h2>Aracı Kullanımı</h2>
+<p>Yapay zeka temsilciniz konuşmaları bir özetle aktarır:</p>
+<pre><code class="language-">transfer_to_assistant(summary="Arayan John Smith, 12345 numaralı faturadaki fazla ücret hakkında arıyor. Mart ve Nisan ayına ait ücretler tartışıldı. Geri ödeme yapılabilmesi için fatura kesilmesi gerekiyor.")
+</code></pre>
+<p>Genel senaryolar:
+<ul>
+<li>Arayanın farklı bir departmanla görüşmesi gerekiyor (satış → destek, destek → faturalandırma)</li>
+<li>Konuşma konusu değişir ve uzman bir ajan gerektirir</li>
+<li>Yönetici iş akışına iletme</li>
+<li>Farklı ajanların farklı aşamaları ele aldığı çok adımlı süreçler</li>
+</ul>
+<blockquote class="note">Ajan'a aktarım yalnızca aynı kuruluş içindeki iş akışları arasında çalışır. Harici telefon aktarımları için <a href="/guides/iş akışları/araçlar/call-transfer">Çağrı Aktarımı</a> aracını kullanın. Sonsuz aktarım döngülerini önlemek için tek bir görüşme art arda en fazla <strong>3 kez</strong> aktarılabilir; sınıra ulaşılırsa aracı mevcut iş akışında kalır.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Ajan Aktarımı: hedef iş akışı ve izinli aktarım hedefleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;target_workflow&quot;: &quot;support&quot;
+  },
+  &quot;result&quot;: {
+    &quot;active_workflow&quot;: &quot;support&quot;
+  }
+}</code></pre>

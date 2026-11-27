@@ -1,0 +1,76 @@
+---
+path: "guides/workflows/tools/trendyol"
+title: "Trendyol"
+excerpt: "Configure Trendyol and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 6
+---
+
+<p>The Trendyol tool lets your AI agent handle common seller-side tasks on Trendyol — listing and answering customer questions, checking order status, and reviewing returned/claimed orders — all during a live conversation.</p>
+<blockquote class="note">This tool acts through a Trendyol seller account you've already connected under <strong>Settings → E-Commerce</strong>. Connect the account first, then create the Trendyol tool and point it at that account.</blockquote>
+<h2>Connecting an Account</h2>
+<ol>
+<li>Go to <strong>Settings → E-Commerce</strong> and choose <strong>Connect Trendyol</strong></li>
+<li>Enter your <strong>Supplier ID</strong>, <strong>API Key</strong>, and <strong>API Secret</strong> (from your Trendyol Seller Center integration credentials)</li>
+<li>Choose the <strong>Environment</strong>: <code>production</code> or <code>stage</code></li>
+<li>Choose which order statuses to subscribe to for webhook notifications (defaults to all): <code>CREATED</code>, <code>PICKING</code>, <code>INVOICED</code>, <code>SHIPPED</code>, <code>CANCELLED</code>, <code>DELIVERED</code>, <code>UNDELIVERED</code>, <code>RETURNED</code>, <code>UNSUPPLIED</code>, <code>AWAITING</code>, <code>UNPACKED</code>, <code>AT_COLLECTION_POINT</code>, <code>VERIFIED</code></li>
+<li>Verasist registers a webhook with Trendyol so order status updates arrive automatically</li>
+</ol>
+<h2>How It Works</h2>
+<p>The account is fixed when you configure the tool (<code>trendyol_config_id</code>) — the LLM only supplies question/order details at call time.</p>
+<ul>
+<li><strong>Questions and claims</strong> (list, detail, answer, list claims, issue reasons, claim item audits) call the Trendyol API live, using your stored Supplier ID/API Key/API Secret</li>
+<li><strong>Order status</strong> is <em>not</em> fetched live — it's read from the latest webhook event Verasist has stored locally for that order number. This keeps order lookups instant during a call, but means status is only as fresh as the last webhook Trendyol has delivered for that order</li>
+</ul>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Trendyol Account</strong>: The connected seller account this tool uses</li>
+<li><strong>Allow List Questions</strong>: Let the agent list customer questions (default: on)</li>
+<li><strong>Allow Get Question Detail</strong>: Let the agent fetch a single question's full detail (default: on)</li>
+<li><strong>Allow Answer Questions</strong>: Let the agent submit an answer to a question (default: on)</li>
+<li><strong>Allow Check Order Status</strong>: Let the agent check an order's latest known status (default: on)</li>
+<li><strong>Allow List Claims</strong>: Let the agent list returned/claimed orders (default: on)</li>
+<li><strong>Allow Get Claim Issue Reasons</strong>: Let the agent fetch the global list of claim issue/rejection reasons (default: on)</li>
+<li><strong>Allow Get Claim Item Audits</strong>: Let the agent fetch the status/audit history of a single claim item (default: on)</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+At least one capability must be enabled.
+<h2>Agent Usage</h2>
+<h3>List Customer Questions</h3>
+<pre><code class="language-">trendyol_list_questions(status="WAITING_FOR_ANSWER", limit=10)
+</code></pre>
+<p>Optional filters: <code>status</code> (<code>WAITING_FOR_ANSWER</code>, <code>ANSWERED</code>, <code>REJECTED</code>, <code>REPORTED</code>), <code>barcode</code>.</p>
+<h3>Get Question Detail</h3>
+<pre><code class="language-">trendyol_question_detail(question_id="123456")
+</code></pre>
+<h3>Answer a Question</h3>
+<pre><code class="language-">trendyol_answer_question(question_id="123456", answer_text="Your order ships within 24 hours of confirmation.")
+</code></pre>
+<p>Answer text must be 10–2000 characters.</p>
+<h3>Check Order Status</h3>
+<pre><code class="language-">trendyol_order_status(order_number="TY123456789")
+</code></pre>
+<h3>List Returns/Claims</h3>
+<pre><code class="language-">trendyol_list_claims(status="Created", limit=10)
+</code></pre>
+<h3>Claim Issue Reasons & Audits</h3>
+<pre><code class="language-">trendyol_claim_issue_reasons()
+trendyol_claim_item_audits(claim_item_id="789")
+</code></pre>
+<p>Common scenarios:
+<ul>
+<li>A customer calls asking whether their unanswered question has a response yet</li>
+<li>The agent answers a routine customer question directly during the call</li>
+<li>A caller wants to know if their order has shipped</li>
+<li>Reviewing why a return was rejected or checking a claim's audit trail</li>
+</ul>
+<blockquote class="note">The tool fails closed if the configured Trendyol account doesn't belong to your organization or is inactive — the agent receives a clear error and the conversation continues instead of failing the call.</blockquote></p><h2>Current setup and execution</h2><p>Trendyol: configure seller connection and product/order/question permissions, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;lookup_order&quot;,
+    &quot;order_number&quot;: &quot;DEMO-42&quot;
+  },
+  &quot;result&quot;: {
+    &quot;order_status&quot;: &quot;preparing&quot;
+  }
+}</code></pre>

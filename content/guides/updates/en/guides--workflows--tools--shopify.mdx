@@ -1,0 +1,17 @@
+---
+path: "guides/workflows/tools/shopify"
+title: "Shopify"
+excerpt: "Configure Shopify and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 23
+---
+
+<p>Shopify: configure store connection and product/order/abandoned-checkout permissions, attach the saved tool to an agent, and test its operation in a workflow.</p><h2>Configure</h2><ul><li>Tools → New tool → Shopify</li><li>Store connection and product/order/abandoned-checkout permissions</li><li>Save, attach to the agent and test before publishing.</li></ul><h2>Behavior and limits</h2><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li><li>Select the connected store and enable the required product, order and abandoned-checkout capabilities. Results can supply context for a separate Workflow Trigger or Contact List Call Plan; reading a checkout alone does not start calls.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;lookup_order&quot;,
+    &quot;order_number&quot;: &quot;DEMO-1001&quot;
+  },
+  &quot;result&quot;: {
+    &quot;order_status&quot;: &quot;fulfilled&quot;
+  }
+}</code></pre>

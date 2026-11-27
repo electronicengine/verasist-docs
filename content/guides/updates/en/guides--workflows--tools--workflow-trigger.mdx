@@ -1,0 +1,20 @@
+---
+path: "guides/workflows/tools/workflow-trigger"
+title: "Workflow Trigger"
+excerpt: "Configure Workflow Trigger and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 25
+---
+
+<p>Workflow Trigger: configure published target workflow, channel, connection and optional fixed recipient, attach the saved tool to an agent, and test its operation in a workflow.</p><h2>Configure</h2><ul><li>Tools → New tool → Workflow Trigger</li><li>Published target workflow, channel, connection and optional fixed recipient</li><li>Save, attach to the agent and test before publishing.</li></ul><h2>Behavior and limits</h2><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li><li>The selected published workflow starts a separate run; the current conversation continues. Select phone, WhatsApp, Telegram or Instagram, connection and optional fixed recipient. The assistant cannot override a fixed workflow/channel/recipient. Queued means waiting for capacity, not a completed conversation.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;target&quot;: &quot;+905551112233&quot;,
+    &quot;initial_context&quot;: {
+      &quot;customer_name&quot;: &quot;Ada&quot;
+    }
+  },
+  &quot;result&quot;: {
+    &quot;workflow_run_id&quot;: &quot;demo-run&quot;,
+    &quot;status&quot;: &quot;queued&quot;
+  }
+}</code></pre>

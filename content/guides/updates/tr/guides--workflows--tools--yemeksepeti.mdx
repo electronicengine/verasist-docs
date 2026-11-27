@@ -1,0 +1,62 @@
+---
+path: "guides/workflows/tools/yemeksepeti"
+title: "Yemek Sepeti"
+excerpt: "Yemek Sepeti aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 7
+---
+
+<p>Yemek Sepeti aracı, AI temsilcinizin Canlı bir görüşme sırasında Yemek Sepeti'ndeki restoran tarafı sipariş işlemlerini (sipariş ayrıntılarını alma, sipariş durumunu güncelleme ve son siparişleri listeleme) yönetmesine olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Ayarlar → E-Ticaret</strong> altından bağladığınız Yemek Sepeti iş ortağı hesabı üzerinden çalışır. Önce hesabı bağlayın, ardından Yemek Sepeti aracını oluşturun ve onu o hesaba yönlendirin.</blockquote>
+<h2>Hesap Bağlama</h2>
+<ol>
+<li><strong>Ayarlar → E-Ticaret</strong>'e gidin ve <strong>Yemek Sepeti'ne Bağlan</strong></li>'ı seçin
+<li><strong>Zincir Kimliğinizi</strong>, <strong>Müşteri Kimliğinizi</strong> ve <strong>Müşteri Sırrınızı</strong> girin (Yemek Sepeti / Delivery Hero iş ortağı entegrasyon kimlik bilgilerinizden)</li>
+<li>Bağlantının kapsamını tek bir mağazaya ayarlamak için isteğe bağlı olarak belirli bir <strong>Satıcı Kimliği</strong> girin</li>
+<li>Verasist, sipariş bildirimleri için Yemek Sepeti'ne kaydedebileceğiniz bir web kancası URL'si ve sırrı oluşturur</li>
+</ol>
+<h2>Nasıl Çalışır</h2>
+<p>Hesap, aracı yapılandırdığınızda sabitlenir (<code>yemeksepeti_config_id</code>) — LLM yalnızca çağrı sırasında sipariş ayrıntılarını sağlar. Tüm işlemler (sipariş ayrıntısı, durum güncellemesi, liste), kayıtlı Zincir Kimliğinizi/Müşteri Kimliğinizi/Müşteri Sırrınızı (ve ayarlanmışsa Satıcı Kimliğinizi) kullanarak Yemek Sepeti API'sini canlı olarak çağırır.</p>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Yemek Sepeti Hesabı</strong>: Bu aracın kullandığı bağlı ortak hesabı</li>
+<li><strong>Sipariş Ayrıntısını Almaya İzin Ver</strong>: Temsilcinin tek bir siparişin tüm ayrıntılarını getirmesine izin verin (varsayılan: açık)</li>
+<li><strong>Sipariş Durumunu Güncellemeye İzin Ver</strong>: Temsilcinin bir siparişin durumunu değiştirmesine izin verin (varsayılan: açık)</li>
+<li><strong>Sipariş Listesine İzin Ver</strong>: Temsilcinin son siparişleri listelemesine izin verin (varsayılan: açık)</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+En az bir özelliğin etkinleştirilmesi gerekir.
+<h2>Aracı Kullanımı</h2>
+<h3>Sipariş Detayını Al</h3>
+<pre><code class = "language-">yemeksepeti_get_order_detail(order_id = "ORD-12345")
+</code></pre>
+<h3>Sipariş Durumunu Güncelle</h3>
+<pre><code class = "language-">yemeksepeti_update_order_status(order_id = "ORD-12345", status = "DISPATCHED")
+</code></pre>
+<p>İzin verilen durum değerleri: <code>READY_FOR_PICKUP</code>, <code>DISPATCHED</code>, <code>CANCELLED</code>. İptal ederken bir <code>iptal_nedeni</code> belirtin: <code>CLOSED</code>, <code>ITEM_UNAVAILABLE</code> veya <code>TOO_BUSY</code>.</p>
+<pre><code class = "language-">yemeksepeti_update_order_status(order_id = "ORD-12345", status = "CANCELLED", cancel_reason = "ITEM_UNAVAILABLE")
+</code></pre>
+<h3>Son Siparişleri Listele</h3>
+<pre><code class = "language-">yemeksepeti_list_orders(start_time = "2026-07-20T00:00:00Z", end_time = "2026-07-21T00:00:00Z", limit=20)
+</code></pre>
+<p>Genel senaryolar:
+<ul>
+<li>Bir kurye veya müşteri, siparişin durumunu kontrol etmek için arar</li>
+<li>Kuryeyle telefonda konuşurken bir siparişi teslim alınmaya hazır veya gönderildi olarak işaretleme</li>
+<li>Bir öğenin mevcut olmaması nedeniyle siparişin iptal edilmesi</li>
+<li>Vardiya devir görüşmesi sırasında son siparişlerden oluşan bir toplu işlemin incelenmesi</li>
+</ul>
+<blockquote class="note">Yapılandırılan Yemek Sepeti hesabı kuruluşunuza ait değilse veya etkin değilse araç kapatılamaz; aracı açık bir hata alır ve çağrıyı başarısız kılmak yerine görüşme devam eder.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Yemek Sepeti: restoran bağlantısı ve sipariş işlemleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;list_orders&quot;
+  },
+  &quot;result&quot;: {
+    &quot;orders&quot;: [
+      {
+        &quot;id&quot;: &quot;DEMO-7&quot;,
+        &quot;status&quot;: &quot;accepted&quot;
+      }
+    ]
+  }
+}</code></pre>

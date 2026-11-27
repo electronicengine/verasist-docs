@@ -1,0 +1,156 @@
+---
+path: "guides/workflows/tools/calendar"
+title: "Calendar"
+excerpt: "Configure Calendar and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 2
+---
+
+<p>The Calendar tool enables your AI agent to manage calendar entries — create new appointments, notes, reminders, or todos, and search existing entries — all during a live conversation.</p>
+<h2>How It Works</h2>
+<p>The Calendar tool exposes two functions to the LLM:</p>
+<ol>
+<li><strong>Write (Create Entry)</strong>: The agent creates a new calendar entry with a date, optional time, title, and description</li>
+<li><strong>Read (Query Entries)</strong>: The agent searches existing entries by date range or keyword</li>
+</ol>
+When a caller asks "Do I have anything scheduled next week?" or "Can you set a reminder for my dentist appointment?", the agent uses the Calendar tool to read or write entries.
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Entry Type</strong>: The default type of entry this tool creates. Choose one of:</li>
+</ul>  - <code>note</code> — General note
+  - <code>appointment</code> — Scheduled appointment
+  - <code>reminder</code> — Time-based reminder
+  - <code>todo</code> — Task to be completed
+<ul>
+<li><strong>Default Title Template</strong>: Optional template for auto-generating entry titles using <code>{{initial_context.<em>}}</code> and <code>{{gathered_context.</em>}}</code> variables</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+<h2>Agent Usage</h2>
+<h3>Creating an Entry</h3>
+<p>Your AI agent creates calendar entries with date, title, and optional time/description:</p>
+<pre><code class="language-">calendar_tool(date="2026-07-10", time="14:00", title="Dentist Appointment", description="Annual checkup at Dr. Smith's office")
+</code></pre>
+<h3>Querying Entries</h3>
+<p>The agent can search existing entries by date range or keyword:</p>
+<pre><code class="language-">calendar_tool_read(start_date="2026-07-01", end_date="2026-07-31", query="dentist")
+</code></pre>
+<p>Common scenarios:
+<ul>
+<li>Caller asks to schedule an appointment or set a reminder</li>
+<li>Caller asks what appointments they have coming up</li>
+<li>Agent needs to check availability before booking</li>
+<li>Recording meeting notes during the call</li>
+</ul>
+<h2>Entry Types</h2></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>note</code></td>
+<td>A general note without specific time constraints</td>
+</tr>
+<tr>
+<td><code>appointment</code></td>
+<td>A scheduled meeting or appointment with a date/time</td>
+</tr>
+<tr>
+<td><code>reminder</code></td>
+<td>A time-based reminder for future action</td>
+</tr>
+<tr>
+<td><code>todo</code></td>
+<td>A task item to be completed</td>
+</tr>
+<tr>
+<td><code>trigger</code></td>
+<td>A scheduled action (see <a href="#scheduled-triggers">Scheduled Triggers</a> below) — created automatically when <code>action_type</code> is set</td>
+</tr>
+</tbody>
+</table>
+<blockquote class="note">The agent automatically uses the configured default entry type, but can suggest a different type based on conversation context.</blockquote>
+<h2>Scheduled Triggers</h2>
+<p>Beyond plain notes and reminders, a calendar entry can also be a <strong>scheduled trigger</strong> that automatically kicks off a workflow run or controls a call campaign at a future date/time — with optional recurrence. Triggers are checked and executed automatically roughly once a minute.</p>
+<p>Both your AI agent (via the Calendar tool) and you (from the <strong>Calendar</strong> page in the dashboard) can create, edit, and delete these triggers.</p>
+<h3>Trigger Actions</h3>
+<table>
+<thead>
+<tr>
+<th><code>action_type</code></th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workflow_run</code></td>
+<td>Starts a new run of the specified workflow</td>
+</tr>
+<tr>
+<td><code>campaign_start</code></td>
+<td>Starts the specified call campaign</td>
+</tr>
+<tr>
+<td><code>campaign_pause</code></td>
+<td>Pauses the specified call campaign</td>
+</tr>
+</tbody>
+</table>
+<p>For <code>workflow_run</code> triggers, you also choose:</p>
+<ul>
+<li><strong><code>mode</code></strong> — the run mode, e.g. <code>textchat</code> or <code>webrtc</code> (used when <code>action_channel</code> is <code>text</code>, the default)</li>
+<li><strong><code>action_channel</code></strong> — how the workflow is launched: <code>text</code> (default, no external channel), <code>phone</code>, <code>whatsapp</code>, <code>telegram</code>, or <code>instagram</code></li>
+</ul>  - <code>phone</code> requires an <code>action_target</code> phone number and dials out through your organization's default (or a specifically chosen) telephony configuration
+  - <code>whatsapp</code>/<code>telegram</code>/<code>instagram</code> require an <code>action_target</code> (phone/JID or chat ID) and a <code>action_channel_configuration_id</code> picking which saved channel credential to use
+<h3>Recurrence</h3>
+<p>Set <code>recurrence</code> to make a trigger repeat instead of firing once:</p>
+<pre><code class="language-json">{"frequency": "weekly", "interval": 1, "days_of_week": [1, 3], "end_date": "2026-12-31"}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>frequency</code></td>
+<td><code>daily</code>, <code>weekly</code>, or <code>monthly</code></td>
+</tr>
+<tr>
+<td><code>interval</code></td>
+<td>Repeat every N periods (default <code>1</code>)</td>
+</tr>
+<tr>
+<td><code>days_of_week</code></td>
+<td>For weekly recurrence: which days (<code>0</code>=Monday … <code>6</code>=Sunday)</td>
+</tr>
+<tr>
+<td><code>end_date</code></td>
+<td>Optional date after which the trigger stops recurring</td>
+</tr>
+</tbody>
+</table>
+<p>After a recurring trigger fires, it is automatically advanced to its next occurrence rather than being marked complete.</p>
+<h3>Agent Usage</h3>
+<p>Your AI agent can schedule a trigger the same way it creates a normal entry, by adding <code>action_type</code>/<code>target_uuid</code> (and <code>mode</code>/<code>recurrence</code> if needed):</p>
+<pre><code class="language-">calendar_tool(
+  date="2026-08-01", time="09:00", title="Weekly follow-up campaign",
+  action_type="campaign_start", target_uuid="<campaign-uuid>",
+  recurrence='{"frequency":"weekly","interval":1}'
+)
+</code></pre>
+<blockquote class="note"><code>target_uuid</code> is the workflow UUID for <code>workflow_run</code> triggers, or the campaign UUID for <code>campaign_start</code>/<code>campaign_pause</code> triggers.</blockquote><h2>Current setup and execution</h2><p>Calendar: configure title, timezone and callback target, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;title&quot;: &quot;Geri arama / Callback&quot;,
+    &quot;time&quot;: &quot;2026-12-01T10:00:00+03:00&quot;
+  },
+  &quot;result&quot;: {
+    &quot;scheduled&quot;: true
+  }
+}</code></pre>

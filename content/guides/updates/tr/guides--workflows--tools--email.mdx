@@ -1,0 +1,71 @@
+---
+path: "guides/workflows/tools/email"
+title: "E-posta"
+excerpt: "E-posta aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 2
+---
+
+<p>E-posta aracı, yapay zeka aracınızın canlı bir görüşme sırasında e-posta göndermesine veya bağlı bir posta kutusunda en son e-postayı aramasına/okumasına olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Ayarlar → E-posta</strong> altında zaten bağladığınız bir posta kutusu aracılığıyla çalışır. Önce hesabı bağlayın, ardından E-posta aracını oluşturun ve onu bu posta kutusuna yönlendirin.</blockquote>
+<h2>Desteklenen Sağlayıcılar</h2>
+<tablo>
+<thead>
+<tr>
+<th>Sağlayıcı</th>
+<th>Kapsamlar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Gmail</strong></td>
+<td><code>gmail.send</code>, <code>gmail.readonly</code></td>
+</tr>
+<tr>
+<td><strong>Microsoft (Outlook / Microsoft 365)</strong></td>
+<td><code>Mail.Read</code>, <code>Mail.Send</code>, <code>offline_access</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Hesap Bağlama</h2>
+<ol>
+<li><strong>Ayarlar → E-posta</strong>'ya gidin ve <strong>Posta Kutusuna Bağlan</strong></li>'ı seçin
+<li><strong>Gmail</strong> veya <strong>Microsoft</strong></li>'u seçin
+<li>Açılır pencerede/yönlendirmede OAuth izin akışını tamamlayın</li>
+<li>Aracı yapılandırdığınızda, bağlı posta kutusu E-posta aracının hesap seçicisinde görünür</li>
+</ol>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Posta Kutusu</strong>: Bu aracın kullandığı bağlı Gmail veya Microsoft hesabı</li>
+<li><strong>Göndermeye İzin Ver</strong>: Temsilcinin bu araç aracılığıyla e-posta göndermesine izin verin (varsayılan: açık)</li>
+<li><strong>Okumaya İzin Ver</strong>: Temsilcinin bu araç aracılığıyla e-posta aramasına/okumasına izin verin (varsayılan: açık)</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+Göndermeye İzin Ver / Okumaya İzin Ver seçeneklerinden en az birinin etkinleştirilmesi gerekir.
+<h2>Aracı Kullanımı</h2>
+<h3>E-posta Gönderme</h3>
+<pre><code class="language-">email_araç(to=["customer@example.com"], Subject="İstediğiniz onay", body="İşte görüşmemiz sırasında istediğiniz onay.", cc=["sales@yourcompany.com"])
+</code></pre>
+<code>to</code>, <code>konu</code> ve <code>body</code> gereklidir; <code>cc</code> isteğe bağlıdır.
+<h3>E-posta Arama/Okuma</h3>
+<pre><code class = "language-">email_araç_search(query = fatura", beri = "2026-07-01", limit=10)
+</code></pre>
+<p>Tüm arama parametreleri isteğe bağlıdır; gelen kutusuna en son e-postaları almak için bunları atlayın.</p>
+<p>Genel senaryolar:
+<ul>
+<li>Arayan kişiye istediği onay, makbuz veya belgeyi e-postayla gönderme</li>
+<li>Bir soruyu yanıtlamadan önce önceki bir e-posta ileti dizisine bakmak</li>
+<li>Arayandan önceki bir mesajın alınıp alınmadığını doğrulama</li>
+<li>Telefon veya web aramasından sonra yazılı bir özet gönderme</li>
+</ul>
+<blockquote class="note">Yapılandırılan posta kutusu kuruluşunuza ait değilse, etkin değilse veya sağlayıcı desteklenmiyorsa araç başarısız şekilde kapatılır; aracı açık bir hata alır ve çağrıyı başarısız kılmak yerine görüşme devam eder.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>E-posta: bağlı gmail/microsoft hesabı ve izinli işlemler ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;send&quot;,
+    &quot;to&quot;: &quot;ada@example.invalid&quot;,
+    &quot;subject&quot;: &quot;Appointment&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;sent&quot;
+  }
+}</code></pre>

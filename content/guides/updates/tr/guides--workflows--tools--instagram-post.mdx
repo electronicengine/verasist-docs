@@ -1,0 +1,55 @@
+---
+path: "guides/workflows/tools/instagram-post"
+title: "Instagram Gönderisi"
+excerpt: "Instagram Gönderisi aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 1
+---
+
+<p>Instagram Gönderi aracı, AI temsilcinizin, canlı bir görüşme sırasında bağlı bir Instagram Business hesabında (fotoğraflar ve Reels) içerik yayınlamasının yanı sıra son gönderileri listelemesine, yorumları okumasına ve bunlara yanıt vermesine olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Kanallar</strong> altından zaten bağladığınız bir Instagram hesabı üzerinden çalışır. Önce hesabı bağlayın, ardından aracı oluşturun ve o hesaba yönlendirin. Kurulum için <a href="/guides/integrations/channels/instagram">Instagram kanal kılavuzuna</a> bakın.</blockquote>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Instagram Hesabı</strong> — bu aracın yayınlayacağı bağlı Instagram İşletme hesabı</li>
+<li><strong>Yayınlamaya izin ver</strong> — temsilcinin gönderileri yayınlamasına izin verin (varsayılan: açık)</li>
+<li><strong>Video yayınlarına izin ver (Reels)</strong> — temsilcinin Reels yayınlamasına izin verin; yayınlamanın açık olmasını gerektirir (varsayılan: açık)</li>
+<li><strong>Yorumların okunmasına izin ver</strong> — temsilcinin son gönderileri listelemesine ve yorumlarını okumasına izin verin (varsayılan: açık)</li>
+<li><strong>Yorumların yanıtlanmasına izin ver</strong> — temsilcinin bir yorumu yanıtlamasına izin verin (varsayılan: açık)</li>
+<li><strong>Özel mesaj</strong> — araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+<h2>Nasıl Çalışır</h2>
+<p>Hesap, aracı yapılandırdığınızda sabitlenir; LLM yalnızca çağrı sırasında gönderi içeriği sağlar. Verasist, Meta Graph API'yi aşağıdaki amaçlarla kullanır:</p>
+<ol>
+<li>Fotoğraf veya Reel için bir medya kapsayıcısı oluşturun</li>
+<li>Kapsayıcı hazır olana kadar anket yapın (video için daha uzun bütçe)</li>
+<li>Kapsayıcıyı yayınlayın, isteğe bağlı olarak Makaraları da Akışta paylaşın</li>
+<li>Yayın kalıcı bağlantısını temsilciye iade edin</li>
+</ol>
+<blockquote class="note">Instagram'daki video gönderileri <strong>Reels</strong>'tir — Meta'nın Graph API'sinin artık ayrı bir salt feed video türü yoktur. Makaralar isteğe bağlı olarak Akışta <code>share_to_feed</code> işareti aracılığıyla da görünebilir.</blockquote>
+<h2>Aracı Kullanımı</h2>
+<h3>Fotoğraf yayınlayın</h3>
+<pre><code class = "language-">publish_post(media_type = "image", image_url = "https://example.com/photo.jpg", caption = "Büyük haber!")
+</code></pre>
+<h3>Bir Reel Yayınlayın</h3>
+<pre><code class = "language-">publish_post(media_type = "reels", video_url = "https://example.com/reel.mp4", caption = "Kamera arkası", share_to_feed=true)
+</code></pre>
+<p>Medya, genel bir HTTPS URL'si veya önceden oluşturulmuş/yüklenmiş bir dosyadan bir <code>attachment_uuid</code> olabilir.</p>
+<h3>Yorumları okuyun</h3>
+<pre><code class = "language-">read_comments(post_id = "...")
+</code></pre>
+<h3>Bir yorumu yanıtlama</h3>
+<pre><code class = "language-">reply_to_comment(comment_id = "...", message = "Nazik sözleriniz için teşekkürler!")
+</code></pre>
+<p>Gönderi ve yorum kimlikleri önceki <code>list_recent_posts</code> / <code>read_comments</code> çağrılarından gelir.</p>
+<blockquote class="note">İşlev adlarının önüne araç adı gelir — ör. "insta" adlı bir araç <code>insta_publish_post</code>'u ortaya çıkarır.</blockquote><h2>Güncel kurulum ve çalışma</h2><p>Instagram Gönderisi: bağlı instagram hesabı ve izinli yayın işlemleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

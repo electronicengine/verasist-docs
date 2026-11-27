@@ -1,0 +1,85 @@
+---
+path: "guides/workflows/tools/calculator"
+title: "Calculator"
+excerpt: "Configure Calculator and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 1
+---
+
+<p>The Calculator tool enables your AI agent to evaluate arithmetic expressions during calls. It uses a safe AST-based evaluator that only permits basic math operations — no arbitrary code execution.</p>
+<h2>How It Works</h2>
+<p>The Calculator tool exposes a single <code>safe_calculator</code> function to the LLM:</p>
+<ol>
+<li><strong>Agent Decision</strong>: The agent encounters a math problem during conversation (e.g., pricing calculation, date math, totals)</li>
+<li><strong>Expression Evaluation</strong>: The expression is parsed through Python's AST and only allowed node types (<code>+</code>, <code>-</code>, <code><em></code>, <code>/</code>, <code></em>*</code>, <code>%</code>, parentheses) are permitted</li>
+<li><strong>Result Returned</strong>: The numeric result is returned to the agent, which can incorporate it into the conversation</li>
+</ol>
+<h2>Supported Operations</h2>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>+</code></td>
+<td>Addition</td>
+<td><code>2000 + 500</code></td>
+</tr>
+<tr>
+<td><code>-</code></td>
+<td>Subtraction</td>
+<td><code>1000 - 350</code></td>
+</tr>
+<tr>
+<td><code>*</code></td>
+<td>Multiplication</td>
+<td><code>150 * 3</code></td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td>Division</td>
+<td><code>1200 / 4</code></td>
+</tr>
+<tr>
+<td><code>**</code></td>
+<td>Exponentiation</td>
+<td><code>2 ** 10</code></td>
+</tr>
+<tr>
+<td><code>%</code></td>
+<td>Modulo (remainder)</td>
+<td><code>17 % 5</code></td>
+</tr>
+<tr>
+<td><code>()</code></td>
+<td>Parentheses (grouping)</td>
+<td><code>(100 + 50) * 2</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Configuration</h2>
+<p>The Calculator tool has no additional configuration — it's ready to use out of the box. Simply add it to your workflow node from the Tools panel.</p>
+<h2>Agent Usage</h2>
+<p>Your AI agent calls the calculator with an arithmetic expression:</p>
+<pre><code class="language-">safe_calculator(expression="(150 * 3) + (75 / 5)")
+</code></pre>
+<p>Common scenarios:
+<ul>
+<li>Calculating totals, discounts, or tax during sales calls</li>
+<li>Date and time arithmetic (e.g., "What date is 45 days from now?")</li>
+<li>Unit conversions (e.g., square footage, currency with fixed rates)</li>
+<li>Splitting bills or calculating per-person costs</li>
+<li>Any math the caller asks about during the conversation</li>
+</ul>
+<blockquote class="note">The calculator only supports numeric arithmetic. It cannot access external APIs, databases, or execute arbitrary code. For complex calculations that depend on external data, use an <a href="/guides/workflows/tools/http-api">HTTP API</a> tool instead.</blockquote></p><h2>Current setup and execution</h2><p>Calculator: configure expression and tool access, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;expression&quot;: &quot;125 * 1.20&quot;
+  },
+  &quot;result&quot;: {
+    &quot;result&quot;: 150
+  }
+}</code></pre>

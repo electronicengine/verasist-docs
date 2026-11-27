@@ -1,0 +1,138 @@
+---
+path: "guides/workflows/tools/http-api"
+title: "External HTTP API"
+excerpt: "Configure External HTTP API and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 1
+---
+
+<p>HTTP API tools allow you to attach extrernal REST API calls directly to workflow nodes, enabling your voice agents to call any internal or external system during live conversations based on LLM judgment and your prompts. This works similar to function calling on any agentic platform and is 100% open source and fully customizable.</p>
+<h2>Video Tutorial</h2>
+<h2>What is an HTTP API Tool?</h2>
+<p>An HTTP API Tool is a REST API definition that the LLM can invoke at runtime.</p>
+<strong>Typical use cases:</strong>
+<ul>
+<li>Call your own backend endpoints</li>
+<li>Trigger n8n automations</li>
+<li>Sync data with a CRM</li>
+<li>Fetch data from external APIs (weather, pricing, availability, etc.)</li>
+<li>Write/update/read data using Rest API</li>
+</ul>
+<strong>The LLM decides:</strong>
+<ul>
+<li>which tool to call</li>
+<li>when to call it</li>
+<li>what parameters to send</li>
+</ul>
+<strong>All based on:</strong>
+<ul>
+<li>Your prompts: node-level instructions in simple english (or any language)</li>
+<li>Tool name</li>
+<li>Tool description</li>
+<li>Parameter definitions</li>
+</ul>
+<br/>
+<div style={{ borderBottom: '2px solid #e5e5e5', margin: '20px 0' }}></div>
+<h2>Defining an HTTP API Tool</h2>
+<h3>1. Tool Name</h3>
+<ul>
+<li>Must be clear and action-oriented.</li>
+</ul>
+<ul>
+<li><strong>Examples:</strong> <code>capture_lead_interest</code>, <code>fetch_weather</code>, 'create_crm_contact', etc</li>
+</ul>
+<h3>2. Tool Description</h3>
+<ul>
+<li>Extremely important</li>
+<li>This is how the LLM decides <strong>when</strong> to use the tool. </li>
+<li>Write it in plain, explicit English.</li>
+</ul>
+<strong>Bad:</strong>
+"API to capture data"
+<strong>Good:</strong>
+"This tool is to capture interest. Use this tool when the user clearly expresses interest in the product or wants to be contacted"
+<h3>3. Endpoint Configuration</h3>
+<ul>
+<li>Full URL (<strong>must include <code>http://</code> or <code>https://</code></strong>)</li>
+<li>Supports <strong>REST</strong> methods</li>
+</ul>
+<blockquote class="note">Common mistake: forgetting https:// in the URL.</blockquote>
+<p><br/>
+<div style={{ borderBottom: '2px solid #e5e5e5', margin: '20px 0' }}></div></p>
+<h3>4. Authentication & Headers</h3>
+<ul>
+<li>Add custom authentication</li>
+<li>Add custom headers</li>
+<li>Works with internal services and third-party APIs</li>
+</ul>
+<br/>
+<div style={{ borderBottom: '2px solid #e5e5e5', margin: '20px 0' }}></div>
+<h3>5. Parameters</h3>
+<p>Each parameter must have:
+<ul>
+<li>Name</li>
+<li>Type</li>
+<li>Description</li>
+<li>Required/Optional flag</li>
+</ul>
+<strong>Parameter descriptions matter more than types.</strong></p>
+<p>Guidelines:
+<ul>
+<li>Start with string parameters when possible</li>
+<li>Be explicit in what the value represents</li>
+<li>Mark only truly mandatory fields as required</li>
+</ul>
+Example:
+<ul>
+<li>interest (string):</li>
+</ul>  "Set to true if the user clearly shows intent to buy or wants follow-up. Otherwise false."</p>
+<p><br/>
+<div style={{ borderBottom: '2px solid #e5e5e5', margin: '20px 0' }}></div></p>
+<h2>Attaching Tools to Workflow Nodes</h2>
+<ul>
+<li>You can attach <strong>multiple tools to a single node</strong></li>
+<li>All the tools that you have created will be available for selection in the node</li>
+<li>Tools are only callable when attached to that node</li>
+<li>The LLM will choose which one to call</li>
+</ul>
+Inside the node, guide the LLM using <strong>simple English instructions</strong>.
+<p>Example:</p>
+<p>"If the user shows interest in speaking to sales or wants a callback, immediately call the capture_lead_interest tool and set interest to true."
+This instruction is often the deciding factor for correct tool usage.</p>
+<p>This instruction is often the <strong>deciding factor</strong> for correct tool usage.</p>
+<p><br/>
+<div style={{ borderBottom: '2px solid #e5e5e5', margin: '20px 0' }}></div></p>
+<h2>Tool Invocation Logic (How the LLM Thinks)</h2>
+<p>The LLM considers:
+<ul>
+<li>User's spoken intent</li>
+<li>Node prompt instructions</li>
+<li>Tool name and description</li>
+<li>Parameter descriptions</li>
+</ul>
+If these align clearly, the tool is called automatically.</p>
+<p>Poor naming or vague descriptions lead to:
+<ul>
+<li>Missed tool calls</li>
+<li>Wrong parameters</li>
+<li>Hallucinated values</li>
+</ul>
+<br/>
+<div style={{ borderBottom: '2px solid #e5e5e5', margin: '20px 0' }}></div></p>
+<h2>Key Best Practices</h2>
+<ul>
+<li>Name tools clearly</li>
+<li>Write detailed, action-based descriptions</li>
+<li>Keep parameters simple at first</li>
+<li>Always include http/https in URLs</li>
+<li>Use plain English in node instructions</li>
+<li>Attach only relevant tools to each node</li>
+</ul>
+<strong>Well-defined tools + clear prompts = reliable, production-grade voice agents.</strong><h2>Current setup and execution</h2><p>External HTTP API: configure url, http method, authentication and parameter schema, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;order_id&quot;: &quot;DEMO-42&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;shipped&quot;
+  }
+}</code></pre>

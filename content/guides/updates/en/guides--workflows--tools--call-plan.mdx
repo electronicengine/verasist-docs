@@ -1,0 +1,22 @@
+---
+path: "guides/workflows/tools/call-plan"
+title: "Contact List Call Plan"
+excerpt: "Configure Contact List Call Plan and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 24
+---
+
+<p>Contact List Call Plan: configure published target workflow, outbound connection and contact limit, attach the saved tool to an agent, and test its operation in a workflow.</p><h2>Configure</h2><ul><li>Tools → New tool → Contact List Call Plan</li><li>Published target workflow, outbound connection and contact limit</li><li>Save, attach to the agent and test before publishing.</li></ul><h2>Behavior and limits</h2><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li><li>Choose an active published target workflow, outbound connection and maximum contacts (1–500; default 100). Contacts are called in list order, one at a time. Inspect, pause and resume the plan from Call Plans. Invalid or duplicate numbers are rejected; new tool plans do not automatically retry failed calls.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;name&quot;: &quot;Follow up&quot;,
+    &quot;contacts&quot;: [
+      {
+        &quot;phone_number&quot;: &quot;+905551112233&quot;
+      }
+    ]
+  },
+  &quot;result&quot;: {
+    &quot;campaign_id&quot;: &quot;demo-plan&quot;,
+    &quot;contact_count&quot;: 1
+  }
+}</code></pre>

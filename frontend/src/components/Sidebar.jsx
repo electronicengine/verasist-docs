@@ -300,6 +300,10 @@ export default function Sidebar({ mobile = false, onNavigate }) {
       onClick={(event) => { if (event.target.closest("a")) onNavigate?.(); }}
       data-testid="docs-sidebar"
     >
+      <Link to="/verasistLAB/pbx" aria-current={currentPath.startsWith("verasistLAB/") ? "page" : undefined}
+        className="mb-6 block rounded-lg border border-border px-3 py-3 text-sm hover:border-primary text-primary">
+        Verasist LAB
+      </Link>
       {mobile && <nav aria-label={lang === "tr" ? "Bölümler" : "Sections"} className="mb-6 pb-4 border-b space-y-1">
         {navData.map((tab) => <Link key={tab.id} className="block px-2 py-2 text-sm font-medium rounded hover:bg-secondary"
           to={tab.slug === "api-referansi" ? "/api-referansi" : `/docs/${tab.slug}`}>{translateTab(tab, lang).title}</Link>)}

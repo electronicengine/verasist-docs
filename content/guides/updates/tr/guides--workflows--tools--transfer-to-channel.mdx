@@ -1,0 +1,68 @@
+---
+path: "guides/workflows/tools/transfer-to-channel"
+title: "Kanala Aktar"
+excerpt: "Kanala Aktar aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 10
+---
+
+<p>Kanala Aktarma aracı, AI temsilcinizin mevcut görüşmeye <strong>farklı bir mesajlaşma kanalında</strong> devam etmesine olanak tanır; örneğin, canlı bir telefon görüşmesini veya WhatsApp sohbetini Telegram'a taşıyabilir veya telefonu kapattıktan sonra sohbete devam etmek isteyen bir arayan için WhatsApp görüşmesi başlatabilir. Hedef konuşmanın temeli şu ana kadar tartışılan her şeyle birlikte oluşturulduğu için boş bir sayfadan başlamıyor.</p>
+<h2>Nasıl Çalışır</h2>
+<p><a href="/guides/iş akışları/araçlar/transfer-to-assistant">Ajan'a Aktarım</a>'dan (aynı görüşme içinde farklı bir iş akışına geçiş yapar) veya <a href="/guides/iş akışları/araçlar/call-transfer">Çağrı Aktarımı</a>'ndan (bağlam olmadan bir telefon numarasına/SIP uç noktasına kör aktarım) farklı olarak, Kanala Aktarma başka bir yerde <strong>yepyeni bir oturum başlatır kanal</strong>:</p>
+<ol>
+<li><strong>Temsilci Kararı</strong>: Yapay zeka temsilcisi, arayanın başka bir yerden devam etmek istediğini belirler (ör. "Bunun yerine bana WhatsApp'tan mesaj gönderebilir misiniz?") ve alıcının kimliğiyle aracı çağırır</li>
+<li><strong>Yeni Oturum Oluşturuldu</strong>: Araçta yapılandırılan hedef iş akışı kullanılarak hedef kanalda yeni bir görüşme başlatılır</li>
+<li><strong>Geçmişin Taşınması</strong>: Geçerli görüşmede şu ana kadar söylenen her şey hedef oturuma eklenir ve başlangıç düğümünden değil, kaynak görüşmenin bulunduğu <strong>aynı iş akışı düğümünden</strong> devam ettirilir; böylece temsilcinin bir sonraki yanıtı, genel bir karşılamayı tekrarlamak yerine doğal bir şekilde başlar</li>
+<li><strong>Kaynak Görüşmesi Sonlanır</strong>: Hedef oturum başarıyla oluşturulduktan sonra kaynak görüşme (canlı arama veya orijinal metin sohbeti) sonlandırılır. Geriye tam olarak tek bir etkin oturum kalıyor; aktarılan oturum.</li>
+</ol>
+Hedef oturum başlatılamazsa (geçersiz hedef, yanlış yapılandırılmış kanal, kota aşıldı vb.), kaynak konuşmaya <strong>dokunulmadan bırakılır</strong> ve normal şekilde devam eder. Araç aynı zamanda yerleşik bir veri tekilleştirme korumasına da sahiptir; eğer LLM aynı hedef için yanlışlıkla 30 saniye içinde aktarımı iki kez başlatırsa, ikinci çağrı sessizce göz ardı edilir.
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Hedef Kanal</strong>: Kanal türü (<code>whatsapp</code>, <code>telegram</code> veya <code>instagram</code>) ve gönderilecek belirli <strong>Kanal Yapılandırması</strong></li>
+<li><strong>Hedef İş Akışı</strong>: Hedef görüşmeyi yürütmesi gereken iş akışı (ajan)</li>
+<li><strong>Özel Mesaj</strong>: Aktarımdan önce oynatılan/gönderilen isteğe bağlı mesaj</li>
+</ul>
+Araç yapılandırıldığında hedef kanal ve hedef iş akışı sabitlenir; LLM yalnızca arama sırasında alıcının kimliğini sağlar.
+<h2>Aracı Kullanımı</h2>
+<p>Yapay zeka temsilciniz, hedef kimliğini sağlayarak görüşmeyi aktarır:</p>
+<pre><code class = "language-">transfer_to_channel(target_identity = "+14155550100")
+</code></pre>
+<p><code>target_identity</code> için beklenen format, yapılandırılan hedef kanala bağlıdır:</p><table>
+<thead>
+<tr>
+<th>Channel</th>
+<th><code>target_identity</code> format</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WhatsApp</td>
+<td>E.164 phone number, e.g. <code>+14155550100</code></td>
+</tr>
+<tr>
+<td>Telegram</td>
+<td>Telegram chat ID</td>
+</tr>
+<tr>
+<td>Instagram</td>
+<td>Instagram-scoped user ID</td>
+</tr>
+</tbody>
+</table>
+<p>Common scenarios:
+<ul>
+<li>Caller on a phone call asks to continue over WhatsApp/Telegram instead</li>
+<li>A text-chat user asks to switch to a different messaging app</li>
+<li>Business hours end for voice support but chat support should keep going</li>
+</ul>
+<blockquote class="note">This araç <strong>ends the current conversation</strong> once the destination conversation has successfully started — the two do not run side by side. If you want both the source and destination to keep running independently, use <a href="/guides/iş akışları/araçlar/send-message">Send Message</a> instead, which sends a one-off message without ending the current conversation. A transferred session cannot be transferred again — only <strong>1 channel transfer</strong> is allowed per conversation to prevent loops.</blockquote></p>
+<blockquote class="warning">If the caller sends another message on the transferred channel shortly after, it re-attaches to the same transferred session rather than starting a new one — as long as the destination channel configuration's identity matches on both the outbound and inbound side (this is automatic for channels set up through Verasist).</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Kanala Aktar: hedef kanal bağlantısı ve alıcı ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;channel&quot;: &quot;whatsapp&quot;,
+    &quot;target&quot;: &quot;+905551112233&quot;
+  },
+  &quot;result&quot;: {
+    &quot;handoff&quot;: &quot;conversation history retained&quot;
+  }
+}</code></pre>

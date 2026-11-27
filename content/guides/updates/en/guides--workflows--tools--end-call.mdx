@@ -1,0 +1,49 @@
+---
+path: "guides/workflows/tools/end-call"
+title: "End Call"
+excerpt: "Configure End Call and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 5
+---
+
+<p>The End Call tool lets your AI agent terminate calls programmatically when the conversation is complete. It also supports capturing a <strong>call disposition</strong> — a reason code stored in the run's gathered context — so you can track call outcomes in reports and webhooks.</p>
+<h2>How It Works</h2>
+<p>The End Call tool is simpler than most tools — it has no configurable parameters the LLM supplies, but it does have one important configuration toggle:</p>
+<ol>
+<li><strong>Agent Decision</strong>: The AI agent determines the call should end</li>
+<li><strong>Call Disposition (optional)</strong>: If <code>endCallReason</code> is enabled, the agent provides a reason string (e.g., "resolved", "follow-up needed") which is stored as <code>call_disposition</code> in <code>gathered_context</code></li>
+<li><strong>Goodbye Message</strong>: If configured, the agent plays a closing message before hanging up</li>
+<li><strong>Clean Termination</strong>: The call ends gracefully through the telephony provider</li>
+</ol>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>End Message</strong>: Optional message played to the caller before the call ends (e.g., "Thank you for calling. Goodbye!")</li>
+<li><strong>End Call Reason</strong>: Toggle — when enabled, the LLM <strong>must</strong> provide a <code>reason</code> string explaining why the call is ending. This reason is stored as <code>gathered_context.call_disposition</code> and appears in:</li>
+</ul>  - <strong>Reports</strong>: Disposition distribution chart
+  - <strong>Usage History</strong>: Disposition column in run tables
+  - <strong>Webhooks</strong>: Included in webhook payloads
+<blockquote class="note">The <code>call_disposition</code> is the primary way to track call outcomes. Common values: <code>resolved</code>, <code>follow_up_needed</code>, <code>not_interested</code>, <code>wrong_number</code>, <code>voicemail</code>. Your agent prompt should instruct the LLM to use consistent disposition values.</blockquote>
+<h2>Agent Usage</h2>
+<p>When <code>endCallReason</code> is <strong>disabled</strong> (default), the agent calls the tool with no parameters:</p>
+<pre><code class="language-">end_call()
+</code></pre>
+<p>When <code>endCallReason</code> is <strong>enabled</strong>, the agent must provide a reason:</p>
+<pre><code class="language-">end_call(reason="resolved")
+</code></pre>
+<p>The LLM chooses the reason based on conversation context — your agent prompt should guide it. For example: "When ending a call, provide a disposition: resolved, follow_up_needed, or not_interested."</p>
+<p>Common scenarios:
+<ul>
+<li>Conversation has reached a natural conclusion</li>
+<li>Caller explicitly requests to end the call</li>
+<li>Agent has completed all requested tasks</li>
+<li>Call needs to end due to timeout or error conditions</li>
+<li>Capturing structured call outcomes for analytics</li>
+</ul></p><h2>Current setup and execution</h2><p>End Call: configure end condition and text or audio farewell, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;reason&quot;: &quot;completed&quot;
+  },
+  &quot;result&quot;: {
+    &quot;call_state&quot;: &quot;ended&quot;
+  }
+}</code></pre>

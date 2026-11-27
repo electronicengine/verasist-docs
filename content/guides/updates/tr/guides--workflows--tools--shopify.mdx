@@ -1,0 +1,17 @@
+---
+path: "guides/workflows/tools/shopify"
+title: "Shopify"
+excerpt: "Shopify aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 23
+---
+
+<p>Shopify: mağaza bağlantısı, ürün/sipariş/yarım kalan ödeme izinleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><h2>Yapılandırın</h2><ul><li>Araçlar → Yeni araç → Shopify</li><li>Mağaza bağlantısı, ürün/sipariş/yarım kalan ödeme izinleri</li><li>Kaydedin, ajana ekleyin ve yayımlamadan önce test edin.</li></ul><h2>Davranış ve sınırlar</h2><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li><li>Bağlı mağazayı seçip ürün, sipariş ve yarım kalan ödeme yeteneklerinden gerekenleri açın. Sonuçlar İş Akışı Tetikleyici veya Liste ile Arama Planı aracına bağlam sağlayabilir; ödeme kaydını okumak tek başına arama başlatmaz.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;lookup_order&quot;,
+    &quot;order_number&quot;: &quot;DEMO-1001&quot;
+  },
+  &quot;result&quot;: {
+    &quot;order_status&quot;: &quot;fulfilled&quot;
+  }
+}</code></pre>

@@ -59,3 +59,16 @@ reviewed pages, keeps existing IDs/slugs, adds Data Extraction under Nodes, and
 parents Create Charts/Analyze Charts beneath the existing Reports document. It
 previews by default and requires a new backup filename to apply. Preserve these
 parent relationships when publishing selectively; no service restart is needed.
+
+
+Current guide content
+---------------------
+
+`guides/updates/{en,tr}/` contains reviewed tool/live-operation content, with
+JSON frontmatter and HTML bodies. `guides/tool-catalog.json` tracks the 37 tools.
+Publish with `sync_guide_workshops.py --source-dir content/guides/updates`; it
+previews unless `--apply --backup NEW_FILE` is supplied. Keep backups outside
+Git and customer-publication overrides aligned. Existing Mermaid diagrams
+remain; only the IP PBX and SIP Trunk guides embed a Three.js workshop.
+
+Visible telephony terminology uses **ARI endpoint** for ARI access and **SIP gateway** for SIP transport. Preserve executable examples and official source URLs. `backend/migration/rename_ari_endpoint.py` previews scoped display-text changes; apply with `--apply --backup NEW_FILE`. It preserves document IDs, routes, HTML attributes and code blocks.

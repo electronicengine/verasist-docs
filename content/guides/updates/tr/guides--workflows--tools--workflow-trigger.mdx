@@ -1,0 +1,20 @@
+---
+path: "guides/workflows/tools/workflow-trigger"
+title: "İş Akışı Tetikleyici"
+excerpt: "İş Akışı Tetikleyici aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 25
+---
+
+<p>İş Akışı Tetikleyici: yayımlanmış hedef akış, kanal, bağlantı ve isteğe bağlı sabit alıcı ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><h2>Yapılandırın</h2><ul><li>Araçlar → Yeni araç → İş Akışı Tetikleyici</li><li>Yayımlanmış hedef akış, kanal, bağlantı ve isteğe bağlı sabit alıcı</li><li>Kaydedin, ajana ekleyin ve yayımlamadan önce test edin.</li></ul><h2>Davranış ve sınırlar</h2><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li><li>Seçilen yayımlanmış akış ayrı çalıştırma başlatır; mevcut konuşma devam eder. Telefon, WhatsApp, Telegram veya Instagram kanalını, bağlantıyı ve isteğe bağlı sabit alıcıyı seçin. Ajan sabit akış/kanal/alıcıyı değiştiremez. Kuyrukta durumu görüşmenin tamamlandığını değil kapasite beklendiğini belirtir.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;target&quot;: &quot;+905551112233&quot;,
+    &quot;initial_context&quot;: {
+      &quot;customer_name&quot;: &quot;Ada&quot;
+    }
+  },
+  &quot;result&quot;: {
+    &quot;workflow_run_id&quot;: &quot;demo-run&quot;,
+    &quot;status&quot;: &quot;queued&quot;
+  }
+}</code></pre>

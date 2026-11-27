@@ -1,0 +1,89 @@
+---
+path: "guides/workflows/tools/mcp-tool"
+title: "MCP Sunucusu"
+excerpt: "MCP Sunucusu aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 2
+---
+
+<blockquote class="note">Bu sayfa, harici bir MCP sunucusunun <strong>sesli aracı içindeki bir araç</strong> olarak kullanılmasıyla ilgilidir. Claude, Cursor veya başka bir kodlama aracısının Verasist'i MCP üzerinden kontrol etmesini istiyorsanız <a href="/integrations/mcp">Verasist MCP Sunucusu</a>'na bakın.</blockquote>
+<blockquote class="note">Ayrıca Otomasyon Ajanından (<strong>Otomasyon</strong> sayfasındaki sohbet ajanı) sizin için bir MCP aracı oluşturmasını isteyebilirsiniz (ona sunucu URL'sini ve gerekiyorsa kullanılacak kimlik bilgilerini verin) ve o, elde edilen aracı, oluşturduğu aracıya bağlayacaktır.</blockquote>
+<p>MCP araçları, Verasist sesli aracısının, canlı bir görüşme sırasında uzak bir <a href="https://modelcontextprotocol.io/">Model Bağlam Protokolü</a> sunucusu tarafından açığa çıkan araçları aramasına olanak tanır. Verasist uzak araç kataloğunu keşfeder, bu araçları LLM tarafından çağrılabilir işlevlere dönüştürür ve çağrıları kimliği doğrulanmış Akışlı HTTP üzerinden MCP sunucusuna iletir.</p>
+<h2>Ne yapılandırılmalı</h2>
+<p>Verasist'teki bir MCP aracının dört önemli parçası vardır:</p>
+<ul>
+<li><strong>Ad</strong>: Verasist'te gösterilen sunucu etiketi</li>
+<li><strong>Açıklama</strong>: LLM'a bu MCP sunucusunun ne zaman uygun olduğunu bildirir</li>
+<li><strong>URL</strong>: uzak MCP sunucusu uç noktası (<code>http://</code> veya <code>https://</code>)</li>
+<li><strong>Kimlik bilgisi</strong>: Verasist'in söz konusu sunucuya bağlanırken göndermesi gereken kimlik doğrulaması</li>
+</ul>
+Ayrıca yalnızca belirli uzak MCP araçlarının gösterilmesine izin vermek için bir <strong>araç filtresi</strong> de ayarlayabilirsiniz.
+<h2>Kimlik Doğrulama</h2>
+<p>Barındırılan MCP sunucularının çoğu şunları bekler:</p>
+<pre><code class="language-http">Yetkilendirme: Taşıyıcı <token>
+</code></pre>
+<p>Bu nedenle, MCP aracını oluşturmadan önce Verasist'te aşağıdakileri içeren bir kimlik bilgisi oluşturun:</p>
+<ul>
+<li><strong>Kimlik Bilgisi Türü</strong>: <code>Taşıyıcı Belirteç</code></li>
+<li><strong>Jeton</strong>: MCP sunucunuz tarafından verilen erişim jetonu</li>
+</ul>
+Daha sonra MCP aracında bu kimlik bilgisini seçin.
+<blockquote class="note">Uzak MCP sunucusu belgeleri Taşıyıcı kimlik doğrulamasının kullanılacağını söylüyorsa, kimlik bilgisi iletişim kutusunda <strong>Taşıyıcı Belirteç</strong>'i seçin. Verasist bunu MCP bağlantısındaki tam <code>Authorization: Bearer <token></code> başlığına</blockquote> çevirecektir.
+<p>Verasist diğer kimlik bilgisi türlerini de destekler, ancak <strong>Bearer Token</strong>, üçüncü taraf MCP sunucuları için, dokümanlarında aksi belirtilmediği sürece denenecek varsayılan şeydir.</p>
+<h2>Nasıl çalışır</h2>
+<p>Çalışma zamanı yolu:</p><ol>
+<li>MCP aracını kaydettiğinizde veya yenilediğinizde Verasist, kısa süreli, kimliği doğrulanmış bir MCP oturumu açar ve uzak araç kataloğunu getirir.</li>
+<li>Verasist, bu kataloğu aracın keşfedilen araçları olarak saklar, böylece kullanıcı arayüzü size hangi uzak işlevlerin mevcut olduğunu gösterebilir.</li>
+<li>Bir çağrı başladığında Verasist, bağlı MCP sunucusu başına bir canlı MCP oturumu açar ve seçtiğiniz kimlik bilgisini o oturum için yeniden kullanır.</li>
+<li>Verasist, her düğüm için yalnızca sunucu düzeyi filtrenin ve düğüm düzeyi seçiminin izin verdiği MCP araçlarını gösterir.</li>
+<li>Verasist, bu uzak araçların ad alanlarını sıradan LLM işlev tanımlarına yerleştirir, böylece HTTP API araçları, çağrı aktarımı, çağrı sonlandırma ve diğer araçlarla güvenli bir şekilde bir arada bulunabilirler.</li>
+<li>Konuşma sırasında LLM yalnızca araç adını, açıklamasını ve bağımsız değişken şemasını görür. Sırrı <strong>görmüyor</strong>.</li>
+<li>LLM bu araçlardan birini çağırdığında Verasist, çağrıyı etkin kimlik doğrulamalı oturum üzerinden MCP sunucusuna iletir, sonucu alır ve sonucu aracı sırasına geri gönderir.</li>
+</ol>
+Kısacası: <strong>Verasist keşif, kimlik doğrulama, oturum yönetimi, araç kaydı ve sonuç belirleme işlemlerini yönetir; LLM yalnızca aracın ne zaman ve hangi argümanlarla çağrılacağına karar verir.</strong>
+<h2>Bir MCP aracı oluşturma</h2>
+<ol>
+<li><strong>Araçlar</strong>'a gidin ve yeni bir araç oluşturun.</li>
+<li><strong>MCP Sunucusu</strong>'nu seçin.</li>
+<li>LLM'nin bu sunucuyu ne zaman kullanması gerektiğini açıklayan net bir ad ve açıklama girin.</li>
+<li>MCP sunucusu URL'sini yapıştırın.</li>
+<li>Kimlik bilgisini seçin. Çoğu durumda bu bir <strong>Hamile Tokenı</strong> kimlik bilgisi olmalıdır.</li>
+<li>Aracı kaydedin ve Verasist'in uzak araçları keşfettiğini doğrulayın.</li>
+</ol>
+Sunucu çok sayıda aracı kullanıma sunuyorsa, yalnızca aracınızın gerçekten ihtiyaç duyduğu araçları tutmak için filtrelemeyi kullanın.
+<h2>Araç kataloğu yenileniyor</h2>
+<p>Uzak MCP sunucusu, siz aracı oluşturduktan sonra araçlarını ekler, kaldırır veya değiştirirse, aracı yeniden oluşturmanıza gerek yoktur:</p>
+<ol>
+<li><strong>Araçlar</strong>'da MCP aracını açın.</li>
+<li>Uzak kataloğu yeniden keşfetmek için yenilemeyi tetikleyin.</li>
+<li>Verasist sunucuya yeniden bağlanır ve saklanan keşfedilen araçları mevcut katalogla değiştirir.</li>
+</ol>
+Yenilediğinizde uzak sunucuya erişilemiyorsa Verasist, önceden keşfedilen araçları temizlemek yerine onları olduğu gibi tutar; başarısız bir yenileme, aracı asla kullanılabilir bir katalog olmadan bırakmaz.
+<h2>Bir düğüme ekleme</h2>
+<p>MCP aracı oluşturulduktan sonra:</p>
+<ol>
+<li>Aracın mevcut olması gereken iş akışı düğümünü açın.</li>
+<li>Düğümün araç listesinden MCP aracını ekleyin.</li>
+<li>Yalnızca o düğümde çağrılabilir olması gereken uzak MCP işlevlerini seçin.</li>
+<li>Düğüm isteminde LLM'a bu işlevlerin tam olarak ne zaman kullanılacağını söyleyin.</li>
+</ol>
+Düğüm seviyesi seçimi ve hızlı yönlendirme ne kadar sıkı olursa, MCP aracının kullanımı da o kadar güvenilir olur.
+<h2>En iyi uygulamalar</h2>
+<ul>
+<li>Mümkün olduğunda mantıksal entegrasyon başına bir MCP sunucusu kullanın.</li>
+<li>LLM'nin bu sunucuyu <strong>ne zaman</strong> kullanması gerektiği konusunda araç açıklamasını açık tutun.</li>
+<li>Yalnızca her düğüm için gereken minimum uzak işlevleri ortaya çıkarın.</li>
+<li>MCP sunucusu başka bir kimlik doğrulama şeması belirtmediği sürece <strong>Bearer Token</strong> kimlik bilgisini tercih edin.</li>
+<li>Önce keşfi test edin, ardından LLM'nin doğru argümanlarla doğru MCP işlevini çağırdığını doğrulamak için gerçek bir telefon/web aramasını test edin.</li>
+</ul>
+<blockquote class="note">Uzak MCP sunucusu geçici olarak kullanılamıyorsa, Verasist sorunsuz bir şekilde düşer ve görüşmenin tamamını çökertmek yerine çağrı, bu MCP araçları olmadan devam edebilir.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>MCP Sunucusu: mcp bağlantısı, kimlik doğrulama ve seçili araçlar ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;tool&quot;: &quot;lookup_order&quot;,
+    &quot;arguments&quot;: {
+      &quot;order_id&quot;: &quot;DEMO-42&quot;
+    }
+  },
+  &quot;result&quot;: {
+    &quot;content&quot;: &quot;Order shipped&quot;
+  }
+}</code></pre>

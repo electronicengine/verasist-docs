@@ -1,0 +1,49 @@
+---
+path: "guides/workflows/tools/end-call"
+title: "Çağrıyı Sonlandır"
+excerpt: "Çağrıyı Sonlandır aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 5
+---
+
+<p>Aramayı Sonlandır aracı, konuşma tamamlandığında AI temsilcinizin aramaları programlı bir şekilde sonlandırmasına olanak tanır. Ayrıca, çalıştırmanın toplanan bağlamında depolanan bir neden kodu olan <strong>çağrı düzenlemesini</strong> yakalamayı da destekler; böylece çağrı sonuçlarını raporlarda ve web kancalarında takip edebilirsiniz.</p>
+<h2>Nasıl Çalışır</h2>
+<p>Çağrıyı Sonlandırma aracı çoğu araçtan daha basittir; LLM'nin sağladığı yapılandırılabilir parametrelere sahip değildir, ancak önemli bir yapılandırma geçişine sahiptir:</p>
+<ol>
+<li><strong>Temsilci Kararı</strong>: AI temsilcisi çağrının sona ermesi gerektiğine karar verir</li>
+<li><strong>Çağrı Düzenleme (isteğe bağlı)</strong>: <code>endCallReason</code> etkinleştirilirse, aracı, <code>gathered_context</code></li>'de <code>call_disposition</code> olarak depolanan bir neden dizesi (ör. "çözümlendi", "takip gerekli") sağlar.
+<li><strong>Elveda Mesajı</strong>: Yapılandırılırsa, temsilci telefonu kapatmadan önce bir kapanış mesajı dinletir</li>
+<li><strong>Temiz Sonlandırma</strong>: Çağrı, telefon sağlayıcısı aracılığıyla sorunsuz bir şekilde sonlandırılır</li>
+</ol>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Mesajı Bitir</strong>: Arama sona ermeden arayan kişiye dinletilen isteğe bağlı mesaj (ör. "Aradığınız için teşekkür ederiz. Hoşçakalın!")</li>
+<li><strong>Çağrıyı Sonlandırma Nedeni</strong>: Geçiş — Etkinleştirildiğinde LLM, çağrının neden sona erdiğini açıklayan bir <strong>neden</code> dizesi <strong>sağlamalıdır</strong>. Bu neden <code>gathered_context.call_disposition</code> olarak saklanır ve şurada görünür:</li>
+</ul> - <strong>Raporlar</strong>: Dağıtım dağıtım tablosu
+  - <strong>Kullanım Geçmişi</strong>: Çalıştırma tablolarındaki düzenleme sütunu
+  - <strong>Web kancaları</strong>: Web kancası yüklerine dahildir
+<blockquote class="note"><code>call_disposition</code>, çağrı sonuçlarını izlemenin birincil yoludur. Ortak değerler: <code>çözüldü</code>, <code>follow_up_needed</code>, <code>ilgilenilmeyen</code>, <code>yanlış_numa</code>, <code>sesli posta</code>. Temsilci isteminiz LLM'ye tutarlı elden çıkarma değerleri kullanması talimatını vermelidir.</blockquote>
+<h2>Aracı Kullanımı</h2>
+<p><code>endCallReason</code> <strong>devre dışı</strong> olduğunda (varsayılan), aracı hiçbir parametre olmadan aracı çağırır:</p>
+<pre><code class="language-">end_call()
+</code></pre>
+<p><code>endCallReason</code> <strong>etkinleştirildiğinde</strong>, aracının bir neden sunması gerekir:</p>
+<pre><code class="language-">end_call(reason="resolved")
+</code></pre>
+<p>LLM, görüşmenin bağlamına göre nedenini seçer; temsilcinizin istemi buna rehberlik etmelidir. Örneğin: "Bir aramayı sonlandırırken bir değerlendirme belirtin: çözümlendi, takip edilmesi gerekiyor veya ilgilenilmiyor."</p>
+<p>Genel senaryolar:
+<ul>
+<li>Görüşme doğal bir sonuca ulaştı</li>
+<li>Arayan açıkça çağrının sonlandırılmasını talep ediyor</li>
+<li>Temsilci istenen tüm görevleri tamamladı</li>
+<li>Zaman aşımı veya hata koşulları nedeniyle aramanın sona ermesi gerekiyor</li>
+<li>Analiz için yapılandırılmış çağrı sonuçlarını yakalama</li>
+</ul></p><h2>Güncel kurulum ve çalışma</h2><p>Çağrıyı Sonlandır: kapanış koşulu ve metin veya sesli veda ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;reason&quot;: &quot;completed&quot;
+  },
+  &quot;result&quot;: {
+    &quot;call_state&quot;: &quot;ended&quot;
+  }
+}</code></pre>

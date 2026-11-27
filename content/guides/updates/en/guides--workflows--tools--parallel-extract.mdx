@@ -1,0 +1,26 @@
+---
+path: "guides/workflows/tools/parallel-extract"
+title: "Web Page Extract (Parallel)"
+excerpt: "Configure Web Page Extract (Parallel) and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 28
+---
+
+<p>Web Page Extract (Parallel): configure full-content option and pre-execution message, attach the saved tool to an agent, and test its operation in a workflow.</p><h2>Configure</h2><ul><li>Tools → New tool → Web Page Extract (Parallel)</li><li>Full-content option and pre-execution message</li><li>Save, attach to the agent and test before publishing.</li></ul><h2>Behavior and limits</h2><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li><li>Service availability and usage charges depend on your hosted service configuration. If unavailable, contact your service administrator; no server environment changes are required in this customer guide.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;urls&quot;: [
+      &quot;https://example.invalid/hours&quot;
+    ],
+    &quot;objective&quot;: &quot;Opening hours&quot;
+  },
+  &quot;result&quot;: {
+    &quot;pages&quot;: [
+      {
+        &quot;title&quot;: &quot;Hours&quot;,
+        &quot;excerpts&quot;: [
+          &quot;09:00–18:00&quot;
+        ]
+      }
+    ]
+  }
+}</code></pre>

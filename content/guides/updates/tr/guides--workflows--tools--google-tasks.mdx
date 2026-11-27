@@ -1,0 +1,53 @@
+---
+path: "guides/workflows/tools/google-tasks"
+title: "Google Tasks"
+excerpt: "Google Tasks aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 5
+---
+
+<p>Google Tasks aracı, yapay zeka aracınızın canlı bir görüşme sırasında bir görev oluşturmasına, mevcut görevleri listelemesine veya bağlı bir Google hesabında bir görevi tamamlandı olarak işaretlemesine olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Ayarlar → Uygulamalar</strong> altında zaten bağladığınız bir Google hesabı aracılığıyla çalışır. Önce hesabı bağlayın, ardından Google Tasks aracını oluşturun ve onu o hesaba yönlendirin.</blockquote>
+<h2>Hesap Bağlama</h2>
+<ol>
+<li><strong>Ayarlar → Uygulamalar</strong>'a gidin ve <strong>Google Hesabını Bağla</strong></li>'yı seçin
+<li>OAuth izin akışı sırasında <code>görevler</code> kapsamını verin (Google Tasks, Takvim ve E-Tablolar aynı bağlı Google hesabını paylaşır)</li>
+<li>Aracı yapılandırdığınızda, bağlı hesap Google Tasks aracının hesap seçicisinde görünür</li>
+</ol>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Google Hesabı</strong>: Bu aracın kullandığı bağlı hesap</li>
+<li><strong>Oluşturmaya İzin Ver</strong>: Aracının bu araç aracılığıyla görevler oluşturmasına izin verin (varsayılan: açık)</li>
+<li><strong>İzin Verilenler Listesi</strong>: Aracının bu araç aracılığıyla görevleri listelemesine izin verin (varsayılan: açık)</li>
+<li><strong>Tamamlanmaya İzin Ver</strong>: Temsilcinin bu araç aracılığıyla tamamlanan görevleri işaretlemesine izin verin (varsayılan: açık)</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+En az bir özelliğin etkinleştirilmesi gerekir.
+<h2>Aracı Kullanımı</h2>
+<h3>Görev Oluşturma</h3>
+<pre><code class="language-">google_tasks_araç(title="Jane Doe'yu geri arayın", Notes="Geri ödeme talebiyle ilgili takip yapın", Due="2026-07-22T00:00:00.000Z")
+</code></pre>
+<p>Yalnızca <code>başlık</code> gereklidir.</p>
+<h3>Görevleri Listeleme</h3>
+<pre><code class="language-">google_tasks_araç_list(show_completed=false, limit=10)
+</code></pre>
+<h3>Bir Görevi Tamamlama</h3>
+<pre><code class="language-">google_tasks_araç_complete(task_id="abc123")
+</code></pre>
+<code>task_id</code> önceki bir listeden veya çağrı oluşturmadan gelir.
+<p>Genel senaryolar:
+<ul>
+<li>Arayanın talep ettiği bir takip eylemi öğesi ekleme</li>
+<li>Arayan kişi işin tamamlandığını onayladıktan sonra bir görevi işaretleme</li>
+<li>Bir çağrı başlatmadan önce açık görevleri inceleme</li>
+</ul>
+<blockquote class="note">Yapılandırılan Google hesabı kuruluşunuza ait değilse veya etkin değilse araç kapatılamaz; aracı açık bir hata alır ve çağrıyı başarısız kılmak yerine görüşme devam eder.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Google Tasks: google bağlantısı ve görev listesi ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;create&quot;,
+    &quot;title&quot;: &quot;Call Ada&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;created&quot;
+  }
+}</code></pre>

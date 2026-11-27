@@ -1,0 +1,48 @@
+---
+path: "guides/workflows/tools/facebook-post"
+title: "Facebook Gönderisi"
+excerpt: "Facebook Gönderisi aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 2
+---
+
+<p>Facebook Gönderi aracı, yapay zeka aracınızın bağlı bir Facebook Sayfasında içerik (fotoğraflar ve videolar) yayınlamasının yanı sıra canlı bir görüşme sırasında son gönderileri listelemesine, yorumları okumasına ve bunlara yanıt vermesine olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Kanallar</strong> altından zaten bağladığınız bir Facebook Sayfası üzerinden çalışır. Önce Sayfayı bağlayın, ardından aracı oluşturun ve o Sayfaya yönlendirin. Kurulum için <a href="/guides/integrations/channels/facebook">Facebook kanal kılavuzuna</a> bakın.</blockquote>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Facebook Sayfası</strong> — bu aracın yayınladığı bağlı Facebook Sayfası</li>
+<li><strong>Yayınlamaya izin ver</strong> — temsilcinin gönderileri (fotoğraf ve videolar) yayınlamasına izin verin (varsayılan: açık)</li>
+<li><strong>Yorumların okunmasına izin ver</strong> — temsilcinin son gönderileri listelemesine ve yorumlarını okumasına izin verin (varsayılan: açık)</li>
+<li><strong>Yorumların yanıtlanmasına izin ver</strong> — temsilcinin bir yorumu yanıtlamasına izin verin (varsayılan: açık)</li>
+<li><strong>Özel mesaj</strong> — araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+<h2>Nasıl Çalışır</h2>
+<p>Aracı yapılandırdığınızda Sayfa sabitlenir; LLM yalnızca çağrı sırasında gönderi içeriği sağlar. Verasist, fotoğrafı (veya videoyu) yüklemek ve Sayfada yayınlamak için Meta Graph API'yi kullanır, ardından gönderinin kalıcı bağlantısını döndürür.</p>
+<blockquote class="note">Facebook yayınlama yalnızca içerik amaçlıdır; bu araç aracılığıyla gelen kutusu/mesajlaşma yoktur ve video gönderileri "akışta paylaş" seçeneği sunmaz (Instagram Reels'ın aksine).</blockquote>
+<h2>Aracı Kullanımı</h2>
+<h3>Fotoğraf yayınlayın</h3>
+<pre><code class = "language-">publish_post(media_type = "image", image_url = "https://example.com/photo.jpg", message = "Büyük haber!")
+</code></pre>
+<h3>Bir video yayınlayın</h3>
+<pre><code class = "language-">publish_post(media_type = "video", video_url = "https://example.com/video.mp4", message = "Bunu izle")
+</code></pre>
+<p>Medya, genel bir HTTPS URL'si veya önceden oluşturulmuş/yüklenmiş bir dosyadan bir <code>attachment_uuid</code> olabilir.</p>
+<h3>Yorumları okuyun</h3>
+<pre><code class = "language-">read_comments(post_id = "...")
+</code></pre>
+<h3>Bir yorumu yanıtlama</h3>
+<pre><code class = "language-">reply_to_comment(comment_id = "...", message = "Nazik sözleriniz için teşekkürler!")
+</code></pre>
+<p>Gönderi ve yorum kimlikleri önceki <code>list_recent_posts</code> / <code>read_comments</code> çağrılarından gelir.</p>
+<blockquote class="note">İşlev adlarının önüne araç adı gelir — ör. "fb" adlı bir araç <code>fb_publish_post</code>'u ortaya çıkarır.</blockquote><h2>Güncel kurulum ve çalışma</h2><p>Facebook Gönderisi: bağlı facebook hesabı ve izinli yayın işlemleri ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

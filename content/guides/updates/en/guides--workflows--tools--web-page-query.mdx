@@ -1,0 +1,47 @@
+---
+path: "guides/workflows/tools/web-page-query"
+title: "Web Search"
+excerpt: "Configure Web Search and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 11
+---
+
+<p>The Web Page Query tool lets your AI agent fetch one or more public web pages and extract clean, readable text — article body, product catalog listings, or general page content — during a live conversation.</p>
+<h2>How It Works</h2>
+<ol>
+<li><strong>Fetch</strong>: Verasist requests the page(s) over HTTP(S), enforcing a response size limit and timeout</li>
+<li><strong>Extract</strong>: Boilerplate (navigation, footers, scripts) is stripped, and the readable content is extracted — using article extraction first, then a structured JSON-LD catalog parser, then a generic HTML text fallback</li>
+<li><strong>Return</strong>: The cleaned text (up to 100,000 characters) is returned to the agent to summarize or answer questions from</li>
+</ol>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Fixed URL</strong> <em>(optional)</em>: Pin the tool to a single public URL. If set, the agent doesn't need to supply a URL when calling the tool. If left empty, the agent must supply one or more URLs itself</li>
+<li><strong>Max Results</strong>: Maximum number of pages the agent can fetch in a single call (1–50, default 10)</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+<h2>Agent Usage</h2>
+<p>If no fixed URL is configured, the agent supplies the URL(s) to fetch:</p>
+<pre><code class="language-">web_page_query(urls=["https://example.com/faq"])
+</code></pre>
+<p>Multiple URLs are fetched in parallel, up to the configured max:</p>
+<pre><code class="language-">web_page_query(urls=["https://example.com/products/1", "https://example.com/products/2"], max_results=2)
+</code></pre>
+<p>If a fixed URL is configured, the agent can call the tool with no arguments and it fetches that URL automatically.</p>
+<p>Common scenarios:
+<ul>
+<li>Reading a public FAQ or policy page to answer a caller's question</li>
+<li>Checking current pricing or product listings from a public catalog page</li>
+<li>Pulling the latest content from a status or announcements page</li>
+</ul>
+<blockquote class="note">Only public <code>http(s)</code> URLs are supported — this tool cannot access authenticated pages, internal systems, or APIs. For calling an authenticated API, use an <a href="/guides/workflows/tools/http-api">HTTP API</a> tool instead.</blockquote></p><h2>Current setup and execution</h2><p>Web Search: configure search provider, model and source options, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;query&quot;: &quot;shipping policy&quot;
+  },
+  &quot;result&quot;: {
+    &quot;answer&quot;: &quot;Policy summary&quot;,
+    &quot;sources&quot;: [
+      &quot;https://example.invalid/policy&quot;
+    ]
+  }
+}</code></pre>

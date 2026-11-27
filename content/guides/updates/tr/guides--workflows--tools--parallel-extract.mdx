@@ -1,0 +1,26 @@
+---
+path: "guides/workflows/tools/parallel-extract"
+title: "Web Sayfası Çıkarma (Parallel)"
+excerpt: "Web Sayfası Çıkarma (Parallel) aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 28
+---
+
+<p>Web Sayfası Çıkarma (Parallel): tam içerik seçeneği ve ön mesaj ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><h2>Yapılandırın</h2><ul><li>Araçlar → Yeni araç → Web Sayfası Çıkarma (Parallel)</li><li>Tam içerik seçeneği ve ön mesaj</li><li>Kaydedin, ajana ekleyin ve yayımlamadan önce test edin.</li></ul><h2>Davranış ve sınırlar</h2><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li><li>Servis kullanılabilirliği ve kullanım ücretleri barındırılan hizmet yapılandırmasına bağlıdır. Kullanılamıyorsa hizmet yöneticinize başvurun; bu müşteri rehberi sunucu ortam değişkeni kurulumu gerektirmez.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;urls&quot;: [
+      &quot;https://example.invalid/hours&quot;
+    ],
+    &quot;objective&quot;: &quot;Opening hours&quot;
+  },
+  &quot;result&quot;: {
+    &quot;pages&quot;: [
+      {
+        &quot;title&quot;: &quot;Hours&quot;,
+        &quot;excerpts&quot;: [
+          &quot;09:00–18:00&quot;
+        ]
+      }
+    ]
+  }
+}</code></pre>

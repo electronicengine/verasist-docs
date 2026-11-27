@@ -1,0 +1,61 @@
+---
+path: "guides/workflows/tools/google-sheets"
+title: "Google Tablolar"
+excerpt: "Google Tablolar aracını yapılandırın ve çalıştırma sonucunu inceleyin."
+reference: "guides/workflows/tools/introduction"
+order: 4
+---
+
+<p>Google Sheets aracı, AI aracınızın canlı bir görüşme sırasında yeni bir satır eklemesine, bir dizi satırı okumasına veya sabit bir Google E-Tablosunda belirli bir satırın üzerine yazmasına olanak tanır.</p>
+<blockquote class="note">Bu araç, <strong>Ayarlar → Uygulamalar</strong> altında zaten bağladığınız bir Google hesabı aracılığıyla çalışır. Önce hesabı bağlayın, ardından Google Sheets aracını oluşturun ve onu söz konusu hesaba ve e-tabloya yönlendirin.</blockquote>
+<h2>Hesap Bağlama</h2>
+<ol>
+<li><strong>Ayarlar → Uygulamalar</strong>'a gidin ve <strong>Google Hesabını Bağla</strong></li>'yı seçin
+<li>OAuth izin akışı sırasında <code>e-tablolar</code> kapsamını verin (Google Sheets, Görevler ve Takvim aynı bağlı Google hesabını paylaşır)</li>
+<li>Aracı yapılandırırken, hedef <strong>E-Tablo Kimliğini</strong> (sayfanın URL'sinden) ve <strong>Sayfa/Sekme Adını</strong> (varsayılan olarak <code>Sayfa1</code>'dir) sağlayın</li>
+</ol>
+<h2>Nasıl Çalışır</h2>
+<p>Google hesabı <strong>ve</strong> hedef e-tablo/sekme, aracı yapılandırdığınızda sabitlenir; LLM, arama sırasında yalnızca satır değerleri veya bir arama aralığı sağlar. Tüm işlemler, yapılandırılmış sayfa/sekme içindeki A1 gösterimi aralıklarına çözümlenir.</p>
+<h2>Yapılandırma</h2>
+<h3>Temel Ayarlar</h3>
+<ul>
+<li><strong>Google Hesabı</strong>: Bu aracın kullandığı bağlı hesap</li>
+<li><strong>E-tablo kimliği</strong>: Sabit hedef e-tablo (kimliği sayfanın URL'sinden kopyalayın, ör. <code>https://docs.google.com/spreadsheets/d/</code><strong><code><spreadsheet_id></code></strong><code>/edit</code>)</li>
+<li><strong>Sayfa Adı</strong>: E-tablo içindeki sabit hedef sekmesi (varsayılan <code>Sayfa1</code>)</li>
+<li><strong>Eklemeye İzin Ver</strong>: Aracının bu araç aracılığıyla satır eklemesine izin verin (varsayılan: açık)</li>
+<li><strong>Okumaya İzin Ver</strong>: Aracının bu araç aracılığıyla satırları okumasına izin verin (varsayılan: açık)</li>
+<li><strong>Güncellemeye İzin Ver</strong>: Aracının bu araç aracılığıyla bir satırın üzerine yazmasına izin verin (varsayılan: açık)</li>
+<li><strong>Özel Mesaj</strong>: Araç çalıştırılmadan önce arayana oynatılan isteğe bağlı mesaj</li>
+</ul>
+En az bir özelliğin etkinleştirilmesi gerekir.
+<h2>Aracı Kullanımı</h2>
+<h3>Satır Ekleme</h3>
+<pre><code class="language-">google_sheets_araç(values=["Jane Doe", "jane@example.com", "+14155552671", "Premium planla ilgileniyorum"])
+</code></pre>
+<code>değerler</code>, hücre değerlerinin soldan sağa sıralı bir listesidir.
+<h3>Satırları Okuma</h3>
+<pre><code class="language-">google_sheets_araç_read(range="A1:D20")
+</code></pre>
+<code>range</code> isteğe bağlıdır; tüm sayfayı okumak için bunu atlayın.
+<h3>Bir Satırı Güncelleme</h3>
+<pre><code class="language-">google_sheets_araç_update(row=5,values=["Jane Doe", "jane@example.com", "+14155552672", "Premium'a yükseltildi"])
+</code></pre>
+<code>satır</code>, üzerine yazılacak 1 tabanlı satır numarasıdır (örneğin, başlıklardan hemen sonraki satır için <code>2</code>).
+<p>Genel senaryolar:
+<ul>
+<li>Yeni bir potansiyel müşteri veya çağrı sonucunu paylaşılan bir e-tabloya kaydetme</li>
+<li>Bir girişin zaten mevcut olup olmadığını kontrol etmek için mevcut satırlara bakma</li>
+<li>Arayan yeni ayrıntıları onayladıktan sonra bir satırı düzeltme veya güncelleme</li>
+</ul>
+<blockquote class="note">Yapılandırılan Google hesabı kuruluşunuza ait değilse veya etkin değilse araç kapatılamaz; aracı açık bir hata alır ve çağrıyı başarısız kılmak yerine görüşme devam eder.</blockquote></p><h2>Güncel kurulum ve çalışma</h2><p>Google Tablolar: google bağlantısı, sabit dosya ve sayfa ayarlarını yapın, kaydedilen aracı ajana ekleyin ve iş akışında işlemi test edin.</p><ul><li>Ajanın yapabileceklerini açık işlem izinleri ve hesap erişimi belirler. Bağlantıyı kaydetmek aracı ajana kendiliğinden eklemez.</li><li>Araç girişini, çıktısını ve hataları çalıştırma ayrıntısında inceleyin. Başarısız işlemi tamamlanmış gibi değerlendirmeyin.</li></ul><h2>Temsili giriş ve sonuç</h2><p>Örnekler veri akışını açıklar; çalıştırılabilir istek şeması değildir.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;append&quot;,
+    &quot;row&quot;: [
+      &quot;Ada&quot;,
+      &quot;confirmed&quot;
+    ]
+  },
+  &quot;result&quot;: {
+    &quot;updated_rows&quot;: 1
+  }
+}</code></pre>

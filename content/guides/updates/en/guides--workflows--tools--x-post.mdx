@@ -1,0 +1,51 @@
+---
+path: "guides/workflows/tools/x-post"
+title: "X Post"
+excerpt: "Configure X Post and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 6
+---
+
+<p>The X Post tool lets your AI agent publish posts (with optional media) to a connected X account, reply to posts, list recent posts, and read replies, during a live conversation.</p>
+<blockquote class="note">This tool acts through an X account you've already connected under <strong>Channels</strong>. Connect the account first, then create the tool and point it at that account. See the <a href="/guides/integrations/channels/x">X channel guide</a> for setup.</blockquote>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>X Account</strong> — the connected X account this tool publishes to</li>
+<li><strong>Allow publishing</strong> — let the agent publish posts (default: on)</li>
+<li><strong>Allow media posts</strong> — let published posts include images/videos (default: on)</li>
+<li><strong>Allow replying</strong> — let the agent reply to another post (default: on)</li>
+<li><strong>Allow reading replies</strong> — let the agent list recent posts and read their replies (default: on)</li>
+<li><strong>Custom message</strong> — optional message played to the caller before the tool executes</li>
+</ul>
+At least one of publishing, replying, or reading replies must be enabled.
+<h2>How It Works</h2>
+<p>The account is fixed when you configure the tool — the LLM only supplies post content at call time. Verasist uses X's OAuth 2.0 API (with PKCE) to upload any media (chunked upload for video) and publish the post.</p>
+<blockquote class="note">X access tokens last ~2 hours and refresh tokens <strong>rotate</strong> on each refresh — Verasist persists the new refresh token automatically.</blockquote>
+<h3>Reply limitation</h3>
+<p>Replying to another user's post is only possible when that user has @mentioned your account. If not, the reply fails and the agent is told why.</p>
+<h2>Agent Usage</h2>
+<h3>Publish a text post</h3>
+<pre><code class="language-">publish_post(text="We just launched!")
+</code></pre>
+<h3>Publish with media</h3>
+<pre><code class="language-">publish_post(text="Demo time", media_type="image", media_url="https://example.com/photo.jpg")
+</code></pre>
+<h3>Reply to a post</h3>
+<pre><code class="language-">reply_to_post(post_id="...", text="Great point!")
+</code></pre>
+<h3>Read replies</h3>
+<pre><code class="language-">read_replies(post_id="...")
+</code></pre>
+<p>Post IDs come from prior <code>list_recent_posts</code> / <code>read_replies</code> calls.</p>
+<blockquote class="note">Function names are prefixed with your tool name — e.g. a tool named "xt" exposes <code>xt_publish_post</code>.</blockquote><h2>Current setup and execution</h2><p>X Post: configure connected x account and allowed publishing operations, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;publish&quot;,
+    &quot;content&quot;: &quot;Product announcement&quot;,
+    &quot;media_url&quot;: &quot;https://example.invalid/video.mp4&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;published&quot;,
+    &quot;post_id&quot;: &quot;demo-post&quot;
+  }
+}</code></pre>

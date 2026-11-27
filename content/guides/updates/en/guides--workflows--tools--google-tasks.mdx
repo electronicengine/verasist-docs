@@ -1,0 +1,53 @@
+---
+path: "guides/workflows/tools/google-tasks"
+title: "Google Tasks"
+excerpt: "Configure Google Tasks and inspect its run result."
+reference: "guides/workflows/tools/introduction"
+order: 5
+---
+
+<p>The Google Tasks tool lets your AI agent create a task, list existing tasks, or mark a task complete in a connected Google account — all during a live conversation.</p>
+<blockquote class="note">This tool acts through a Google account you've already connected under <strong>Settings → Applications</strong>. Connect the account first, then create the Google Tasks tool and point it at that account.</blockquote>
+<h2>Connecting an Account</h2>
+<ol>
+<li>Go to <strong>Settings → Applications</strong> and choose <strong>Connect Google Account</strong></li>
+<li>Grant the <code>tasks</code> scope during the OAuth consent flow (Google Tasks, Calendar, and Sheets share the same connected Google account)</li>
+<li>The connected account appears in the Google Tasks tool's account picker when you configure the tool</li>
+</ol>
+<h2>Configuration</h2>
+<h3>Basic Settings</h3>
+<ul>
+<li><strong>Google Account</strong>: The connected account this tool uses</li>
+<li><strong>Allow Create</strong>: Let the agent create tasks through this tool (default: on)</li>
+<li><strong>Allow List</strong>: Let the agent list tasks through this tool (default: on)</li>
+<li><strong>Allow Complete</strong>: Let the agent mark tasks completed through this tool (default: on)</li>
+<li><strong>Custom Message</strong>: Optional message played to the caller before the tool executes</li>
+</ul>
+At least one capability must be enabled.
+<h2>Agent Usage</h2>
+<h3>Creating a Task</h3>
+<pre><code class="language-">google_tasks_tool(title="Call back Jane Doe", notes="Follow up about the refund request", due="2026-07-22T00:00:00.000Z")
+</code></pre>
+<p>Only <code>title</code> is required.</p>
+<h3>Listing Tasks</h3>
+<pre><code class="language-">google_tasks_tool_list(show_completed=false, limit=10)
+</code></pre>
+<h3>Completing a Task</h3>
+<pre><code class="language-">google_tasks_tool_complete(task_id="abc123")
+</code></pre>
+<code>task_id</code> comes from a prior list or create call.
+<p>Common scenarios:
+<ul>
+<li>Adding a follow-up action item the caller requested</li>
+<li>Checking off a task once the caller confirms it's done</li>
+<li>Reviewing open tasks before starting a call</li>
+</ul>
+<blockquote class="note">The tool fails closed if the configured Google account doesn't belong to your organization or is inactive — the agent receives a clear error and the conversation continues instead of failing the call.</blockquote></p><h2>Current setup and execution</h2><p>Google Tasks: configure google connection and task list, attach the saved tool to an agent, and test its operation in a workflow.</p><ul><li>Enabled operations and account access determine what the agent can do. A saved connection alone does not attach the tool to an agent.</li><li>Inspect tool input, output and failures in run details. Never treat a failed operation as completed.</li></ul><h2>Illustrative input and result</h2><p>The examples explain data flow, not an executable request schema.</p><pre><code class="language-json">{
+  &quot;input&quot;: {
+    &quot;operation&quot;: &quot;create&quot;,
+    &quot;title&quot;: &quot;Call Ada&quot;
+  },
+  &quot;result&quot;: {
+    &quot;status&quot;: &quot;created&quot;
+  }
+}</code></pre>
